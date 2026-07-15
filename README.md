@@ -36,7 +36,39 @@ Active hackathon development. The repository will document setup, architecture, 
 
 ## Development
 
-Setup instructions will be added with the first runnable build.
+The first deterministic local scaffold is runnable without an OpenAI API key.
+
+Requirements:
+
+- Node.js `24.18.0` (see `.nvmrc` and `.node-version`)
+- Corepack, included with the supported Node release
+
+From a fresh clone:
+
+```bash
+corepack enable
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
+```
+
+Open `http://localhost:5173`. The current G0 shell renders an instanced Three.js
+voxel preview and can stabilize the same dream text to the same local seed.
+
+Run the complete bootstrap checks with:
+
+```bash
+corepack pnpm typecheck
+corepack pnpm lint
+corepack pnpm test
+corepack pnpm eval
+corepack pnpm e2e
+corepack pnpm build
+```
+
+Real values belong in `.env.local`, which is ignored by Git. Never expose an
+OpenAI key through a `VITE_*` variable; those variables are shipped to the
+browser. Live DreamSpec generation is added after the deterministic vertical
+slice is stable.
 
 ## License
 

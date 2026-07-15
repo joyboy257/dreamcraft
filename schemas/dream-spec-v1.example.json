@@ -1,0 +1,676 @@
+{
+  "version": 1,
+  "id": "dream_candy_guardian_001",
+  "title": "The Candy-Cane Forest",
+  "seed": 271828,
+  "blueprint": {
+    "summary": "A tiny robot crosses a candy forest and earns passage from a giant gummy guardian.",
+    "playerRole": "tiny robot visitor",
+    "playerFantasy": "Outsmart a gigantic but lonely guardian inside an edible world.",
+    "emotionalArc": {
+      "opening": "Wonder and smallness",
+      "transformation": "Suspicion becomes playful trust",
+      "payoff": "The guarded world celebrates with the player"
+    },
+    "semanticAnchors": [
+      {
+        "id": "anchor_forest",
+        "concept": "candy-cane forest with licorice trees",
+        "role": "environment",
+        "importance": 5,
+        "nearSpawn": true
+      },
+      {
+        "id": "anchor_guardian",
+        "concept": "giant translucent gummy bear guardian",
+        "role": "character",
+        "importance": 5,
+        "nearSpawn": true
+      },
+      {
+        "id": "anchor_chest",
+        "concept": "singing treasure chest",
+        "role": "object",
+        "importance": 4,
+        "nearSpawn": true
+      }
+    ],
+    "artDirection": {
+      "shapeLanguage": ["rounded", "spiral", "oversized", "toy-like"],
+      "paletteIntent": ["strawberry red", "pink", "licorice black", "warm gold"],
+      "scaleContrast": "The player is tiny; the guardian and candy trees feel monumental.",
+      "atmosphere": "Playful sugar haze with a mysterious guardian presence."
+    },
+    "playableArc": {
+      "openingSituation": "The player wakes on a soft candy clearing facing a licorice path.",
+      "playerGoal": "Earn the guardian's trust and open the singing chest.",
+      "meaningfulActions": ["follow the licorice path", "speak to the guardian", "answer a riddle", "open the chest"],
+      "finalPayoff": "Gravity softens and the forest rises into a dancing celebration."
+    },
+    "physicsMotifs": ["soft bounce", "sticky licorice", "low-gravity celebration"]
+  },
+  "budgets": {
+    "worldRadius": 48,
+    "worldHeight": 64,
+    "blockTypes": 8,
+    "terrainOperations": 3,
+    "structures": 10,
+    "entityDefinitions": 3,
+    "entityInstances": 6,
+    "meshPartsPerHero": 28,
+    "physicsFields": 3,
+    "dialogueNodes": 5,
+    "storyBeats": 4,
+    "particles": 350
+  },
+  "world": {
+    "radius": 48,
+    "height": 64,
+    "baseHeight": 10,
+    "boundary": "fog",
+    "terrain": [
+      {
+        "kind": "fbm_height",
+        "scale": 0.045,
+        "amplitude": 5,
+        "octaves": 3
+      },
+      {
+        "kind": "terrace",
+        "stepHeight": 2
+      },
+      {
+        "kind": "path_bias",
+        "points": [[0, 0], [8, 4], [16, 3], [24, 8]],
+        "width": 4,
+        "flattenStrength": 0.9
+      }
+    ],
+    "layers": [
+      { "depth": 1, "block": "cotton_candy_grass" },
+      { "depth": 3, "block": "sugar_soil" },
+      { "depth": 999, "block": "hard_candy_stone" }
+    ],
+    "zones": [
+      {
+        "id": "guardian_clearing",
+        "kind": "sphere",
+        "center": [22, 14, 8],
+        "radius": 10,
+        "tags": ["objective", "guardian"]
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "id": "air",
+      "displayName": "Air",
+      "color": 0,
+      "emissive": 0,
+      "opacity": 0,
+      "solid": false,
+      "breakable": false,
+      "materialPhysicsId": "air_normal",
+      "visualPattern": "none",
+      "tags": ["air"]
+    },
+    {
+      "id": "hard_candy_stone",
+      "displayName": "Hard Candy Stone",
+      "color": 12171705,
+      "secondaryColor": 16761515,
+      "emissive": 0,
+      "opacity": 1,
+      "solid": true,
+      "breakable": true,
+      "materialPhysicsId": "normal_solid",
+      "visualPattern": "spots",
+      "tags": ["stone", "candy"]
+    },
+    {
+      "id": "sugar_soil",
+      "displayName": "Sugar Soil",
+      "color": 12618350,
+      "secondaryColor": 16768685,
+      "emissive": 0,
+      "opacity": 1,
+      "solid": true,
+      "breakable": true,
+      "materialPhysicsId": "soft_solid",
+      "visualPattern": "gradient",
+      "tags": ["soil", "candy"]
+    },
+    {
+      "id": "cotton_candy_grass",
+      "displayName": "Cotton Candy",
+      "color": 16751052,
+      "secondaryColor": 16769009,
+      "emissive": 1114134,
+      "opacity": 1,
+      "solid": true,
+      "breakable": true,
+      "materialPhysicsId": "soft_bounce",
+      "visualPattern": "gradient",
+      "tags": ["surface", "soft", "candy"]
+    },
+    {
+      "id": "licorice",
+      "displayName": "Licorice",
+      "color": 1315860,
+      "secondaryColor": 3289650,
+      "emissive": 0,
+      "opacity": 1,
+      "solid": true,
+      "breakable": true,
+      "materialPhysicsId": "sticky",
+      "visualPattern": "stripes",
+      "tags": ["tree", "sticky", "licorice"]
+    },
+    {
+      "id": "peppermint",
+      "displayName": "Peppermint",
+      "color": 16777215,
+      "secondaryColor": 15007779,
+      "emissive": 1114112,
+      "opacity": 1,
+      "solid": true,
+      "breakable": true,
+      "materialPhysicsId": "normal_solid",
+      "visualPattern": "stripes",
+      "tags": ["tree", "candy_cane"]
+    },
+    {
+      "id": "golden_sugar",
+      "displayName": "Golden Sugar",
+      "color": 16766720,
+      "secondaryColor": 16776960,
+      "emissive": 5583872,
+      "opacity": 1,
+      "solid": true,
+      "breakable": false,
+      "materialPhysicsId": "goal_surface",
+      "visualPattern": "stars",
+      "tags": ["goal", "gold"]
+    }
+  ],
+  "structures": [
+    {
+      "id": "licorice_path",
+      "kind": "bridge",
+      "from": [2, 12, 1],
+      "to": [20, 13, 7],
+      "width": 2,
+      "block": "licorice",
+      "tags": ["path", "anchor_forest"]
+    },
+    {
+      "id": "candy_tree_cluster",
+      "kind": "tree_cluster",
+      "center": [8, 12, 6],
+      "count": 7,
+      "radius": 12,
+      "trunkBlock": "peppermint",
+      "canopyBlock": "licorice",
+      "canopyShape": "spiral",
+      "tags": ["forest", "anchor_forest"]
+    },
+    {
+      "id": "singing_chest",
+      "kind": "interactive_object",
+      "position": [26, 14, 8],
+      "shape": "chest",
+      "block": "golden_sugar",
+      "interactionId": "open_singing_chest",
+      "states": ["locked", "open"],
+      "tags": ["objective", "anchor_chest"]
+    }
+  ],
+  "player": {
+    "preferredSpawn": [0, 14, 0],
+    "scale": 0.75,
+    "startingItems": [],
+    "abilities": ["jump", "sprint"],
+    "objectiveSummary": "Follow the licorice path and earn the gummy guardian's trust."
+  },
+  "physics": {
+    "player": {
+      "body": {
+        "radius": 0.3,
+        "height": 1.4,
+        "mass": 1,
+        "stepHeight": 0.55,
+        "maxSlopeDegrees": 48,
+        "groundSnapDistance": 0.12
+      },
+      "movement": {
+        "walkSpeed": 5,
+        "sprintSpeed": 8,
+        "groundAcceleration": 28,
+        "groundDeceleration": 32,
+        "airAcceleration": 7,
+        "groundFriction": 10,
+        "airDrag": 0.5,
+        "turnResponsiveness": 1
+      },
+      "jump": {
+        "jumpVelocity": 8,
+        "coyoteTimeMs": 110,
+        "jumpBufferMs": 130,
+        "variableHeight": true,
+        "releaseGravityMultiplier": 1.8,
+        "maxAirJumps": 0
+      },
+      "abilities": {
+        "crouch": false
+      }
+    },
+    "world": {
+      "gravity": [0, -23, 0],
+      "terminalVelocity": 45,
+      "globalTimeScale": 1,
+      "airDensity": 1,
+      "globalDrag": 0,
+      "wind": {
+        "direction": [1, 0, 0.2],
+        "strength": 0.4,
+        "turbulence": 0.25
+      },
+      "defaultBuoyancy": 0,
+      "voidBehaviour": "respawn"
+    },
+    "materials": [
+      {
+        "id": "normal_solid",
+        "friction": 0.8,
+        "restitution": 0,
+        "movementMultiplier": 1,
+        "jumpMultiplier": 1,
+        "sinkDepth": 0,
+        "sinkSpeed": 0,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "none"
+      },
+      {
+        "id": "soft_solid",
+        "friction": 0.85,
+        "restitution": 0.05,
+        "movementMultiplier": 0.95,
+        "jumpMultiplier": 1,
+        "sinkDepth": 0.06,
+        "sinkSpeed": 0.3,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "none"
+      },
+      {
+        "id": "soft_bounce",
+        "friction": 0.75,
+        "restitution": 0.45,
+        "movementMultiplier": 0.95,
+        "jumpMultiplier": 1.25,
+        "sinkDepth": 0.08,
+        "sinkSpeed": 0.4,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "bounce"
+      },
+      {
+        "id": "sticky",
+        "friction": 1.5,
+        "restitution": 0,
+        "movementMultiplier": 0.65,
+        "jumpMultiplier": 0.8,
+        "sinkDepth": 0,
+        "sinkSpeed": 0,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "stick"
+      },
+      {
+        "id": "goal_surface",
+        "friction": 0.8,
+        "restitution": 0.1,
+        "movementMultiplier": 1,
+        "jumpMultiplier": 1,
+        "sinkDepth": 0,
+        "sinkSpeed": 0,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "none"
+      },
+      {
+        "id": "air_normal",
+        "friction": 0,
+        "restitution": 0,
+        "movementMultiplier": 1,
+        "jumpMultiplier": 1,
+        "sinkDepth": 0,
+        "sinkSpeed": 0,
+        "conveyorVelocity": [0, 0, 0],
+        "damagePerSecond": 0,
+        "healingPerSecond": 0,
+        "contactEffect": "none"
+      }
+    ],
+    "fields": [
+      {
+        "id": "guardian_jelly_aura",
+        "shape": {
+          "kind": "sphere",
+          "center": [22, 15, 8],
+          "radius": 6
+        },
+        "priority": 2,
+        "blendDistance": 2,
+        "enabled": true,
+        "effect": {
+          "kind": "movement_scale",
+          "horizontal": 0.8,
+          "vertical": 0.9
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "id": "celebration_gravity",
+        "durationMs": 3000,
+        "easing": "dream_wobble",
+        "changes": [
+          {
+            "target": "world.gravity",
+            "value": [0, -6, 0]
+          },
+          {
+            "target": "world.globalTimeScale",
+            "value": 0.8
+          }
+        ]
+      }
+    ],
+    "dynamicBodies": {
+      "maximumActiveBodies": 16,
+      "sleepAfterMs": 2500,
+      "simulationRadius": 24
+    },
+    "gameFeel": {
+      "headBob": 0.2,
+      "landingCompression": 0.18,
+      "fieldOfView": 75,
+      "sprintFovIncrease": 5,
+      "cameraRollResponse": 0.05,
+      "cameraShake": 0.12,
+      "hitStopMs": 30,
+      "interactionPulse": 0.4
+    }
+  },
+  "entities": [
+    {
+      "id": "gummy_guardian",
+      "displayName": "The Gummy Guardian",
+      "role": "hero",
+      "visual": {
+        "bodyPlan": "bear",
+        "scale": 3.5,
+        "proportions": {
+          "headScale": [1.1, 1, 1],
+          "torsoScale": [1.2, 1.35, 0.85],
+          "limbLength": 0.8,
+          "limbThickness": 1.1,
+          "stanceWidth": 1.1,
+          "posture": "proud"
+        },
+        "palette": {
+          "primary": 16724787,
+          "secondary": 16751052,
+          "accent": 16766720,
+          "eye": 16776960
+        },
+        "materials": [
+          {
+            "id": "gummy",
+            "preset": "jelly",
+            "color": 16724787,
+            "roughness": 0.15,
+            "metalness": 0,
+            "opacity": 0.82,
+            "emissive": 1114112,
+            "pattern": {
+              "kind": "gradient",
+              "color": 16751052,
+              "scale": 1
+            }
+          },
+          {
+            "id": "gold",
+            "preset": "metal",
+            "color": 16766720,
+            "roughness": 0.25,
+            "metalness": 0.8,
+            "opacity": 1,
+            "emissive": 2236928,
+            "pattern": {
+              "kind": "none",
+              "color": 0,
+              "scale": 1
+            }
+          }
+        ],
+        "features": [
+          { "kind": "ear", "style": "round", "size": 1.2, "materialSlot": "gummy" },
+          { "kind": "snout", "style": "short_round", "size": 0.9, "materialSlot": "gummy" },
+          { "kind": "paw", "style": "rounded", "size": 1.1, "materialSlot": "gummy" },
+          { "kind": "necklace", "pendant": "key", "size": 0.9, "materialSlot": "gold" }
+        ],
+        "face": {
+          "eyeStyle": "glowing",
+          "eyeScale": 0.9,
+          "eyeSpacing": 1,
+          "mouthStyle": "smile",
+          "defaultExpression": "mysterious"
+        },
+        "animationStyle": {
+          "idle": "wobble",
+          "locomotion": "waddle",
+          "emotion": "cheer",
+          "speedMultiplier": 0.85,
+          "exaggeration": 1.25
+        },
+        "recognitionFeatures": [
+          "large round bear ears",
+          "short rounded limbs",
+          "translucent red gummy body",
+          "oversized protective belly",
+          "golden key necklace"
+        ]
+      },
+      "spawn": {
+        "kind": "fixed",
+        "positions": [[22, 15, 8]]
+      },
+      "behavior": {
+        "kind": "guard",
+        "targetId": "singing_chest",
+        "warningRadius": 8,
+        "chaseRadius": 5,
+        "speed": 2.2
+      },
+      "dialogueId": "guardian_dialogue",
+      "interactionId": "speak_guardian",
+      "tags": ["guardian", "anchor_guardian", "bear", "gummy"]
+    }
+  ],
+  "playGraph": {
+    "experienceName": "The Sweetest Question",
+    "playerFantasy": "Earn trust through curiosity rather than force.",
+    "playerRole": "tiny robot visitor",
+    "experienceTags": ["adventure", "mystery", "transformation"],
+    "availableVerbs": [
+      { "mechanic": "observe", "label": "Follow the licorice path", "targetTags": ["path"] },
+      { "mechanic": "talk", "label": "Speak to the guardian", "targetTags": ["guardian"] },
+      { "mechanic": "choose", "label": "Answer the riddle", "targetTags": ["dialogue"] },
+      { "mechanic": "activate", "label": "Open the singing chest", "targetTags": ["objective"] }
+    ],
+    "variables": [
+      {
+        "id": "guardian_trust",
+        "displayName": "Guardian trust",
+        "type": "counter",
+        "initialValue": 0,
+        "minimum": 0,
+        "maximum": 1,
+        "showInHud": false
+      },
+      {
+        "id": "chest_unlocked",
+        "type": "boolean",
+        "initialValue": false,
+        "showInHud": false
+      }
+    ],
+    "beats": [
+      {
+        "id": "follow_path",
+        "title": "The Licorice Path",
+        "objectiveText": "Follow the dark licorice path toward the singing.",
+        "startsWhen": { "kind": "always" },
+        "completesWhen": { "kind": "zone_entered", "zoneId": "guardian_clearing" },
+        "onStart": [],
+        "onProgress": [],
+        "onComplete": [
+          { "kind": "show_message", "text": "The enormous guardian notices your tiny metal footsteps." }
+        ],
+        "optional": false
+      },
+      {
+        "id": "earn_trust",
+        "title": "The Guardian's Riddle",
+        "objectiveText": "Speak to the gummy guardian and answer its question.",
+        "startsWhen": { "kind": "zone_entered", "zoneId": "guardian_clearing" },
+        "completesWhen": { "kind": "counter", "id": "guardian_trust", "operator": ">=", "value": 1 },
+        "onStart": [
+          { "kind": "unlock_interaction", "interactionId": "speak_guardian" }
+        ],
+        "onProgress": [],
+        "onComplete": [
+          { "kind": "set_flag", "id": "chest_unlocked", "value": true },
+          { "kind": "set_entity_state", "entityId": "gummy_guardian", "state": "friendly" },
+          { "kind": "unlock_interaction", "interactionId": "open_singing_chest" }
+        ],
+        "optional": false
+      },
+      {
+        "id": "open_chest",
+        "title": "The Singing Chest",
+        "objectiveText": "Open the chest behind the guardian.",
+        "startsWhen": { "kind": "flag", "id": "chest_unlocked", "equals": true },
+        "completesWhen": { "kind": "interacted", "targetId": "open_singing_chest" },
+        "onStart": [],
+        "onProgress": [],
+        "onComplete": [
+          { "kind": "transform_structure", "structureId": "singing_chest", "state": "open" },
+          { "kind": "apply_physics_transition", "transitionId": "celebration_gravity" },
+          { "kind": "set_entity_state", "entityId": "gummy_guardian", "state": "celebrating" },
+          { "kind": "play_effect", "effectId": "rising_sugar_confetti", "targetId": "singing_chest" },
+          { "kind": "complete_experience", "endingId": "sweet_answer" }
+        ],
+        "optional": false
+      }
+    ],
+    "endings": [
+      {
+        "id": "sweet_answer",
+        "title": "The Forest Remembers You",
+        "narration": "The treasure was not gold. It was the sound of the whole forest laughing at once.",
+        "condition": { "kind": "interacted", "targetId": "open_singing_chest" },
+        "effects": [
+          { "kind": "change_atmosphere", "patchId": "celebration_sky", "durationMs": 3000 },
+          { "kind": "play_audio_cue", "cueId": "dream_complete_chord" }
+        ]
+      }
+    ],
+    "failurePolicy": "retry_current_beat"
+  },
+  "dialogues": [
+    {
+      "id": "guardian_dialogue",
+      "speakerEntityId": "gummy_guardian",
+      "trigger": "interact",
+      "startNodeId": "greeting",
+      "nodes": [
+        {
+          "id": "greeting",
+          "text": "Tiny machine, the chest opens only for what grows sweeter when it is shared.",
+          "responses": [
+            {
+              "id": "answer_joy",
+              "text": "Joy.",
+              "nextNodeId": "correct",
+              "effects": [
+                { "kind": "change_counter", "id": "guardian_trust", "amount": 1 }
+              ]
+            },
+            {
+              "id": "answer_sugar",
+              "text": "Sugar.",
+              "nextNodeId": "try_again",
+              "effects": []
+            }
+          ]
+        },
+        {
+          "id": "correct",
+          "text": "At last. A visitor who understands sweetness.",
+          "responses": [
+            { "id": "continue", "text": "Open the way.", "effects": [] }
+          ]
+        },
+        {
+          "id": "try_again",
+          "text": "Sugar disappears when shared. Think of something that multiplies.",
+          "responses": [
+            { "id": "retry", "text": "Let me answer again.", "nextNodeId": "greeting", "effects": [] }
+          ]
+        }
+      ]
+    }
+  ],
+  "atmosphere": {
+    "skyTop": 16751052,
+    "skyBottom": 16769009,
+    "fogColor": 16764057,
+    "fogNear": 22,
+    "fogFar": 78,
+    "ambientLight": 16777215,
+    "ambientIntensity": 1.2,
+    "sunColor": 16773564,
+    "sunIntensity": 1.5,
+    "particleKind": "sugar",
+    "particleDensity": 0.55,
+    "wobbleStrength": 0.08,
+    "pulseSpeed": 0.4,
+    "patches": [
+      {
+        "id": "celebration_sky",
+        "skyTop": 16766720,
+        "skyBottom": 16751052,
+        "fogColor": 16764057,
+        "particleKind": "stars",
+        "particleDensity": 1
+      }
+    ]
+  },
+  "audio": {
+    "mood": "playful",
+    "ambientIntensity": 0.45,
+    "footstepProfile": "soft_candy",
+    "cues": [
+      { "id": "dream_complete_chord", "kind": "chord", "preset": "warm_major" }
+    ]
+  }
+}

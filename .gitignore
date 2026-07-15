@@ -1,0 +1,23 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+
+# Local environment and secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Tooling and operating-system files
+*.tsbuildinfo
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Local evidence that may contain machine-specific data
+artifacts/local/

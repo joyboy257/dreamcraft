@@ -1,0 +1,146 @@
+[
+  {
+    "id": "candy_guardian",
+    "prompt": "I was a tiny robot in a candy-cane forest where the trees were made of licorice and a giant gummy bear guarded a singing treasure chest.",
+    "expectedAnchors": ["tiny robot scale", "candy-cane/licorice forest", "giant gummy bear", "singing chest"],
+    "expectedTags": ["adventure", "mystery", "transformation"],
+    "essentialMechanic": "Talk or solve a short guardian interaction before opening the chest.",
+    "tone": "playful wonder"
+  },
+  {
+    "id": "flying_clock_city",
+    "prompt": "I was flying above an endless city made of clocks while blue whales swam through the sky and every bell changed the direction of gravity.",
+    "expectedAnchors": ["clock city", "sky whales", "flight", "gravity-changing bells"],
+    "expectedTags": ["exploration", "transformation"],
+    "essentialMechanic": "Fly between clock towers and activate bells that redirect movement.",
+    "tone": "cosmic freedom"
+  },
+  {
+    "id": "flooded_school",
+    "prompt": "A shadow followed me through my flooded school. Every door opened into the same classroom, but one detail changed each time.",
+    "expectedAnchors": ["flooded school", "repeating classroom", "shadow follower", "changing detail"],
+    "expectedTags": ["mystery", "pursuit", "survival"],
+    "essentialMechanic": "Observe changes and choose the correct exit while evading the shadow.",
+    "tone": "eerie non-graphic nightmare"
+  },
+  {
+    "id": "space_teapot",
+    "prompt": "I lived inside a porcelain teapot floating through space with three talking moons that argued about where home was.",
+    "expectedAnchors": ["teapot home", "space", "three talking moons", "home debate"],
+    "expectedTags": ["social", "exploration", "mystery"],
+    "essentialMechanic": "Speak with the moons and choose or assemble a route home.",
+    "tone": "whimsical melancholy"
+  },
+  {
+    "id": "photograph_forest",
+    "prompt": "I was searching for my dog in a forest made from old photographs. The trees showed memories when I touched them.",
+    "expectedAnchors": ["photograph forest", "missing dog", "memory trees"],
+    "expectedTags": ["exploration", "reunion", "mystery"],
+    "essentialMechanic": "Inspect memory trees to follow clues and reunite with the dog.",
+    "tone": "nostalgic and warm"
+  },
+  {
+    "id": "volcano_riddle",
+    "prompt": "A friendly volcano asked me riddles before it would let me cross a bridge made of glass over glowing clouds.",
+    "expectedAnchors": ["friendly volcano", "riddles", "glass bridge", "glowing clouds"],
+    "expectedTags": ["adventure", "mystery"],
+    "essentialMechanic": "Answer or discover clues, then cross a fragile/slippery bridge.",
+    "tone": "friendly danger"
+  },
+  {
+    "id": "underwater_palace",
+    "prompt": "I was underwater but could breathe. Glowing fish were building a palace around me, and they wanted me to place the final star on its roof.",
+    "expectedAnchors": ["underwater breathing", "glowing fish builders", "palace", "final star"],
+    "expectedTags": ["creation", "ritual", "social"],
+    "essentialMechanic": "Swim/carry/place the star and complete the palace.",
+    "tone": "serene wonder"
+  },
+  {
+    "id": "alarm_clock_chase",
+    "prompt": "A giant alarm clock chased me through my childhood home. Every room became smaller until I finally turned around.",
+    "expectedAnchors": ["giant alarm clock", "childhood home", "shrinking rooms", "turning to confront it"],
+    "expectedTags": ["pursuit", "transformation", "mystery"],
+    "essentialMechanic": "Escape through shrinking spaces, then trigger a confrontation rather than endless running.",
+    "tone": "tense and cathartic"
+  },
+  {
+    "id": "cloud_stars",
+    "prompt": "The floor became clouds and I had to catch falling stars before the moon forgot my name.",
+    "expectedAnchors": ["cloud floor", "falling stars", "moon", "name fading"],
+    "expectedTags": ["adventure", "collection", "transformation"],
+    "essentialMechanic": "Glide or bounce to collect stars, then restore the name to the moon.",
+    "tone": "urgent but beautiful"
+  },
+  {
+    "id": "future_library",
+    "prompt": "I entered a library where every book whispered a different version of my future and one blank book followed me around.",
+    "expectedAnchors": ["future-whispering library", "many possible futures", "following blank book"],
+    "expectedTags": ["mystery", "social", "transformation"],
+    "essentialMechanic": "Inspect futures and make a choice that writes the blank book.",
+    "tone": "quiet uncanny reflection"
+  },
+  {
+    "id": "lottery_family",
+    "prompt": "I won the lottery and rushed home to tell my family. We gave each other ridiculous gifts and celebrated until the furniture floated into the sky.",
+    "expectedAnchors": ["winning ticket", "family gathering", "ridiculous gifts", "floating celebration"],
+    "expectedTags": ["celebration", "reunion", "social", "ritual"],
+    "essentialMechanic": "Tell family members, choose gifts, gather everyone, and activate the celebration.",
+    "tone": "joyful generosity"
+  },
+  {
+    "id": "quiet_reunion",
+    "prompt": "I met my late grandfather at an empty train station. We planted a tree together before his train arrived.",
+    "expectedAnchors": ["empty train station", "grandfather figure", "planting a tree", "departing train"],
+    "expectedTags": ["reunion", "ritual", "transformation"],
+    "essentialMechanic": "Gather/place symbolic pieces to plant the tree and share a final conversation.",
+    "tone": "gentle, respectful, non-medical"
+  },
+  {
+    "id": "tiny_kitchen",
+    "prompt": "I was the size of a coin in my kitchen. The sink was an ocean, toast was a mountain, and ants offered me a ride home.",
+    "expectedAnchors": ["tiny scale", "sink ocean", "toast mountain", "helpful ants"],
+    "expectedTags": ["adventure", "social", "exploration"],
+    "essentialMechanic": "Traverse oversized household terrain and ride/follow ants.",
+    "tone": "playful scale wonder"
+  },
+  {
+    "id": "sideways_office",
+    "prompt": "In my office, gravity pulled sideways whenever someone told a lie, and the meeting room drifted around the building.",
+    "expectedAnchors": ["office", "sideways gravity", "lies trigger physics", "drifting meeting room"],
+    "expectedTags": ["mystery", "social", "transformation"],
+    "essentialMechanic": "Use dialogue clues and gravity zones to reach the moving meeting room.",
+    "tone": "surreal workplace comedy"
+  },
+  {
+    "id": "stage_performance",
+    "prompt": "I had to conduct an orchestra of birds on a stage made of sunrise. Every gesture painted a new part of the sky.",
+    "expectedAnchors": ["bird orchestra", "sunrise stage", "conducting", "painting sky"],
+    "expectedTags": ["performance", "creation", "transformation"],
+    "essentialMechanic": "Perform timed interactions that transform the sky; no enemy required.",
+    "tone": "uplifting spectacle"
+  },
+  {
+    "id": "paper_city_rain",
+    "prompt": "I walked through a city folded from paper while it rained ink. I had to repair umbrellas for tiny citizens before the streets dissolved.",
+    "expectedAnchors": ["paper city", "ink rain", "tiny citizens", "repair umbrellas"],
+    "expectedTags": ["creation", "social", "survival"],
+    "essentialMechanic": "Collect/assemble/deliver repairs before a soft timer changes the city.",
+    "tone": "urgent handcrafted charm"
+  },
+  {
+    "id": "mirror_garden",
+    "prompt": "A garden of mirrors grew copies of me. Each copy remembered a different thing I had forgotten.",
+    "expectedAnchors": ["mirror garden", "copies of player", "different memories"],
+    "expectedTags": ["mystery", "social", "transformation"],
+    "essentialMechanic": "Speak/observe/choose among copies and restore one memory to the garden.",
+    "tone": "reflective surrealism"
+  },
+  {
+    "id": "balloon_rescue",
+    "prompt": "My house floated away under thousands of balloons and I chased it across rooftops while my cat calmly watched from the chimney.",
+    "expectedAnchors": ["balloon-lifted house", "rooftop chase", "cat on chimney", "strong wind/upward pull"],
+    "expectedTags": ["pursuit", "adventure", "reunion"],
+    "essentialMechanic": "Dash/glide across rooftops and reach the moving house/cat.",
+    "tone": "comic urgency"
+  }
+]
