@@ -1,40 +1,43 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { CanvasShell } from "./app/CanvasShell";
+import { useState } from "react";
 import {
   createLocalPreview,
-  MAX_DREAM_LENGTH,
   SAMPLE_DREAMS,
   type LocalPreview,
 } from "./app/localPreview";
-import type { AppPhase } from "./contracts/runtime";
-import { publicEnv } from "./config/publicEnv";
+import { DreamExperience } from "./integration/DreamExperience";
+import { DreamInputForm, type DreamIntensity } from "./ui";
 
 export default function App(): React.JSX.Element {
   const [dreamText, setDreamText] = useState<string>(SAMPLE_DREAMS[0]);
-  const [phase, setPhase] = useState<AppPhase>("input");
-  const [preview, setPreview] = useState<LocalPreview>(() =>
-    createLocalPreview(SAMPLE_DREAMS[0]),
-  );
+  const [intensity, setIntensity] = useState<DreamIntensity>("vivid");
+  const [preview, setPreview] = useState<LocalPreview | null>(null);
   const [issue, setIssue] = useState<string | null>(null);
+  const [session, setSession] = useState(0);
 
-  const phaseLabel = useMemo(() => {
-    if (phase === "playing") return "Deterministic fragment stabilized";
-    if (phase === "fatal") return "The preview needs another detail";
-    return "G0 local shell — no API key required";
-  }, [phase]);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
+  const enterDream = (): void => {
     try {
-      const nextPreview = createLocalPreview(dreamText);
-      setPreview(nextPreview);
+      setPreview(createLocalPreview(dreamText));
       setIssue(null);
-      setPhase("playing");
+      setSession((current) => current + 1);
     } catch (error) {
       setIssue(error instanceof Error ? error.message : "The dream is empty.");
-      setPhase("fatal");
     }
   };
+
+  if (preview) {
+    return (
+      <DreamExperience
+        key={`${preview.seed}-${session}`}
+        preview={preview}
+        onReplay={() => setSession((current) => current + 1)}
+        onRemix={() => setPreview(null)}
+        onNewDream={() => {
+          setDreamText("");
+          setPreview(null);
+        }}
+      />
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -43,7 +46,7 @@ export default function App(): React.JSX.Element {
           <span className="brand-mark" aria-hidden="true">✦</span>
           DreamCraft
         </a>
-        <span className="build-chip">Local prototype</span>
+        <span className="build-chip">Playable local fragment</span>
       </header>
 
       <div className="hero-grid" id="top">
@@ -54,78 +57,34 @@ export default function App(): React.JSX.Element {
             <span> Step inside it.</span>
           </h1>
           <p className="lede">
-            DreamCraft will turn remembered details into a bounded, playable
-            voxel world. This first scaffold runs a deterministic local preview
-            while the trusted DreamSpec pipeline is built.
+            DreamCraft turns remembered details into a bounded first-person voxel
+            fragment with movement, block editing, a procedural guide, dialogue,
+            an objective, and an ending—without an API key.
           </p>
-
-          <form onSubmit={handleSubmit} className="dream-form">
-            <label htmlFor="dream-text">What do you remember?</label>
-            <textarea
-              id="dream-text"
-              name="dream"
-              value={dreamText}
-              maxLength={MAX_DREAM_LENGTH}
-              onChange={(event) => setDreamText(event.target.value)}
-              aria-describedby="dream-guidance dream-issue"
-            />
-            <div className="form-meta" id="dream-guidance">
-              <span>Include a place, a strange rule, and someone you met.</span>
-              <span>{dreamText.length}/{MAX_DREAM_LENGTH}</span>
-            </div>
-            {issue ? (
-              <p className="form-issue" id="dream-issue" role="alert">
-                {issue}
-              </p>
-            ) : null}
-            <button className="primary-action" type="submit">
-              Stabilize local preview
-              <span aria-hidden="true">→</span>
-            </button>
-          </form>
-
-          <div className="sample-list" aria-label="Sample dreams">
-            {SAMPLE_DREAMS.map((sample, index) => (
-              <button
-                key={sample}
-                type="button"
-                onClick={() => {
-                  setDreamText(sample);
-                  setIssue(null);
-                  setPhase("input");
-                }}
-              >
-                <span>0{index + 1}</span>
-                {sample}
-              </button>
-            ))}
-          </div>
+          <DreamInputForm
+            value={dreamText}
+            intensity={intensity}
+            issue={issue}
+            onValueChange={setDreamText}
+            onIntensityChange={setIntensity}
+            onSubmit={enterDream}
+          />
         </section>
 
-        <aside className="world-panel" aria-label="World preview">
-          <CanvasShell />
-          <div className="world-caption">
-            <div>
-              <p>{phaseLabel}</p>
-              <h2>{preview.title}</h2>
-            </div>
-            <dl>
-              <div>
-                <dt>Seed</dt>
-                <dd>{preview.seed}</dd>
-              </div>
-              <div>
-                <dt>Strategy</dt>
-                <dd>{preview.strategy}</dd>
-              </div>
-              {publicEnv.debug ? (
-                <div>
-                  <dt>API</dt>
-                  <dd>{publicEnv.apiBase}</dd>
-                </div>
-              ) : null}
-            </dl>
-          </div>
+        <aside className="world-panel world-promise" aria-label="Current playable promise">
+          <div className="promise-orbit" aria-hidden="true"><i /><i /><i /></div>
+          <p className="eyebrow">Deterministic vertical slice</p>
+          <h2>Meet the Lantern Keeper. Wake the moonwell.</h2>
+          <p>
+            Every local seed builds the same bounded chunks. Walk, look, jump,
+            collide, break and place blocks, speak with the guide, and complete
+            the fragment.
+          </p>
+          <dl>
+            <div><dt>World</dt><dd>16×16 chunks</dd></div>
+            <div><dt>Renderer</dt><dd>Combined faces</dd></div>
+            <div><dt>Runtime</dt><dd>Mock-local</dd></div>
+          </dl>
         </aside>
       </div>
 
