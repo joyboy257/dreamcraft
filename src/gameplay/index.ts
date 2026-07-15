@@ -1,4 +1,9 @@
-export { DreamArcController, createDreamArc } from "./dreamArc";
+export {
+  DEFAULT_DREAM_ARC_DEFINITION,
+  DreamArcController,
+  createDreamArc,
+  type DreamArcDefinition,
+} from "./dreamArc";
 export {
   DREAM_BEACON_ID,
   DREAM_GUIDE_ID,

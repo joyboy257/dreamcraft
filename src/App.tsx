@@ -5,38 +5,77 @@ import {
   type LocalPreview,
 } from "./app/localPreview";
 import { DreamExperience } from "./integration/DreamExperience";
-import { DreamInputForm, type DreamIntensity } from "./ui";
+import {
+  MockLocalGenerationProvider,
+  compileDreamDescriptor,
+  type TrustedDreamManifest,
+} from "./dream";
+import {
+  DreamInputForm,
+  MaterializationOverlay,
+  type DreamIntensity,
+  type MaterializationStep,
+} from "./ui";
 
 export default function App(): React.JSX.Element {
   const [dreamText, setDreamText] = useState<string>(SAMPLE_DREAMS[0]);
   const [intensity, setIntensity] = useState<DreamIntensity>("vivid");
   const [preview, setPreview] = useState<LocalPreview | null>(null);
+  const [manifest, setManifest] = useState<TrustedDreamManifest | null>(null);
+  const [materialization, setMaterialization] = useState<MaterializationStep | null>(null);
   const [issue, setIssue] = useState<string | null>(null);
   const [session, setSession] = useState(0);
 
-  const enterDream = (): void => {
+  const enterDream = async (): Promise<void> => {
     try {
-      setPreview(createLocalPreview(dreamText));
+      const localPreview = createLocalPreview(dreamText);
       setIssue(null);
+      setMaterialization("requesting");
+      const result = await new MockLocalGenerationProvider().generate({
+        dreamText: localPreview.normalizedDream,
+        intensity,
+        strategy: "mock-local",
+        clientRequestId: `local-${localPreview.seed.toString(16)}`,
+      }, new AbortController().signal);
+      setMaterialization("compiling");
+      const trustedManifest = compileDreamDescriptor(result.core, result.issues);
+      setMaterialization("staging");
+      setManifest(trustedManifest);
+      setPreview({
+        ...localPreview,
+        title: trustedManifest.title,
+        seed: trustedManifest.seed,
+      });
       setSession((current) => current + 1);
     } catch (error) {
       setIssue(error instanceof Error ? error.message : "The dream is empty.");
+    } finally {
+      setMaterialization(null);
     }
   };
 
-  if (preview) {
+  if (preview && manifest) {
     return (
       <DreamExperience
         key={`${preview.seed}-${session}`}
         preview={preview}
+        manifest={manifest}
         onReplay={() => setSession((current) => current + 1)}
-        onRemix={() => setPreview(null)}
+        onRemix={() => {
+          setManifest(null);
+          setPreview(null);
+        }}
         onNewDream={() => {
           setDreamText("");
+          setManifest(null);
           setPreview(null);
         }}
       />
     );
+  }
+
+  if (materialization) {
+    return <main className="app-shell"><MaterializationOverlay step={materialization} /></main>;
   }
 
   return (
@@ -67,7 +106,9 @@ export default function App(): React.JSX.Element {
             issue={issue}
             onValueChange={setDreamText}
             onIntensityChange={setIntensity}
-            onSubmit={enterDream}
+            onSubmit={() => {
+              void enterDream();
+            }}
           />
         </section>
 

@@ -8,8 +8,8 @@ import {
   type CenterTarget,
   type InteractiveEntityTarget,
 } from "./interaction";
-import { createLocalGenerator, type BlockId } from "./localGenerator";
-import { PlayerMotor } from "./playerMotor";
+import { createLocalGenerator, type BlockId, type ChunkGenerator } from "./localGenerator";
+import { PlayerMotor, type PlayerMotorConfig } from "./playerMotor";
 import { detectQualityTier, qualityProfile, type QualityTier } from "./quality";
 import { RuntimeMetricsRecorder } from "./runtimeMetrics";
 import { prepareSafeSpawn } from "./spawnSafety";
@@ -26,6 +26,13 @@ export interface VoxelEngineOptions {
   getInteractiveEntities?: () => readonly InteractiveEntityTarget[];
   sceneObjects?: readonly THREE.Object3D[];
   onFixedUpdate?: (elapsedSeconds: number, deltaSeconds: number) => void;
+  generator?: ChunkGenerator;
+  worldRadius?: number;
+  spawn?: { x: number; z: number };
+  safeSpawnBlock?: BlockId;
+  blockColors?: Readonly<Record<number, readonly [number, number, number]>>;
+  playerConfig?: Partial<PlayerMotorConfig>;
+  fieldOfView?: number;
 }
 
 export interface VoxelEngine {
@@ -61,7 +68,12 @@ export function createVoxelEngine(
   scene.background = new THREE.Color(0x151126);
   scene.fog = new THREE.Fog(0x211b35, 18, 58);
 
-  const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(
+    Math.max(55, Math.min(95, options.fieldOfView ?? 72)),
+    1,
+    0.05,
+    100,
+  );
   camera.rotation.order = "YXZ";
   const hemisphere = new THREE.HemisphereLight(0xcbbfff, 0x181225, 1.65);
   const sun = new THREE.DirectionalLight(0xffdfb8, 2.1);
@@ -73,10 +85,21 @@ export function createVoxelEngine(
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 
-  const world = new VoxelWorld(createLocalGenerator(options.seed ?? 0x5eed), { radius: 64 });
-  const surfaceY = world.getSurfaceY(0, 0) ?? 6;
-  prepareSafeSpawn(world, surfaceY);
-  const player = new PlayerMotor({ x: 0.5, y: surfaceY + 1, z: 0.5 });
+  const world = new VoxelWorld(options.generator ?? createLocalGenerator(options.seed ?? 0x5eed), {
+    radius: options.worldRadius ?? 64,
+  });
+  const spawnX = Math.floor(options.spawn?.x ?? 0);
+  const spawnZ = Math.floor(options.spawn?.z ?? 0);
+  const surfaceY = world.getSurfaceY(spawnX, spawnZ) ?? 6;
+  prepareSafeSpawn(world, surfaceY, {
+    centerX: spawnX,
+    centerZ: spawnZ,
+    ...(options.safeSpawnBlock === undefined ? {} : { blockId: options.safeSpawnBlock }),
+  });
+  const player = new PlayerMotor(
+    { x: spawnX + 0.5, y: surfaceY + 1, z: spawnZ + 0.5 },
+    options.playerConfig,
+  );
   const material = new THREE.MeshLambertMaterial({ vertexColors: true });
   const chunkMeshes = new Map<string, THREE.Mesh>();
   const meshQueue = new Map<string, ChunkCoordinate>();
@@ -131,6 +154,7 @@ export function createVoxelEngine(
       chunkZ: chunk.z,
       voxels: data.voxels,
       getNeighbor: (x, y, z) => world.getBlock(x, y, z),
+      ...(options.blockColors === undefined ? {} : { blockColors: options.blockColors }),
     });
     const key = chunkKey(chunk.x, chunk.z);
     disposeChunkMesh(key);

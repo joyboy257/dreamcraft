@@ -11,6 +11,7 @@ export interface ChunkMeshRequest {
   chunkZ: number;
   voxels: Uint16Array;
   getNeighbor: (worldX: number, y: number, worldZ: number) => BlockId;
+  blockColors?: Readonly<Record<number, readonly [number, number, number]>>;
 }
 
 export interface ChunkMeshData {
@@ -47,8 +48,11 @@ const BLOCK_COLORS: Readonly<Record<number, readonly [number, number, number]>> 
   6: [0.36, 0.7, 0.94],
 };
 
-function colorFor(block: BlockId): readonly [number, number, number] {
-  return BLOCK_COLORS[block] ?? [0.8, 0.8, 0.84];
+function colorFor(
+  block: BlockId,
+  custom: ChunkMeshRequest["blockColors"],
+): readonly [number, number, number] {
+  return custom?.[block] ?? BLOCK_COLORS[block] ?? [0.8, 0.8, 0.84];
 }
 
 export function meshChunk(request: ChunkMeshRequest): ChunkMeshData {
@@ -81,7 +85,7 @@ export function meshChunk(request: ChunkMeshRequest): ChunkMeshData {
           if (neighbor !== 0) continue;
 
           const vertexStart = positions.length / 3;
-          const [red, green, blue] = colorFor(block);
+          const [red, green, blue] = colorFor(block, request.blockColors);
           for (const [cornerX, cornerY, cornerZ] of face.corners) {
             positions.push(localX + cornerX, y + cornerY, localZ + cornerZ);
             normals.push(normalX, normalY, normalZ);

@@ -54,6 +54,22 @@ const ENDING: EndingView = {
     "The moonwell opens like a silver flower, and the quiet world rises to meet the dawn.",
 };
 
+export interface DreamArcDefinition {
+  meetObjective: ObjectiveView;
+  awakenObjective: ObjectiveView;
+  dialogue: DialogueView;
+  transformation: WorldTransformationView;
+  ending: EndingView;
+}
+
+export const DEFAULT_DREAM_ARC_DEFINITION: DreamArcDefinition = {
+  meetObjective: MEET_OBJECTIVE,
+  awakenObjective: AWAKEN_OBJECTIVE,
+  dialogue: GUIDE_DIALOGUE,
+  transformation: TRANSFORMATION,
+  ending: ENDING,
+};
+
 function copyObjective(objective: ObjectiveView): ObjectiveView {
   return { ...objective };
 }
@@ -67,19 +83,31 @@ function copyDialogue(dialogue: DialogueView): DialogueView {
 
 export class DreamArcController {
   readonly #bus: TypedEventBus<GameplayEvent>;
+  readonly #definition: DreamArcDefinition;
   readonly #unsubscribe: readonly (() => void)[];
-  #snapshot: DreamArcSnapshot = {
-    phase: "meet_guide",
-    objective: copyObjective(MEET_OBJECTIVE),
-    dialogue: null,
-    transformation: null,
-    ending: null,
-    revision: 0,
-  };
+  #snapshot: DreamArcSnapshot;
   #disposed = false;
 
-  constructor(bus: TypedEventBus<GameplayEvent>) {
+  constructor(
+    bus: TypedEventBus<GameplayEvent>,
+    definition: DreamArcDefinition = DEFAULT_DREAM_ARC_DEFINITION,
+  ) {
     this.#bus = bus;
+    this.#definition = {
+      meetObjective: copyObjective(definition.meetObjective),
+      awakenObjective: copyObjective(definition.awakenObjective),
+      dialogue: copyDialogue(definition.dialogue),
+      transformation: { ...definition.transformation },
+      ending: { ...definition.ending },
+    };
+    this.#snapshot = {
+      phase: "meet_guide",
+      objective: copyObjective(this.#definition.meetObjective),
+      dialogue: null,
+      transformation: null,
+      ending: null,
+      revision: 0,
+    };
     this.#unsubscribe = [
       bus.on("entity_interacted", (event) => {
         this.#handleInteraction(event.entityId);
@@ -108,7 +136,7 @@ export class DreamArcController {
     if (this.#disposed) return;
     this.#snapshot = {
       phase: "meet_guide",
-      objective: copyObjective(MEET_OBJECTIVE),
+      objective: copyObjective(this.#definition.meetObjective),
       dialogue: null,
       transformation: null,
       ending: null,
@@ -131,8 +159,8 @@ export class DreamArcController {
 
     if (this.#snapshot.phase === "meet_guide" && entityId === DREAM_GUIDE_ID) {
       if (this.#snapshot.dialogue) return;
-      const objective = { ...MEET_OBJECTIVE, current: 1, completed: true };
-      const dialogue = copyDialogue(GUIDE_DIALOGUE);
+      const objective = { ...this.#definition.meetObjective, current: 1, completed: true };
+      const dialogue = copyDialogue(this.#definition.dialogue);
       this.#snapshot = {
         ...this.#snapshot,
         objective,
@@ -162,13 +190,13 @@ export class DreamArcController {
       this.#disposed ||
       this.#snapshot.phase !== "meet_guide" ||
       this.#snapshot.dialogue?.id !== dialogueId ||
-      dialogueId !== GUIDE_DIALOGUE_ID ||
-      responseId !== GUIDE_RESPONSE_ID
+      dialogueId !== this.#definition.dialogue.id ||
+      !this.#definition.dialogue.responses.some(({ id }) => id === responseId)
     ) {
       return;
     }
 
-    const objective = copyObjective(AWAKEN_OBJECTIVE);
+    const objective = copyObjective(this.#definition.awakenObjective);
     this.#snapshot = {
       ...this.#snapshot,
       phase: "awaken_beacon",
@@ -186,9 +214,9 @@ export class DreamArcController {
   }
 
   #completeArc(): void {
-    const objective = { ...AWAKEN_OBJECTIVE, current: 1, completed: true };
-    const transformation = { ...TRANSFORMATION };
-    const ending = { ...ENDING };
+    const objective = { ...this.#definition.awakenObjective, current: 1, completed: true };
+    const transformation = { ...this.#definition.transformation };
+    const ending = { ...this.#definition.ending };
     this.#snapshot = {
       phase: "completed",
       objective,
@@ -214,6 +242,7 @@ export class DreamArcController {
 
 export function createDreamArc(
   bus: TypedEventBus<GameplayEvent>,
+  definition?: DreamArcDefinition,
 ): DreamArcController {
-  return new DreamArcController(bus);
+  return new DreamArcController(bus, definition);
 }

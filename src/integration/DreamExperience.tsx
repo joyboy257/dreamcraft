@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LocalPreview } from "../app/localPreview";
+import type { TrustedDreamManifest } from "../dream";
 import { createVoxelEngine, type VoxelEngine } from "../engine/voxelEngine";
 import type { InteractiveEntityTarget } from "../engine/interaction";
 import { createDreamGuide, type DreamGuideState } from "../entitykit";
@@ -20,9 +21,11 @@ import {
 } from "../ui";
 import type { ComfortSettings } from "../ui";
 import { createDreamBeacon } from "./dummyWorldObjects";
+import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 
 interface DreamExperienceProps {
   preview: LocalPreview;
+  manifest: TrustedDreamManifest;
   onReplay: () => void;
   onRemix: () => void;
   onNewDream: () => void;
@@ -59,6 +62,7 @@ function requestCanvasPointerLock(canvas: HTMLCanvasElement): void {
 
 export function DreamExperience({
   preview,
+  manifest,
   onReplay,
   onRemix,
   onNewDream,
@@ -87,8 +91,9 @@ export function DreamExperience({
     if (!canvas) return;
 
     const bus = new TypedEventBus<GameplayEvent>();
-    const arc = createDreamArc(bus);
-    const guide = createDreamGuide({ seed: preview.seed, scale: 1.25 });
+    const runtime = adaptDreamManifest(manifest);
+    const arc = createDreamArc(bus, runtime.story);
+    const guide = createDreamGuide({ seed: preview.seed, ...runtime.guideOptions });
     const beacon = createDreamBeacon();
     const unsubscribers: Array<() => void> = [];
     busRef.current = bus;
@@ -115,7 +120,7 @@ export function DreamExperience({
             z: guide.root.position.z,
           },
           radius: 1.55,
-          prompt: "Speak with the Lantern Keeper",
+          prompt: `Speak with ${runtime.story.dialogue.speaker}`,
         }];
       }
       if (phase === "awaken_beacon") {
@@ -127,7 +132,7 @@ export function DreamExperience({
             z: beacon.root.position.z,
           },
           radius: 1.75,
-          prompt: "Awaken the moonwell beacon",
+          prompt: runtime.story.awakenObjective.title,
         }];
       }
       return [];
@@ -145,6 +150,13 @@ export function DreamExperience({
       onFixedUpdate: (elapsedSeconds, deltaSeconds) => {
         guide.update({ elapsedSeconds, deltaSeconds });
       },
+      generator: runtime.generator,
+      blockColors: runtime.blockColors,
+      safeSpawnBlock: runtime.safeSpawnBlock,
+      worldRadius: runtime.worldRadius,
+      spawn: runtime.spawn,
+      playerConfig: runtime.playerConfig,
+      fieldOfView: runtime.fieldOfView,
     });
     if (!engine) {
       arc.dispose();
@@ -156,9 +168,11 @@ export function DreamExperience({
     }
     engineRef.current = engine;
 
-    const guideSurface = engine.world.getSurfaceY(0, -4) ?? 6;
-    guide.root.position.set(0.5, guideSurface + 0.2, -3.5);
-    beacon.root.position.set(0.5, guideSurface + 0.2, -5.75);
+    const guideX = Math.floor(runtime.spawn.x);
+    const guideZ = Math.floor(runtime.spawn.z) - 4;
+    const guideSurface = engine.world.getSurfaceY(guideX, guideZ) ?? 6;
+    guide.root.position.set(guideX + 0.5, guideSurface + 0.2, guideZ + 0.5);
+    beacon.root.position.set(guideX + 0.5, guideSurface + 0.2, guideZ - 1.75);
 
     const syncSnapshot = (): void => setSnapshot(arc.getSnapshot());
     unsubscribers.push(
@@ -215,7 +229,7 @@ export function DreamExperience({
       engineRef.current = null;
       busRef.current = null;
     };
-  }, [preview.seed]);
+  }, [manifest, preview.seed]);
 
   const enter = (): void => {
     const canvas = canvasRef.current;
@@ -286,7 +300,7 @@ export function DreamExperience({
           <span className="brand-mark" aria-hidden="true">✦</span>
           DreamCraft
         </a>
-        <span className="build-chip">G1 playable fragment</span>
+        <span className="build-chip">G2 compiled fragment</span>
       </header>
       <section className="experience-world" id="dream-world" aria-label="Playable dream world">
         <CanvasEntry isReady={ready} isEntered={entered} onEnter={enter}>
