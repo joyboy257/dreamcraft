@@ -5,9 +5,9 @@
 ## Baseline
 
 - Date/time: 2026-07-15 (Asia/Singapore)
-- Branch / commit: `main` at pushed G2 evidence commit `2dc180b`; G3 engineering changes are locally validated and pending the gate commit
+- Branch / commit: `main`; G3 engineering implementation commit `36547ef` (evidence/status commit follows), ready to synchronize with `origin/main`
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Working tree: G3 implementation/evidence in progress; no unrelated user changes detected
+- Working tree: clean after the validated G3 engineering and evidence commits
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
@@ -85,6 +85,6 @@
 
 ## Next worker wave
 
-- Complete independent G3 review, fix substantive findings, commit, and safely synchronize `main`.
+- G3 independent review and coherent implementation commit are complete; safely synchronize `main`.
 - Continue M4–M6 local richness, polish, accessibility, performance, and release certification without live OpenAI calls.
 - After G6 is certified, create/link the Vercel project, configure secrets server-side, deploy and verify a preview, then request explicit production-deployment authorization.
