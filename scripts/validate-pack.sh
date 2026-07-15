@@ -35,10 +35,21 @@ done
 python3 -m json.tool "$ROOT/schemas/eval-cases.json" >/dev/null
 python3 -m json.tool "$ROOT/schemas/dream-spec-v1.example.json" >/dev/null
 
-if grep -R --exclude='validate-pack.sh' -nE 'OPENAI_API_KEY=[^[:space:]]+' "$ROOT" | grep -v 'OPENAI_API_KEY=replace_me' | grep -v 'OPENAI_API_KEY=$'; then
-  echo "Possible embedded API key value found." >&2
-  failed=1
-fi
+while IFS= read -r -d '' path; do
+  [[ "$path" == "scripts/validate-pack.sh" ]] && continue
+  grep -Iq . "$ROOT/$path" || continue
+  if awk '
+    /OPENAI_API_KEY=/ {
+      value = $0
+      sub(/^.*OPENAI_API_KEY=/, "", value)
+      if (value !~ /^([[:space:]]*|replace_me[[:space:]]*)$/) found = 1
+    }
+    END { exit found ? 0 : 1 }
+  ' "$ROOT/$path"; then
+    echo "Possible embedded API key value found in $path (value suppressed)." >&2
+    failed=1
+  fi
+done < <(git -C "$ROOT" ls-files --cached --others --exclude-standard -z)
 
 if [[ $failed -ne 0 ]]; then
   exit 1

@@ -28,6 +28,31 @@ describe("DreamArcController", () => {
     });
   });
 
+  it("applies late narrative enrichment at safe pre-event boundaries", () => {
+    const bus = new TypedEventBus<GameplayEvent>();
+    const arc = createDreamArc(bus);
+    expect(
+      arc.applyNarrativeEnrichment({
+        dialogueText: "The enriched guide remembers your paper boat.",
+        endingNarration: "The enriched river carries every message home.",
+      }),
+    ).toBe(true);
+
+    bus.emit({ type: "entity_interacted", entityId: DREAM_GUIDE_ID });
+    expect(arc.getSnapshot().dialogue?.text).toBe(
+      "The enriched guide remembers your paper boat.",
+    );
+    bus.emit({
+      type: "dialogue_response",
+      dialogueId: GUIDE_DIALOGUE_ID,
+      responseId: GUIDE_RESPONSE_ID,
+    });
+    bus.emit({ type: "entity_interacted", entityId: DREAM_BEACON_ID });
+    expect(arc.getSnapshot().ending?.narration).toBe(
+      "The enriched river carries every message home.",
+    );
+  });
+
   it("progresses deterministically from interaction to transformed ending", () => {
     const bus = new TypedEventBus<GameplayEvent>();
     const arc = createDreamArc(bus);

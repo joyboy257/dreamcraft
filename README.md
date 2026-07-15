@@ -21,22 +21,26 @@ DreamCraft is being built with **Codex and GPT-5.6** for the **Apps for Your Lif
 
 The initial product is deliberately web-first: a polished, instantly playable browser experience. Native packaging is out of scope until the web game is complete and stable.
 
-## Planned build scope
+## Current build scope
 
-- Natural-language dream input
-- AI-generated dream/world plan
-- Playable stylised 3D environment
-- Dream-specific interactions, objective, and ending
-- Dynamic dialogue and environmental storytelling
-- A responsive, shareable browser demo
+- Natural-language dream input with three showcase prompts
+- Strict, declarative DreamSpec generation and repair
+- Playable bounded voxel terrain with first-person controls and block editing
+- Procedural guide, interaction, objective, dialogue, and ending
+- Server-only GPT-5.6 generation with a deterministic offline fallback
+- Feature-flagged Sol → Terra/Luna director experiment
+- Progressive core delivery, validated enrichment, and safe local caches
 
 ## Status
 
-Active hackathon development. The repository will document setup, architecture, and the ways Codex and GPT-5.6 accelerated the build as implementation lands.
+G3 is engineering-complete and live-proof-pending. The complete local path is
+playable without an API key. Live OpenAI validation remains deliberately locked
+until the owner authorizes the ten-prompt run described in
+[`docs/13_G3_LIVE_VALIDATION_RUNBOOK.md`](docs/13_G3_LIVE_VALIDATION_RUNBOOK.md).
 
 ## Development
 
-The first deterministic local scaffold is runnable without an OpenAI API key.
+DreamCraft is runnable without an OpenAI API key.
 
 Requirements:
 
@@ -51,8 +55,9 @@ corepack pnpm install --frozen-lockfile
 corepack pnpm dev
 ```
 
-Open `http://localhost:5173`. The current G0 shell renders an instanced Three.js
-voxel preview and can stabilize the same dream text to the same local seed.
+Open `http://localhost:5173`. Enter a dream, wait for the bounded compiler, then
+enter the generated world. With the live gate disabled, the same dream and
+intensity always produce the same stable local fragment.
 
 Run the complete bootstrap checks with:
 
@@ -67,8 +72,21 @@ corepack pnpm build
 
 Real values belong in `.env.local`, which is ignored by Git. Never expose an
 OpenAI key through a `VITE_*` variable; those variables are shipped to the
-browser. Live DreamSpec generation is added after the deterministic vertical
-slice is stable.
+browser. A key alone does not enable requests: the server also requires the
+literal safety gate `DREAMCRAFT_OPENAI_ENABLED=true`.
+
+The normal local configuration is intentionally offline:
+
+```dotenv
+OPENAI_API_KEY=
+DREAMCRAFT_OPENAI_ENABLED=false
+DREAMCRAFT_ENABLE_DIRECTOR_PIPELINE=false
+VITE_DREAMCRAFT_GENERATION_STRATEGY=single-sol
+```
+
+Runtime details and engineering evidence are documented in
+[`docs/06_RUNTIME_MODEL_PIPELINE.md`](docs/06_RUNTIME_MODEL_PIPELINE.md) and
+[`docs/14_G3_ENGINEERING_EVIDENCE.md`](docs/14_G3_ENGINEERING_EVIDENCE.md).
 
 ## License
 

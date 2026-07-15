@@ -352,6 +352,10 @@ Promote `director-parallel` only if it materially improves quality while staying
 
 At least ten varied live prompts generate valid playable worlds, and API-disabled mode reliably falls back.
 
+**Current status (2026-07-15):** engineering-complete / live-proof-pending.
+All non-live requirements and mocked provider paths pass independent review;
+the locked ten-prompt live proof remains the only outstanding G3 artifact.
+
 ---
 
 ## M4 — Dream richness and game feel

@@ -40,4 +40,10 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ["**/*.test.ts", "tests/**/*.ts"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+    },
+  },
 );

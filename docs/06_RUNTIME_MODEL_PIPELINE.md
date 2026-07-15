@@ -1,5 +1,25 @@
 # Runtime Model Pipeline
 
+## Implemented G3 boundary
+
+The runtime adapter is implemented in `src/server/generation/openaiGateway.ts`
+and is imported only by server modules. Browser code calls same-origin
+`POST /api/dream`; the server creates its own request ID, normalizes and caps
+input, chooses only allowlisted models, sets `store: false`, disables SDK
+retries, and validates every structured result through the canonical sanitizer.
+
+Live access requires both a non-empty server `OPENAI_API_KEY` and the exact
+`DREAMCRAFT_OPENAI_ENABLED=true` flag. The default remains disabled even when a
+key is present. The app then returns the mandatory deterministic local fragment
+without touching the gateway.
+
+The response boundary supports validated NDJSON frames. In the experimental
+director path, the browser may compile and enter a valid Terra core while Luna
+enrichment is still pending. Enrichment can change only allowlisted narrative
+slots. Updates apply to not-yet-opened dialogue and not-yet-reached endings
+without rebuilding the active world. Invalid, late, or incompatible patches are
+discarded.
+
 ## Distinguish two model workflows
 
 ### Build-time Codex workflow

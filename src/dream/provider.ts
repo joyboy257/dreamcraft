@@ -13,13 +13,38 @@ export interface DreamGenerationRequest {
 
 export interface GenerationMetadata {
   strategy: GenerationStrategy;
+  requestedStrategy?: GenerationStrategy | undefined;
+  actualStrategy?: GenerationStrategy | undefined;
   modelAliases: string[];
   requestDurationMs: number;
   validationDurationMs: number;
-  compileDurationMs?: number;
+  compileDurationMs?: number | undefined;
   fallbackUsed: boolean;
+  fallbackReason?: GenerationFailureCategory | undefined;
   repairCount: number;
   requestId: string;
+  providerRequestId?: string | undefined;
+  attemptCount?: number | undefined;
+  usage?: GenerationTokenUsage | undefined;
+}
+
+export type GenerationFailureCategory =
+  | "api_disabled"
+  | "authentication"
+  | "cancelled"
+  | "incomplete"
+  | "invalid_output"
+  | "network"
+  | "quota"
+  | "rate_limit"
+  | "refusal"
+  | "server"
+  | "timeout"
+  | "unknown";
+
+export interface GenerationTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
 }
 
 export interface DreamGenerationResult {
@@ -28,10 +53,21 @@ export interface DreamGenerationResult {
   issues: DreamIssue[];
 }
 
+export type DreamGenerationProgressEvent =
+  | { phase: "requesting" }
+  | { phase: "blueprint-ready" }
+  | { phase: "core-ready"; result: DreamGenerationResult }
+  | { phase: "enrichment-ready" };
+
+export type DreamGenerationProgressListener = (
+  event: DreamGenerationProgressEvent,
+) => void;
+
 export interface DreamGenerationProvider {
   generate(
     request: DreamGenerationRequest,
     signal: AbortSignal,
+    onProgress?: DreamGenerationProgressListener,
   ): Promise<DreamGenerationResult>;
 }
 
@@ -485,6 +521,7 @@ export class MockLocalGenerationProvider implements DreamGenerationProvider {
   async generate(
     request: DreamGenerationRequest,
     signal: AbortSignal,
+    onProgress?: DreamGenerationProgressListener,
   ): Promise<DreamGenerationResult> {
     assertNotAborted(signal);
     await Promise.resolve();
@@ -493,7 +530,7 @@ export class MockLocalGenerationProvider implements DreamGenerationProvider {
     if (!sanitized.success) {
       throw new Error("Built-in local DreamSpec failed validation");
     }
-    return {
+    const result: DreamGenerationResult = {
       core: sanitized.spec,
       issues: sanitized.issues,
       metadata: {
@@ -506,11 +543,26 @@ export class MockLocalGenerationProvider implements DreamGenerationProvider {
         requestId: request.clientRequestId,
       },
     };
+    onProgress?.({ phase: "core-ready", result });
+    return result;
   }
 }
 
 function isAbortFailure(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
+}
+
+function categorizeFallback(error: unknown): GenerationFailureCategory {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String(error.code)
+      : "";
+  if (code === "invalid_response" || code === "invalid_json") return "invalid_output";
+  if (code === "http_401") return "authentication";
+  if (code === "http_429") return "rate_limit";
+  if (code === "http_408" || code === "http_504") return "timeout";
+  if (error instanceof TypeError) return "network";
+  return "unknown";
 }
 
 export class FallbackGenerationProvider implements DreamGenerationProvider {
@@ -522,10 +574,11 @@ export class FallbackGenerationProvider implements DreamGenerationProvider {
   async generate(
     request: DreamGenerationRequest,
     signal: AbortSignal,
+    onProgress?: DreamGenerationProgressListener,
   ): Promise<DreamGenerationResult> {
     assertNotAborted(signal);
     try {
-      const primary = await this.primary.generate(request, signal);
+      const primary = await this.primary.generate(request, signal, onProgress);
       const sanitized = sanitizeDreamSpec(primary.core);
       if (!sanitized.success) {
         throw new Error("Primary provider returned an invalid DreamSpec");
@@ -543,9 +596,11 @@ export class FallbackGenerationProvider implements DreamGenerationProvider {
       };
     } catch (error) {
       if (signal.aborted || isAbortFailure(error)) throw error;
+      const fallbackReason = categorizeFallback(error);
       const fallback = await this.local.generate(
         { ...request, strategy: "mock-local" },
         signal,
+        onProgress,
       );
       const fallbackIssue: DreamIssue = {
         code: "provider_fallback",
@@ -559,8 +614,12 @@ export class FallbackGenerationProvider implements DreamGenerationProvider {
         issues: [...fallback.issues, fallbackIssue],
         metadata: {
           ...fallback.metadata,
+          requestedStrategy: request.strategy,
+          actualStrategy: "mock-local",
           fallbackUsed: true,
+          fallbackReason,
           repairCount: fallback.metadata.repairCount + 1,
+          attemptCount: 0,
         },
       };
     }

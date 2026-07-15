@@ -52,6 +52,9 @@ describe("FallbackGenerationProvider", () => {
 
     expect(result.metadata.fallbackUsed).toBe(true);
     expect(result.metadata.strategy).toBe("mock-local");
+    expect(result.metadata.requestedStrategy).toBe("single-sol");
+    expect(result.metadata.actualStrategy).toBe("mock-local");
+    expect(result.metadata.fallbackReason).toBe("unknown");
     expect(result.issues.some((issue) => issue.code === "provider_fallback")).toBe(
       true,
     );

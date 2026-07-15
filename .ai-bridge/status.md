@@ -5,13 +5,13 @@
 ## Baseline
 
 - Date/time: 2026-07-15 (Asia/Singapore)
-- Branch / commit: `main` at pushed G2 commit `59965a2579f07a932c9b97a4834195f86f64be8c`, synchronized with `origin/main`
+- Branch / commit: `main` at pushed G2 evidence commit `2dc180b`; G3 engineering changes are locally validated and pending the gate commit
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Working tree: clean after the validated G2 compiler push
+- Working tree: G3 implementation/evidence in progress; no unrelated user changes detected
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
-- Missing prerequisites: none for G0; Playwright-managed Chromium is installed. Live model and deployment credentials are intentionally deferred and not required for deterministic boot.
+- Missing prerequisites: live G3 proof requires a rotated/funded OpenAI project key and explicit authorization; deployment is deliberately deferred until local release certification
 - Deviations from pack assumptions: mounted repository initially had no `origin`; it was safely connected to the verified non-empty remote and fast-forwarded to `origin/main`
 
 ## Active milestone
@@ -19,14 +19,15 @@
 - Milestone: M3 — Runtime GPT-5.6 generation
 - Work items: DC-WI-030 through DC-WI-034; Gate G3
 - Goal: add a server-only structured-generation route, progressive/fallback handling, prompts, metadata, and strategy evaluation without exposing secrets
-- Owners/agents: root Sol integration; security and generation-provider review required before any live request
+- Gate state: **engineering-complete / live-proof-pending**
+- Owners/agents: root Sol integration plus independent architecture, adversarial-test, and security reviewers; no live request authorized
 
 ## Working user-visible behavior
 
 - [x] Application boots
 - [x] Voxel shell playable
 - [x] Dummy DreamSpec completes
-- [ ] Live generation works
+- [ ] Live generation proof (engineering path complete; ten-prompt live evidence pending)
 - [x] Local fallback works
 - [x] Procedural hero entity readable
 - [x] Generated story ending works
@@ -38,14 +39,15 @@
 | Check | Command / route | Result | Evidence |
 |---|---|---|---|
 | Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
-| Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across the G2 checkpoint, 2026-07-15 |
+| Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-15 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
-| Unit tests | `corepack pnpm test` | Pass, 73/73 at G2 checkpoint | schema, references, sanitization/repair, trusted compilation, adapter, engine/gameplay/UI, hostile bounds, fallback |
-| Browser smoke | `corepack pnpm test:e2e` plus headed CLI inspection | Pass; compiled local provider path, declarative guide/objective/ending, reload, console, page errors, failed requests, and HTTP failures clean | `output/playwright/g2-compiled-world.png` |
-| Dream evals | `corepack pnpm eval` | Pass, 3/3 | six-dream representative corpus plus hostile maximum-path chunk-latency probe |
-| Production build | `corepack pnpm build` | Pass | Vite 8 production output; 245.59 kB main gzip |
+| Unit/integration tests | `corepack pnpm test` | Pass, 133/133 | includes mocked success, retry, timeout, cancellation, refusal, invalid output, rate limit, authentication, quota, API-disabled, progressive director, cache, route, prompt, and Vercel deadline boundaries |
+| Browser smoke | `corepack pnpm e2e` | Pass, 1/1 Chromium | API-disabled same-origin route, stable-fragment messaging, playable entry, reload, console/page/network errors clean |
+| Dream evals | `corepack pnpm eval` | Pass, 4/4 | representative compiler corpus, hostile path budget, and ten-prompt mocked single/director benchmark |
+| Production build | sentinel `OPENAI_API_KEY` + `corepack pnpm build`, then `rg` over `dist/` | Pass | Vite 8 output; 249.56 kB main gzip; sentinel and key name absent from browser bundle |
 | Performance | focused metrics tests + headed render inspection | Pass for G1 gate | combined per-chunk geometry, bounded one-job-per-frame scheduling, quality tiers, disposal, and runtime metric recorder |
-| Security review | `corepack pnpm audit --audit-level high` + secret scan | Pass | no known advisories; no embedded credential patterns |
+| Dependency/security checks | `corepack pnpm audit --prod --audit-level high`; ignored-aware pack validator; independent architecture/test/security diff review | Pass | no known production advisories; no High/Critical findings; prior cache/rate/cancellation findings remediated; validator suppresses values and excludes ignored secret files |
+| Install integrity | `corepack pnpm install --frozen-lockfile` | Pass | 222 lock entries pass supply-chain policy; OpenAI SDK pinned to mature `6.46.0` |
 
 ## Recent decisions or deviations
 
@@ -59,23 +61,30 @@
 - Gate G2 independently reviewed PASS after adversarial remediation, committed, and pushed to `origin/main` at `59965a2`.
 - G2 compiler preserves the complete sanitized declarative spec and maps a trusted safe subset into runtime terrain, palette, hero presentation, story copy, ending, physics, FOV, and spawn.
 - G2 adversarial probes cover missing completion, mismatched dialogue responses, nested work budgets, finite overflow, radial spawn safety, requested block capacity, all-air, and all-solid inputs.
+- G3 uses strict stage-specific JSON Schemas over the Responses API with `store: false`, `maxRetries: 0`, an overall deadline, and one shared application retry.
+- `single-sol` remains the default. The mocked director benchmark did not demonstrate a quality advantage and incurred additional staged calls, so promotion criteria are not met.
+- Three bundled showcase prompts warm a bounded memory-only validated cache; exact last-known-good entries are restored only after validation, while novel failures still reach the deterministic local generator.
+- Vercel CLI `54.18.1` and MCP are authenticated to team `deonaqwx-9156s-projects`; no DreamCraft project was created and no deployment was attempted before local release certification.
+- The original pack validator was hardened after it printed an ignored local key: it now scans only tracked/nonignored files and suppresses matched values.
 
 ## Known issues
 
 | Severity | Issue | Owner | Next action |
 |---|---|---|---|
-| Low | Vite reports the client entry chunk above its 500 kB minified advisory threshold | Root/engine | Reassess code splitting during G6; G2 gzip is 245.59 kB and current functionality passes |
+| Low | Vite reports the client entry chunk above its 500 kB minified advisory threshold | Root/engine | Reassess code splitting during G6; G3 gzip is 249.56 kB and current functionality passes |
+| Low | In-memory application rate limiting is per serverless instance | Root/release | Pair with Vercel platform/WAF rate protection before public production traffic |
 | Low | Browser E2E does not directly assert pointer-locked movement, jumping, collision, or block editing | Root/QA | Add focused browser instrumentation during G6; source review and unit tests cover G1 |
 | Low | Comfort controls do not yet propagate FOV, sensitivity, and reduced-motion values into the engine | Root/UI | Wire during G5/G6 accessibility and comfort work |
 | Low | Chunk generation/meshing is bounded to one job per frame but remains on the main thread | Root/engine | Add worker offload during the G6 performance pass if thresholds require it |
 
 ## External blockers
 
-- `OPENAI_API_KEY` is absent in the current environment. This does not block G3 architecture, fallback, or mocked route tests, but it blocks the ten varied live-prompt proof required to close G3.
+- The existing development key must be rotated because its value appeared in local validator output. Do not add credit to that key.
+- The replacement OpenAI project needs up to `$10` credit and explicit authorization before the locked ten-prompt proof. Projected maximum spend is `$9.35`; see `docs/13_G3_LIVE_VALIDATION_RUNBOOK.md`.
+- These blockers affect only the live G3 proof. Engineering, deterministic fallback, browser, and security validation are complete locally.
 
 ## Next worker wave
 
-- Agent: root implements G3 server/provider/prompt/progressive slices; independent security/generation review follows mocked verification
-- Bounded task: reconcile official OpenAI structured-output guidance, implement a server-only route with strict caps/timeouts/retry/metadata and guaranteed mock-local fallback
-- Owned paths: `src/server/**`, `api/**`, provider/integration/UI contracts, prompt/eval fixtures; no client secret access
-- Return criteria: mocked primary success/failure/timeout/refusal paths pass, API-disabled fallback is browser-clean, security review passes, live proof waits only on the documented credential blocker
+- Complete independent G3 review, fix substantive findings, commit, and safely synchronize `main`.
+- Continue M4–M6 local richness, polish, accessibility, performance, and release certification without live OpenAI calls.
+- After G6 is certified, create/link the Vercel project, configure secrets server-side, deploy and verify a preview, then request explicit production-deployment authorization.

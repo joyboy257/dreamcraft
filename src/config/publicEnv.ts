@@ -1,6 +1,7 @@
 export interface PublicEnv {
   apiBase: string;
   debug: boolean;
+  generationStrategy: "single-sol" | "director-parallel";
 }
 
 const PUBLIC_SECRET_PATTERN = /VITE_.*(?:OPENAI|API_KEY|SECRET|TOKEN)/i;
@@ -32,6 +33,10 @@ export function parsePublicEnv(values: Record<string, unknown>): PublicEnv {
   return {
     apiBase,
     debug: parseBoolean(values.VITE_DREAMCRAFT_DEBUG, "VITE_DREAMCRAFT_DEBUG"),
+    generationStrategy:
+      values.VITE_DREAMCRAFT_GENERATION_STRATEGY === "director-parallel"
+        ? "director-parallel"
+        : "single-sol",
   };
 }
 

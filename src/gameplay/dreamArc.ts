@@ -62,6 +62,11 @@ export interface DreamArcDefinition {
   ending: EndingView;
 }
 
+export interface DreamArcNarrativeEnrichment {
+  dialogueText: string;
+  endingNarration: string;
+}
+
 export const DEFAULT_DREAM_ARC_DEFINITION: DreamArcDefinition = {
   meetObjective: MEET_OBJECTIVE,
   awakenObjective: AWAKEN_OBJECTIVE,
@@ -146,6 +151,28 @@ export class DreamArcController {
       type: "objective_changed",
       objective: copyObjective(this.#snapshot.objective),
     });
+  }
+
+  applyNarrativeEnrichment(
+    enrichment: DreamArcNarrativeEnrichment,
+  ): boolean {
+    if (this.#disposed) return false;
+    let applied = false;
+    if (this.#snapshot.phase === "meet_guide" && !this.#snapshot.dialogue) {
+      this.#definition.dialogue = {
+        ...this.#definition.dialogue,
+        text: enrichment.dialogueText,
+      };
+      applied = true;
+    }
+    if (this.#snapshot.phase !== "completed") {
+      this.#definition.ending = {
+        ...this.#definition.ending,
+        narration: enrichment.endingNarration,
+      };
+      applied = true;
+    }
+    return applied;
   }
 
   dispose(): void {

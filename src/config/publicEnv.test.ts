@@ -3,7 +3,11 @@ import { parsePublicEnv } from "./publicEnv";
 
 describe("public environment boundary", () => {
   it("uses safe local defaults", () => {
-    expect(parsePublicEnv({})).toEqual({ apiBase: "/api", debug: false });
+    expect(parsePublicEnv({})).toEqual({
+      apiBase: "/api",
+      debug: false,
+      generationStrategy: "single-sol",
+    });
   });
 
   it("normalizes an explicit API base and boolean flag", () => {
@@ -12,7 +16,11 @@ describe("public environment boundary", () => {
         VITE_DREAMCRAFT_API_BASE: " https://example.test/dream/ ",
         VITE_DREAMCRAFT_DEBUG: "true",
       }),
-    ).toEqual({ apiBase: "https://example.test/dream", debug: true });
+    ).toEqual({
+      apiBase: "https://example.test/dream",
+      debug: true,
+      generationStrategy: "single-sol",
+    });
   });
 
   it("rejects secret-like values that would enter the client bundle", () => {
@@ -25,5 +33,18 @@ describe("public environment boundary", () => {
     expect(() =>
       parsePublicEnv({ VITE_DREAMCRAFT_DEBUG: "yes" }),
     ).toThrow(/true.*false/i);
+  });
+
+  it("enables the experimental client strategy only through its exact safe value", () => {
+    expect(
+      parsePublicEnv({
+        VITE_DREAMCRAFT_GENERATION_STRATEGY: "director-parallel",
+      }).generationStrategy,
+    ).toBe("director-parallel");
+    expect(
+      parsePublicEnv({
+        VITE_DREAMCRAFT_GENERATION_STRATEGY: "user-chosen-model",
+      }).generationStrategy,
+    ).toBe("single-sol");
   });
 });

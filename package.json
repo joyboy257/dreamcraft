@@ -19,9 +19,11 @@
     "e2e": "playwright test",
     "test:e2e": "playwright test",
     "eval": "vitest run tests/eval",
-    "eval:dreams": "vitest run tests/eval"
+    "eval:dreams": "vitest run tests/eval",
+    "validate:g3:live": "node scripts/validate-g3-live.mjs"
   },
   "dependencies": {
+    "openai": "6.46.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "three": "^0.185.1",

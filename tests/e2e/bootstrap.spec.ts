@@ -24,6 +24,10 @@ test("boots the deterministic local shell without an API key", async ({ page }) 
     page.getByRole("heading", { name: /describe a dream/i }),
   ).toBeVisible();
   await page.getByRole("button", { name: /^enter dream$/i }).click();
+  await expect(
+    page.getByRole("heading", { name: /dream.*shape|distant dream|took too long/i }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /enter the fragment/i }).click();
   await expect(page.getByTestId("dream-canvas")).toBeVisible();
   await page.getByRole("button", { name: /step into the dream/i }).click();
   await expect(page.getByText("Meet Fragment Guide")).toBeVisible();

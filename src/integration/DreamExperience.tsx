@@ -9,6 +9,7 @@ import {
   DREAM_GUIDE_ID,
   TypedEventBus,
   createDreamArc,
+  type DreamArcController,
   type DreamArcSnapshot,
   type GameplayEvent,
 } from "../gameplay";
@@ -26,6 +27,8 @@ import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 interface DreamExperienceProps {
   preview: LocalPreview;
   manifest: TrustedDreamManifest;
+  enrichmentManifest: TrustedDreamManifest | null;
+  generationLabel: string;
   onReplay: () => void;
   onRemix: () => void;
   onNewDream: () => void;
@@ -63,6 +66,8 @@ function requestCanvasPointerLock(canvas: HTMLCanvasElement): void {
 export function DreamExperience({
   preview,
   manifest,
+  enrichmentManifest,
+  generationLabel,
   onReplay,
   onRemix,
   onNewDream,
@@ -70,6 +75,7 @@ export function DreamExperience({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
   const busRef = useRef<TypedEventBus<GameplayEvent> | null>(null);
+  const arcRef = useRef<DreamArcController | null>(null);
   const suppressPointerPauseRef = useRef(false);
   const wasPointerLockedRef = useRef(false);
   const enteredRef = useRef(false);
@@ -93,6 +99,7 @@ export function DreamExperience({
     const bus = new TypedEventBus<GameplayEvent>();
     const runtime = adaptDreamManifest(manifest);
     const arc = createDreamArc(bus, runtime.story);
+    arcRef.current = arc;
     const guide = createDreamGuide({ seed: preview.seed, ...runtime.guideOptions });
     const beacon = createDreamBeacon();
     const unsubscribers: Array<() => void> = [];
@@ -164,6 +171,7 @@ export function DreamExperience({
       guide.dispose();
       beacon.dispose();
       busRef.current = null;
+      arcRef.current = null;
       return;
     }
     engineRef.current = engine;
@@ -228,8 +236,18 @@ export function DreamExperience({
       beacon.dispose();
       engineRef.current = null;
       busRef.current = null;
+      arcRef.current = null;
     };
   }, [manifest, preview.seed]);
+
+  useEffect(() => {
+    if (!enrichmentManifest) return;
+    const enrichment = adaptDreamManifest(enrichmentManifest);
+    arcRef.current?.applyNarrativeEnrichment({
+      dialogueText: enrichment.story.dialogue.text,
+      endingNarration: enrichment.story.ending.narration,
+    });
+  }, [enrichmentManifest]);
 
   const enter = (): void => {
     const canvas = canvasRef.current;
@@ -300,7 +318,7 @@ export function DreamExperience({
           <span className="brand-mark" aria-hidden="true">✦</span>
           DreamCraft
         </a>
-        <span className="build-chip">G2 compiled fragment</span>
+        <span className="build-chip">{generationLabel}</span>
       </header>
       <section className="experience-world" id="dream-world" aria-label="Playable dream world">
         <CanvasEntry isReady={ready} isEntered={entered} onEnter={enter}>

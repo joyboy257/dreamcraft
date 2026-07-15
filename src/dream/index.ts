@@ -9,15 +9,37 @@ export {
 } from "./compiler";
 export { DREAM_LIMITS, STRUCTURAL_LIMITS } from "./limits";
 export {
+  LastKnownGoodGenerationProvider,
+  SafeDreamCache,
+  warmBundledSampleCache,
+} from "./cache";
+export {
   FallbackGenerationProvider,
   MockLocalGenerationProvider,
   type DreamGenerationProvider,
   type DreamGenerationRequest,
   type DreamGenerationResult,
+  type DreamGenerationProgressEvent,
+  type DreamGenerationProgressListener,
   type DreamIntensity,
   type GenerationMetadata,
   type GenerationStrategy,
 } from "./provider";
+export {
+  DreamIntensitySchema,
+  DreamGenerationResultSchema,
+  GenerationFailureCategorySchema,
+  GenerationMetadataSchema,
+  GenerationStrategySchema,
+} from "./generationWire";
+export { DreamRouteError, HttpDreamGenerationProvider } from "./httpProvider";
+export {
+  DreamBlueprintSchema,
+  DreamEnrichmentPatchSchema,
+  applyDreamEnrichmentPatch,
+  type DreamEnrichmentPatch,
+  type EnrichmentResult,
+} from "./enrichment";
 export {
   DreamIssueSchema,
   DreamSpecV1Schema,

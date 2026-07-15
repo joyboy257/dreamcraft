@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createLocalPreview,
   SAMPLE_DREAMS,
@@ -6,51 +6,194 @@ import {
 } from "./app/localPreview";
 import { DreamExperience } from "./integration/DreamExperience";
 import {
-  MockLocalGenerationProvider,
+  FallbackGenerationProvider,
+  HttpDreamGenerationProvider,
+  LastKnownGoodGenerationProvider,
+  SafeDreamCache,
+  warmBundledSampleCache,
   compileDreamDescriptor,
+  type GenerationMetadata,
   type TrustedDreamManifest,
 } from "./dream";
+import { publicEnv } from "./config/publicEnv";
 import {
   DreamInputForm,
+  FragmentNotice,
   MaterializationOverlay,
   type DreamIntensity,
   type MaterializationStep,
 } from "./ui";
+
+interface MaterializedDream {
+  preview: LocalPreview;
+  manifest: TrustedDreamManifest;
+  metadata: GenerationMetadata;
+}
+
+const memoryStorage = new Map<string, string>();
+const safeCache = new SafeDreamCache({
+  storage: {
+    getItem: (key) => memoryStorage.get(key) ?? null,
+    setItem: (key, value) => memoryStorage.set(key, value),
+  },
+});
+const generationProvider = new FallbackGenerationProvider(
+  new LastKnownGoodGenerationProvider(
+    new HttpDreamGenerationProvider({ endpoint: `${publicEnv.apiBase}/dream` }),
+    safeCache,
+  ),
+);
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
 
 export default function App(): React.JSX.Element {
   const [dreamText, setDreamText] = useState<string>(SAMPLE_DREAMS[0]);
   const [intensity, setIntensity] = useState<DreamIntensity>("vivid");
   const [preview, setPreview] = useState<LocalPreview | null>(null);
   const [manifest, setManifest] = useState<TrustedDreamManifest | null>(null);
+  const [enrichmentManifest, setEnrichmentManifest] =
+    useState<TrustedDreamManifest | null>(null);
   const [materialization, setMaterialization] = useState<MaterializationStep | null>(null);
   const [issue, setIssue] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<GenerationMetadata | null>(null);
+  const [pendingFragment, setPendingFragment] = useState<MaterializedDream | null>(null);
   const [session, setSession] = useState(0);
+  const generationController = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const sampleController = new AbortController();
+    void warmBundledSampleCache(
+      safeCache,
+      SAMPLE_DREAMS,
+      sampleController.signal,
+    ).catch(() => {
+      // Sample warming is optional; the deterministic generator remains available.
+    });
+    return () => {
+      sampleController.abort();
+      generationController.current?.abort();
+    };
+  }, []);
 
   const enterDream = async (): Promise<void> => {
+    generationController.current?.abort();
+    const controller = new AbortController();
+    generationController.current = controller;
     try {
       const localPreview = createLocalPreview(dreamText);
+      let enteredProgressiveCore = false;
+      let progressiveCompileDurationMs: number | undefined;
       setIssue(null);
+      setPendingFragment(null);
+      setEnrichmentManifest(null);
       setMaterialization("requesting");
-      const result = await new MockLocalGenerationProvider().generate({
-        dreamText: localPreview.normalizedDream,
-        intensity,
-        strategy: "mock-local",
-        clientRequestId: `local-${localPreview.seed.toString(16)}`,
-      }, new AbortController().signal);
+      const result = await generationProvider.generate(
+        {
+          dreamText: localPreview.normalizedDream,
+          intensity,
+          strategy: publicEnv.generationStrategy,
+          clientRequestId: `dream-${localPreview.seed.toString(16)}-${Date.now().toString(36)}`,
+        },
+        controller.signal,
+        (event) => {
+          if (controller.signal.aborted) return;
+          if (event.phase === "blueprint-ready") {
+            setMaterialization("validating");
+            return;
+          }
+          if (
+            event.phase !== "core-ready" ||
+            event.result.metadata.actualStrategy !== "director-parallel"
+          ) {
+            return;
+          }
+          const compileStartedAt = performance.now();
+          const trustedManifest = compileDreamDescriptor(
+            event.result.core,
+            event.result.issues,
+          );
+          const progressiveMetadata: GenerationMetadata = {
+            ...event.result.metadata,
+            compileDurationMs: Math.max(
+              0,
+              Math.round(performance.now() - compileStartedAt),
+            ),
+          };
+          progressiveCompileDurationMs = progressiveMetadata.compileDurationMs;
+          setManifest(trustedManifest);
+          setPreview({
+            ...localPreview,
+            title: trustedManifest.title,
+            seed: trustedManifest.seed,
+          });
+          setMetadata(progressiveMetadata);
+          setMaterialization(null);
+          setSession((current) => current + 1);
+          enteredProgressiveCore = true;
+        },
+      );
+      if (controller.signal.aborted) return;
+      if (enteredProgressiveCore) {
+        setEnrichmentManifest(
+          compileDreamDescriptor(result.core, result.issues),
+        );
+        setMetadata({
+          ...result.metadata,
+          ...(progressiveCompileDurationMs === undefined
+            ? {}
+            : { compileDurationMs: progressiveCompileDurationMs }),
+        });
+        return;
+      }
+      setMaterialization("validating");
+      await yieldToBrowser();
+      if (controller.signal.aborted) return;
       setMaterialization("compiling");
+      const compileStartedAt = performance.now();
       const trustedManifest = compileDreamDescriptor(result.core, result.issues);
+      const resultMetadata: GenerationMetadata = {
+        ...result.metadata,
+        compileDurationMs: Math.max(0, Math.round(performance.now() - compileStartedAt)),
+      };
+      setMaterialization("generating-spawn");
+      await yieldToBrowser();
+      if (controller.signal.aborted) return;
       setMaterialization("staging");
-      setManifest(trustedManifest);
-      setPreview({
+      await yieldToBrowser();
+      if (controller.signal.aborted) return;
+      const materialized: MaterializedDream = {
+        manifest: trustedManifest,
+        metadata: resultMetadata,
+        preview: {
         ...localPreview,
         title: trustedManifest.title,
         seed: trustedManifest.seed,
-      });
-      setSession((current) => current + 1);
+        },
+      };
+      setMaterialization("entering");
+      await yieldToBrowser();
+      if (controller.signal.aborted) return;
+      if (resultMetadata.fallbackUsed) {
+        setPendingFragment(materialized);
+      } else {
+        setManifest(materialized.manifest);
+        setPreview(materialized.preview);
+        setMetadata(materialized.metadata);
+        setSession((current) => current + 1);
+      }
     } catch (error) {
+      if (
+        controller.signal.aborted ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) return;
       setIssue(error instanceof Error ? error.message : "The dream is empty.");
     } finally {
-      setMaterialization(null);
+      if (generationController.current === controller) {
+        generationController.current = null;
+        setMaterialization(null);
+      }
     }
   };
 
@@ -60,15 +203,25 @@ export default function App(): React.JSX.Element {
         key={`${preview.seed}-${session}`}
         preview={preview}
         manifest={manifest}
+        enrichmentManifest={enrichmentManifest}
+        generationLabel={metadata?.fallbackUsed ? "Stable local fragment" : "GPT-5.6 generated dream"}
         onReplay={() => setSession((current) => current + 1)}
         onRemix={() => {
+          generationController.current?.abort();
+          generationController.current = null;
           setManifest(null);
           setPreview(null);
+          setMetadata(null);
+          setEnrichmentManifest(null);
         }}
         onNewDream={() => {
+          generationController.current?.abort();
+          generationController.current = null;
           setDreamText("");
           setManifest(null);
           setPreview(null);
+          setMetadata(null);
+          setEnrichmentManifest(null);
         }}
       />
     );
@@ -78,6 +231,27 @@ export default function App(): React.JSX.Element {
     return <main className="app-shell"><MaterializationOverlay step={materialization} /></main>;
   }
 
+  if (pendingFragment) {
+    return (
+      <main className="app-shell">
+        <FragmentNotice
+          issueCode={pendingFragment.metadata.fallbackReason ?? null}
+          onEnterFragment={() => {
+            setManifest(pendingFragment.manifest);
+            setPreview(pendingFragment.preview);
+            setMetadata(pendingFragment.metadata);
+            setPendingFragment(null);
+            setSession((current) => current + 1);
+          }}
+          onTryAgain={() => {
+            setPendingFragment(null);
+            void enterDream();
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <header className="site-header">
@@ -85,7 +259,7 @@ export default function App(): React.JSX.Element {
           <span className="brand-mark" aria-hidden="true">✦</span>
           DreamCraft
         </a>
-        <span className="build-chip">Playable local fragment</span>
+        <span className="build-chip">G3 generation-ready</span>
       </header>
 
       <div className="hero-grid" id="top">
@@ -98,7 +272,8 @@ export default function App(): React.JSX.Element {
           <p className="lede">
             DreamCraft turns remembered details into a bounded first-person voxel
             fragment with movement, block editing, a procedural guide, dialogue,
-            an objective, and an ending—without an API key.
+            an objective, and an ending through a server-only generator with a
+            deterministic local fallback.
           </p>
           <DreamInputForm
             value={dreamText}
@@ -124,7 +299,7 @@ export default function App(): React.JSX.Element {
           <dl>
             <div><dt>World</dt><dd>16×16 chunks</dd></div>
             <div><dt>Renderer</dt><dd>Combined faces</dd></div>
-            <div><dt>Runtime</dt><dd>Mock-local</dd></div>
+            <div><dt>Runtime</dt><dd>Server-safe</dd></div>
           </dl>
         </aside>
       </div>
