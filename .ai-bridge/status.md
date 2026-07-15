@@ -5,9 +5,9 @@
 ## Baseline
 
 - Date/time: 2026-07-15 (Asia/Singapore)
-- Branch / commit: `main` at `905ed7e9e3ffab1b7ed59dc9293c57e85823d16b`, tracking `origin/main`
+- Branch / commit: `main` at pushed G0 commit `8f0e888269a5ca2c86cca84b43fd62f11b07c4df`, synchronized with `origin/main`
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Working tree: clean remote baseline plus the validated kickstart-v2 overlay and active G0 scaffold changes
+- Working tree: clean after the validated G0 bootstrap push
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
@@ -16,10 +16,10 @@
 
 ## Active milestone
 
-- Milestone: M0 — Repository and toolchain foundation
-- Work items: DC-WI-001, DC-WI-002; Gate G0
-- Goal: fresh clone installs and launches a strict TypeScript, React, Vite, and Three.js deterministic local shell without an API key
-- Owners/agents: root Sol orchestration thread; read-only review agent after validation
+- Milestone: M1 — Playable voxel shell vertical slice
+- Work items: DC-WI-010 through DC-WI-015; Gate G1
+- Goal: enter a bounded dummy world, move/look/jump/collide/edit, interact with a procedural entity, complete an objective, and reach an ending without uncaught errors
+- Owners/agents: root Sol integration; bounded engine, gameplay, and product UI workers; DreamSpec compiler lane queued next
 
 ## Working user-visible behavior
 
@@ -37,6 +37,7 @@
 
 | Check | Command / route | Result | Evidence |
 |---|---|---|---|
+| Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
 | Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript, 2026-07-15 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
 | Unit tests | `corepack pnpm test` | Pass, 9/9 | local normalization, seed, bounds, bundled samples, public-env secret boundary |
@@ -52,6 +53,7 @@
 - Selected lightweight React for product/error-boundary composition and Three.js for the canvas shell.
 - G0 preview uses `THREE.InstancedMesh`; it does not create one mesh per decorative voxel.
 - Client configuration rejects secret-like `VITE_*` names and exposes no OpenAI credential.
+- Gate G0 independently reviewed, reproduced from a fresh clone, committed, and pushed to `origin/main` at `8f0e888`.
 
 ## Known issues
 
@@ -65,7 +67,7 @@
 
 ## Next worker wave
 
-- Agent: `repo_explorer` (read-only), then disjoint engine/compiler/gameplay/UI workers after G0 push
-- Bounded task: verify scaffold/contracts/toolchain hazards, then begin the G1 vertical slice and G2 foundations
+- Agent: `engine_builder`, `gameplay_builder`, and `product_ui_builder`; `dream_compiler` queues as soon as a worker slot opens
+- Bounded task: implement disjoint G1 engine/gameplay/UI lanes, then begin G2 DreamSpec foundations
 - Owned paths: as defined in `AGENTS.md`; root retains package/config/contracts/composition
 - Return criteria: exact files, commands/results, risks, and proposed contract changes
