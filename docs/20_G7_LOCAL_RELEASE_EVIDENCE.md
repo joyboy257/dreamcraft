@@ -45,6 +45,31 @@ Independent edge evidence passed:
   `generationEnabled: false`, and `fallbackAvailable: true`; manifest and
   service worker both returned 200.
 
+## Public browser acceptance evidence
+
+An isolated Chromium browser context exercised the public production alias,
+not a local server. It completed the API-disabled materialization path, entered
+the canvas after the entry scrim released input, opened the guide dialogue with
+the real keyboard interaction, selected the guide response, and rendered the
+`Awaken the Fragment` objective. The observed `/api/dream` response was 200
+under the disabled fallback; no application console error, page error, or failed
+request occurred. Chromium emitted only its own WebGL `GL Driver Message`
+performance warnings during readback, which are recorded as renderer noise and
+not an application warning.
+
+Additional isolated public-origin checks passed:
+
+- A Pixel 7-sized touch emulation rendered the portrait guidance, guide prompt,
+  and real Move, Jump, and Interact controls without application errors.
+- After the production service worker became ready, a fully offline reload
+  rendered the DreamCraft input shell.
+- With CDP network emulation at 400 ms latency, 1 Mbps download, and 500 Kbps
+  upload, the fallback materialization reached `Enter the fragment` in 3.27 s.
+
+These are browser emulation proofs only. They improve coverage of incognito,
+touch, offline, and slow-network paths but do not replace a physical device,
+second-device, or user-ergonomics check.
+
 ## Independent release-security review
 
 Terra returned **PASS** for the G7 release-security slice.
@@ -164,9 +189,10 @@ CI structural pass cannot substitute for the hardware proof.
 
 ## Remaining Gate G7 proof and human actions
 
-- Complete incognito, second-device, physical-mobile, slow-network, offline,
-  and full bundled-ending checks against the public production URL. These are
-  human/device proofs and cannot be represented by the CI software renderer.
+- Complete a physical-mobile, second-device, and full bundled-ending check
+  against the public production URL. Isolated browser, touch-emulation, offline,
+  and slow-network checks are now recorded above, but human/device ergonomics
+  cannot be represented by the CI software renderer.
 - GitHub branch protection is active on `main`: `release-checks` is required
   and strict, while force pushes and branch deletion are disabled. The final
   evidence update passed GitHub Actions run
