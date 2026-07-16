@@ -556,11 +556,16 @@ Gate G7 is not complete.** Gate G6 is synchronized at `112d3da`. Terra returned
 PASS for the G7 release-security review, and Sol certified the complete local
 candidate through the full serialized release matrix. Health/smoke/CI,
 same-origin enforcement, repository/judge/demo readiness, and exact rollback
-instructions are complete locally. No Vercel project has been created/linked,
-no preview or production deployment exists, no OpenAI request was made, and the
-live proof remains separately locked. Evidence:
-`docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`. Next: synchronize this candidate, then
-perform generation-disabled preview edge/device verification.
+instructions are complete locally. Vercel project `dreamcraft` is linked with
+Git integration disconnected. A first preview-intended command omitted an
+explicit target and created failed deployment
+`dpl_CiC9DEQH949T2FBYPvsZqTt77d39`, reported as target `production`; it failed
+before application output because a nested PATH pnpm 10.28 violated the pnpm 11
+engine and made no OpenAI request. The record is non-release evidence and must
+be removed before retry. No Ready preview, authorized production release, or
+live proof exists. Evidence: `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`. Next:
+synchronize the direct-build repair, remove the failed record, and retry only
+with explicit `--target=preview` before edge/device verification.
 
 ---
 

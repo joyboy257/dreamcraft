@@ -2,9 +2,13 @@
 
 Date: 2026-07-16 (Asia/Singapore)
 
-Status: G6 is synchronized at `112d3da`. Vercel is selected, but no DreamCraft
-project has been created or linked and no preview or production deployment has
-been attempted.
+Status: the `dreamcraft` Vercel project is linked to the intended team with Git
+integration disconnected. The first preview-intended CLI attempt created failed
+deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39`; Vercel classified it as a
+production target and stopped during the build before producing application
+output because a nested PATH `pnpm` resolved to 10.28 instead of the
+Corepack-selected 11.13. It is not release evidence, must be removed before a
+retry, and no Ready preview or authorized production release exists.
 
 DreamCraft remains a Vite/React PWA with small serverless functions. It will not
 be migrated to Next.js. The hackathon release does not need a database,
@@ -26,8 +30,9 @@ authentication system, paid domain, or separate backend.
 ## Release policy
 
 1. Finish and independently review the local G7 candidate.
-2. Create/link through the CLI without enabling Git auto-production.
-3. Deploy a CLI preview with generation disabled and no OpenAI key.
+2. Keep the existing CLI link and disconnected Git integration unchanged.
+3. Remove the failed non-release deployment, then deploy with the explicit CLI
+   target `--target=preview`, generation disabled, and no OpenAI key.
 4. Run the deployed smoke plus incognito, second-device, slow-network, offline,
    and complete-sample checks.
 5. Ask the owner before any production deployment or promotion.

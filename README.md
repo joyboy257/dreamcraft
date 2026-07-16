@@ -202,7 +202,7 @@ G7 release work.
 ## Deployment
 
 Vercel is the selected Vite/serverless host: Node 24, frozen pnpm install,
-`pnpm build`, and `dist/`. Preview must be created first with live generation
+`corepack pnpm build`, and `dist/`. Preview must be created first with live generation
 disabled and **no OpenAI key**. Production deployment requires explicit owner
 authorization. Funding/rotating a key and running the live ten-prompt proof are
 separate later actions.

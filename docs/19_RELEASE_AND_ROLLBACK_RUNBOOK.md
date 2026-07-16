@@ -1,9 +1,16 @@
 # G7 Release and Rollback Runbook
 
-Status: **ready for preview execution after local G7 review; not yet executed**.
+Status: **preview retry pending after a failed non-release build attempt**.
 
 This runbook creates a generation-disabled preview first. It does not authorize
 a production deployment or an OpenAI request.
+
+The initial preview-intended command omitted an explicit target and created
+failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39`, which Vercel reported as
+target `production`. The build stopped before application output when a nested
+unqualified `pnpm` resolved to 10.28 under a pnpm 11-only engine. The repository
+fix removes that recursive package-manager call. The failed deployment is not a
+preview proof and must be removed before the retry below.
 
 ## 1. Preconditions
 
@@ -12,7 +19,11 @@ a production deployment or an OpenAI request.
   eval, build, Chromium E2E, production PWA, pack, service-worker syntax, and
   production audit.
 - The Vercel CLI is authenticated to the intended team.
-- No DreamCraft Vercel project or preview exists yet.
+- The local project link points to Vercel project `dreamcraft` in team
+  `deonaqwx-9156s-projects`; Git integration remains disconnected.
+- Before retry, confirm failed deployment
+  `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` has been removed. It still exists at the
+  time of this runbook revision. No Ready preview exists yet.
 - The previously exposed local development key is not reused, funded, or
   uploaded.
 - Production deployment/promotion has separate explicit owner authorization.
@@ -32,15 +43,11 @@ Use these values when creating/linking the project:
 | Production branch | `main` after production authorization |
 | Function region | Vercel default |
 
-Create/link from the repository only after the local checkpoint is approved:
+The project is already linked. Do not relink it or enable Git integration during
+the preview-first phase. The ignored `.vercel/project.json` identifies project
+`dreamcraft`; it must never be committed.
 
-```bash
-cd /Users/deon/Developer/Dreamcraft
-vercel link
-```
-
-For the preview-first phase, do not connect a Git integration that could deploy
-`main` directly to production. CLI preview deployments are sufficient.
+CLI preview deployments are sufficient and must name the target explicitly.
 
 ## 3. Generation-disabled Preview environment
 
@@ -65,12 +72,22 @@ environment, but do not deploy Production until the owner authorizes it.
 
 ## 4. Create and inspect a preview
 
-These commands are instructions; they have not been run for DreamCraft yet.
+First remove the failed non-release deployment. This cleanup command is an
+instruction and was not run while preparing the repository fix:
+
+```bash
+vercel remove dpl_CiC9DEQH949T2FBYPvsZqTt77d39 --yes --scope deonaqwx-9156s-projects
+```
+
+Only after removal and a clean synchronized local checkpoint, create an
+explicit Preview deployment. Vercel CLI 54 exposes `--target <TARGET>` and
+`--prod` is the production shorthand, so the retry must spell out
+`--target=preview`:
 
 ```bash
 cd /Users/deon/Developer/Dreamcraft
-PREVIEW_URL="$(vercel deploy --yes)"
-vercel inspect "$PREVIEW_URL"
+PREVIEW_URL="$(vercel deploy --yes --target=preview --scope deonaqwx-9156s-projects)"
+vercel inspect "$PREVIEW_URL" --scope deonaqwx-9156s-projects
 corepack pnpm smoke:deployed -- "$PREVIEW_URL"
 ```
 

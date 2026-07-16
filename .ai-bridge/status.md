@@ -5,13 +5,13 @@
 ## Baseline
 
 - Date/time: 2026-07-16 (Asia/Singapore)
-- Branch / base commit: `main`; G7 local candidate is based on synchronized G6 commit `112d3da`; final checkpoint SHA is recorded at handoff
+- Branch / base commit: `main`; deployment-build repair starts from synchronized G7 checkpoint `7a8dacc`; final repair SHA is recorded at handoff
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
 - Release-candidate state: G7 local engineering is Sol-certified after Terra release-security PASS; preview proof remains pending
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
-- Missing prerequisites: preview project/link and real edge/device proof have not occurred; production needs explicit authorization; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
+- Missing prerequisites: failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` must be removed before an explicit-target Preview retry; real edge/device proof has not occurred; production needs explicit authorization; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
 - Deviations from pack assumptions: mounted repository initially had no `origin`; it was safely connected to the verified non-empty remote and fast-forwarded to `origin/main`
 
 ## Active milestone
@@ -20,7 +20,7 @@
 - Work items: DC-WI-070 through DC-WI-073; Gate G7
 - Goal: synchronize the certified local candidate, then prove a generation-disabled Vercel preview before any authorized production action
 - Gate state: **engineering-complete / preview-proof-pending; Gate G7 not complete**
-- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; no deployment or live request authorized
+- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; one failed preview-intended deployment record exists, while no production release or live request is authorized
 
 ## Working user-visible behavior
 
@@ -41,7 +41,7 @@
 | Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
 | Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-16 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
-| Unit/integration tests | `corepack pnpm test` | Current G7 candidate passes, 49 files and 201/201 tests | adds safe health/config states, exact same-origin generation requests, bounded Vercel function configuration, and prior G0–G6 coverage |
+| Unit/integration tests | `corepack pnpm test` | Current G7 candidate passes, 49 files and 202/202 tests | adds safe health/config states, exact same-origin generation requests, bounded Vercel function configuration, direct build-path regression coverage, and prior G0–G6 coverage |
 | Deployed-smoke validator | `corepack pnpm test:smoke-deployed` | Pass, 4/4 Node tests | validates safe URL handling, generation-disabled fail-closed behavior, deterministic fallback checks, CORS/header checks, and error redaction without contacting a deployment |
 | Focused independent verification | changed-path unit, integration, security, and hostile suites | Pass, 44/44 tests | independent Terra rerun before the G6 verdict |
 | Browser smoke | `corepack pnpm test:e2e` | Pass, 9/9 Playwright journeys with `workers: 1` | G6 reproducibility plus Sol's final G7-candidate rerun; covers complete desktop and mobile journeys, twenty prompts in one page, accessibility/comfort, WebGL recovery, and measured desktop/mobile budgets |
@@ -51,7 +51,7 @@
 | Performance | deterministic desktop balanced and Pixel 7 reduced-profile browser metrics | Pass | desktop 119 FPS / 16.7 ms p95 / 23 draws / 11,738 triangles; reduced mobile 120 FPS / 9.1 ms p95 / 18 draws / 7,628 triangles; chunk work below 5 ms p95 and three-lifecycle heap growth approximately 6.7% |
 | Dependency/security checks | `corepack pnpm audit --prod`; pack validator; service-worker syntax; sequential repository hardening plus independent Terra gate review | Pass | zero known vulnerabilities, zero High/Critical findings, restrictive deployment-header configuration, API responses excluded from caches, and no secret-pattern hit; this was not claimed as an exhaustive multi-agent security scan |
 | G7 release-security review | exact-origin, health/smoke, CI action pins, Vercel bounds/headers, live-script safety | Terra PASS | no Critical/High finding; Checkout and Setup Node use immutable SHAs, credentials are not persisted, and CI contains no deploy/upload step |
-| G7 complete local matrix | full serialized release commands on the final candidate | Sol PASS | typecheck/lint, 201/201 unit/integration, 4/4 smoke validator, 6/6 eval, build, 9/9 E2E, 1/1 PWA, pack/script/SW syntax, zero-vulnerability audit, and diff check all passed |
+| G7 complete local matrix | full serialized release commands on the final candidate | Terra post-fix PASS | typecheck/lint, 202/202 unit/integration, 4/4 smoke validator, 6/6 eval, direct build, 9/9 E2E, 1/1 PWA, pack/script/SW syntax, zero-vulnerability audit, and diff check all passed |
 | Install integrity | `corepack pnpm install --frozen-lockfile` | Pass | 222 lock entries pass supply-chain policy; OpenAI SDK pinned to mature `6.46.0` |
 
 ## Recent decisions or deviations
@@ -70,6 +70,13 @@
 - `single-sol` remains the default. The mocked director benchmark did not demonstrate a quality advantage and incurred additional staged calls, so promotion criteria are not met.
 - Three bundled showcase prompts warm a bounded memory-only validated cache; exact last-known-good entries are restored only after validation, while novel failures still reach the deterministic local generator.
 - Vercel CLI `54.18.1` and MCP are authenticated to team `deonaqwx-9156s-projects`; no DreamCraft project was created and no deployment was attempted before local release certification.
+- Vercel project `dreamcraft` was subsequently linked with Git integration
+  disconnected. A preview-intended `vercel deploy --yes --scope ...` omitted an
+  explicit target; Vercel recorded failed deployment
+  `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` as target `production`, then stopped before
+  application output because a nested PATH pnpm 10.28 violated the pnpm 11
+  engine. It is non-release evidence, made no OpenAI request, and must be
+  removed before an explicit `--target=preview` retry.
 - The original pack validator was hardened after it printed an ignored local key: it now scans only tracked/nonignored files and suppresses matched values.
 - G4 maps eight safe scenario archetypes into contextual mechanics and copy rather than executing generated code.
 - The six required G4 dreams now have distinct mechanics, movement, silhouettes, atmosphere, audio, and physics fingerprints under deterministic local generation.
@@ -110,9 +117,10 @@
 - Terra returned PASS for G7 release security, including exact same-origin
   enforcement and immutable GitHub Action pins. Sol then reran the complete
   serialized release matrix and certified the local candidate.
-- The accurate G7 state is engineering-complete / preview-proof-pending. No
-  Vercel project, preview, production deployment, public URL, or live OpenAI
-  proof exists yet. Evidence: `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`.
+- The accurate G7 state is engineering-complete / preview-proof-pending. The
+  project is linked, but no Ready preview, authorized production release,
+  public URL, or live OpenAI proof exists. Evidence:
+  `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`.
 
 ## Known issues
 
@@ -121,6 +129,7 @@
 | Low | Vite reports the 980.52 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Reassess code splitting before release only if it materially improves loading; current gzip is 271.31 kB and measured runtime budgets pass |
 | Medium | In-memory application rate limiting is per serverless instance | Root/release | Configure Vercel Firewall/shared rate protection or approve a distributed limiter before public live generation |
 | Low | Exact same-origin enforcement is locally certified but not yet verified at the Vercel edge | Release | Probe missing, foreign, and exact origins against the generation-disabled preview |
+| Medium | Failed non-release deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` remains in Vercel after the recursive pnpm build failure | Release | Remove it, synchronize the direct-build repair, then retry only with explicit `--target=preview` |
 | Low | Automated Pixel 7 Chromium proves touch paths and reduced-profile budgets but not physical-device ergonomics, GPU-driver behavior, or thermals | Root/QA | Confirm on the physical demo device during G7 release verification |
 | Low | PWA shell changes can remain stale if the service-worker cache name is not version-bumped | Root/release | Require a cache-version bump whenever cached shell behavior or assets change |
 | Low | Chunk generation/meshing remains on the main thread | Root/engine | Keep the measured sub-5 ms p95 guard; add worker offload only if future content breaks it |
@@ -137,9 +146,9 @@
 
 ## Next worker wave
 
-- Create/link Vercel only from the synchronized release-candidate checkpoint,
-  configure Preview with
-  generation disabled and no OpenAI key, then deploy and verify the preview.
+- Remove the failed deployment record, keep the existing disconnected-Git
+  project link and safe Preview environment, then retry from the synchronized
+  repair checkpoint with explicit `--target=preview` and verify the preview.
 - Configure required checks/branch protection after the CI workflow is present
   on the remote.
 - Populate preview evidence and request explicit production authorization only

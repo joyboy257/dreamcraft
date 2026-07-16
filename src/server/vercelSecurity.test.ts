@@ -20,6 +20,9 @@ const config = JSON.parse(
   functions: Record<string, FunctionRule>;
   headers: HeaderRule[];
 };
+const packageManifest = JSON.parse(
+  readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+) as { scripts: Record<string, string> };
 
 function headersFor(source: string): Map<string, string> {
   const rule = config.headers.find((candidate) => candidate.source === source);
@@ -61,5 +64,13 @@ describe("Vercel release security headers", () => {
       "api/health.ts": { maxDuration: 5 },
       "api/dream.ts": { maxDuration: 30, supportsCancellation: true },
     });
+  });
+
+  it("keeps the Vercel build path inside the Corepack-selected pnpm process", () => {
+    expect(packageManifest.scripts.build).toBe("tsc --noEmit && vite build");
+    expect(packageManifest.scripts["test:pwa"]).toBe(
+      "tsc --noEmit && vite build && playwright test --config playwright.pwa.config.ts",
+    );
+    expect(packageManifest.scripts.build).not.toMatch(/\b(?:npm|pnpm|yarn|bun)\b/);
   });
 });

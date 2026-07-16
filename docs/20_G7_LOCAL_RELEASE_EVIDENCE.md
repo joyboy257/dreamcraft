@@ -3,8 +3,25 @@
 Status: **engineering-complete / preview-proof-pending**.
 
 Gate G7 is not complete. This report certifies the local repository candidate;
-it does not claim a Vercel project, preview, production deployment, live OpenAI
+it does not claim a Ready preview, authorized production release, live OpenAI
 proof, or public URL.
+
+## Failed deployment attempt and corrective action
+
+The Vercel project is now linked with Git integration disconnected and the safe
+Preview environment contains no OpenAI key. A first preview-intended CLI command
+omitted an explicit target and created failed deployment
+`dpl_CiC9DEQH949T2FBYPvsZqTt77d39`; inspection reported target `production` and
+status `Error`. It failed before application output because Vercel entered the
+build with Corepack pnpm 11.13, while the package build script recursively ran
+an unqualified PATH `pnpm` that resolved to 10.28 and violated the repository's
+pnpm 11 engine requirement.
+
+This attempt made no OpenAI request and produced no live application/API proof.
+It is non-release evidence and must be removed before retry. The durable fix
+makes `build` execute `tsc --noEmit && vite build` directly inside the original
+Corepack-controlled pnpm process and locks that invariant with a static test.
+The Preview retry command now explicitly uses `--target=preview`.
 
 ## Independent release-security review
 
@@ -37,16 +54,18 @@ candidate. Vercel Firewall/shared rate protection remains mandatory before live
 public generation because application memory is not global across serverless
 instances.
 
-## Sol final serialized release matrix
+## Serialized local release matrix
 
 Sol reran the complete candidate with Playwright `workers: 1` and certified the
-local matrix:
+original local matrix. Terra then reran the complete deployment-build repair;
+the direct build path, 202-test suite, smoke/eval/browser/PWA checks, pack, and
+audit all passed without a deployment or OpenAI request.
 
 | Check | Result |
 | --- | --- |
 | Typecheck | Pass |
 | Lint | Pass, zero warnings |
-| Unit/integration | 49 files, 201/201 passed |
+| Unit/integration | 49 files, 202/202 passed |
 | Deployed-smoke validator | 4/4 passed |
 | Dream evals | 4 files, 6/6 passed |
 | Production build | Pass; JavaScript 980.52 kB raw / 271.31 kB gzip |
@@ -64,15 +83,17 @@ than hidden.
 ## External activity statement
 
 - No OpenAI API request was made.
-- No Vercel project was created or linked.
-- No preview or production deployment was attempted.
+- Vercel project `dreamcraft` was linked with Git integration disconnected.
+- One failed deployment record was created before application output; it is not
+  a Ready preview or an authorized production release and must be removed.
 - No environment secret was read, uploaded, staged, or committed.
 - The deterministic local generator remains the mandatory fallback.
 
 ## Remaining Gate G7 proof and human actions
 
-- Create/link Vercel only from the synchronized release-candidate checkpoint.
-- Configure Preview with generation disabled and no OpenAI key.
+- Remove failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39`.
+- Retry only from the synchronized release-candidate checkpoint with
+  `vercel deploy --yes --target=preview --scope deonaqwx-9156s-projects`.
 - Prove the real edge health, same-origin, CSP/security-header, and deterministic
   fallback behavior with the deployed smoke.
 - Complete incognito, second-device, physical-mobile, slow-network, offline, and
