@@ -1,10 +1,10 @@
 # G7 Local Release Candidate Evidence
 
-Status: **engineering-complete / Vercel-proof-pending**.
+Status: **engineering-complete / generation-disabled production edge verified / physical-proof-pending**.
 
-Gate G7 is not complete. This report certifies the local repository candidate;
-it does not claim a Ready preview, authorized production release, live OpenAI
-proof, or public URL.
+Gate G7 has a public, generation-disabled production deployment. This report
+does not claim physical-device proof, live OpenAI proof, or completed hackathon
+submission placeholders.
 
 ## Vercel deployment behavior and evidence
 
@@ -27,10 +27,23 @@ remains. This is not a production release or preview proof. The official
 behavior is documented at
 [Vercel: Default Production Domain](https://vercel.com/blog/default-production-domain).
 
-An independently verifiable preview cannot be created until there is a first
-successful production-target deployment. That next action is a human-only
-authorization gate; it must be explicitly authorized by the owner, and it will
-remain generation-disabled with no key.
+The owner authorized the required first production-target deployment. Production
+deployment `dpl_GtwUnH595kvDhxmfiDchukMuojXp` is Ready at
+`https://dreamcraft-psi.vercel.app`, with deployment-specific URL
+`https://dreamcraft-q1eou2zv4-deonaqwx-9156s-projects.vercel.app`. It deployed
+certified commit `34c01ee` with generation disabled. The production build
+contains only the bounded `/api/dream` and `/api/health` functions.
+
+Independent edge evidence passed:
+
+- `corepack pnpm smoke:deployed -- https://dreamcraft-q1eou2zv4-deonaqwx-9156s-projects.vercel.app`
+  passed with deterministic `api_disabled` fallback output on two same-origin
+  requests and no provider call.
+- The stable alias returned the restrictive CSP, HSTS, `nosniff`, `DENY`,
+  no-referrer, and restrictive Permissions-Policy headers.
+- `GET /api/health` returned only the safe health shape, `no-store`,
+  `generationEnabled: false`, and `fallbackAvailable: true`; manifest and
+  service worker both returned 200.
 
 ## Independent release-security review
 
@@ -107,10 +120,18 @@ the runtime performance contracts continued to pass and were not relaxed.
   than the global 30-second single-scenario default. Visual distinctness and
   all six captures remain mandatory.
 
-Verification after the repair: lint and typecheck passed; the full 9-test E2E
-suite passed twice consecutively (34.2 seconds each); unit/integration,
-deployed-smoke, evals, production build, production PWA, pack validation,
-service-worker syntax validation, and production dependency audit all passed.
+The final repair removed an invalid assumption in the bootstrap journey: after
+the dialogue, the staged camera is explicitly aligned through the engine's real
+look/targeting path before the visible interaction cue and the real `E` action
+are asserted. The test-only helper exists only in development under automated
+browser control; it does not bypass play-graph events or interaction handling.
+The engine also refreshes its interaction cue when dialogue resumes gameplay.
+
+Verification after the repair: `CI=true` local bootstrap passed; full local
+browser E2E passed 9/9; typecheck and lint passed. GitHub Actions run
+[`29493511135`](https://github.com/joyboy257/dreamcraft/actions/runs/29493511135)
+then passed the complete release chain independently, including Chromium E2E,
+PWA, pack, service-worker syntax, and audit.
 
 ## CI renderer attestation and empirical performance proof
 
@@ -133,9 +154,9 @@ CI structural pass cannot substitute for the hardware proof.
 
 - No OpenAI API request was made.
 - Vercel project `dreamcraft` is linked with Git integration disconnected.
-- The failed pre-build record and the Ready first-success record have both been
-  removed. No deployment or alias remains, and no HTTP application/API request
-  was made against either record.
+- The owner-approved, generation-disabled production deployment is Ready at
+  `https://dreamcraft-psi.vercel.app`; the original failed pre-build and
+  unintended first-success records were removed.
 - Preview and Production each have exactly seven safe non-secret settings and
   no `OPENAI_API_KEY`.
 - No environment secret was read, uploaded, staged, or committed.
@@ -143,25 +164,18 @@ CI structural pass cannot substitute for the hardware proof.
 
 ## Remaining Gate G7 proof and human actions
 
-- Obtain explicit owner authorization for the first successful production-target
-  deployment. The exact conditional command is in
-  `docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md`.
-- After that authorized deployment exists, create and verify the
-  generation-disabled preview with
-  `vercel deploy --yes --target=preview --scope deonaqwx-9156s-projects`.
-- Prove the real edge health, same-origin, CSP/security-header, and deterministic
-  fallback behavior with the deployed smoke.
-- Complete incognito, second-device, physical-mobile, slow-network, offline, and
-  full bundled-ending checks against the preview.
-- Configure GitHub required checks/branch protection after the workflow exists
-  on the remote.
+- Complete incognito, second-device, physical-mobile, slow-network, offline,
+  and full bundled-ending checks against the public production URL. These are
+  human/device proofs and cannot be represented by the CI software renderer.
+- Configure GitHub required checks/branch protection once the final evidence
+  update has passed CI.
 - Obtain owner approval before adopting the MIT draft as `LICENSE`.
-- Obtain separate explicit authorization before production deployment.
 - Rotate/fund the OpenAI key and obtain separate explicit authorization before
   the locked ten-prompt proof.
 - Configure Vercel Firewall/shared limiting and OpenAI spend controls before any
   live public generation.
 - Populate the deployment/video/team/session placeholders before submission.
 
-Until these items pass, the accurate release state is
-**engineering-complete / Vercel-proof-pending**, not Gate G7 complete.
+Until the physical/device and submission actions pass, the accurate release
+state is **engineering-complete / public fallback release verified /
+physical-proof-pending**, not Gate G7 complete.

@@ -7,20 +7,20 @@
 - Date/time: 2026-07-16 (Asia/Singapore)
 - Branch / base commit: `main`; deployment-build repair starts from synchronized G7 checkpoint `7a8dacc`; final repair SHA is recorded at handoff
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Release-candidate state: G7 local engineering is Sol-certified after Terra release-security PASS; preview proof remains pending
+- Release-candidate state: G7 engineering is certified; generation-disabled production edge is verified at `https://dreamcraft-psi.vercel.app`; physical-device proof remains pending
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
-- Missing prerequisites: no Vercel deployment or alias remains; Vercel automatically promotes a new project's first successful deployment to production, so the first successful deployment needs explicit owner authorization before preview proof can proceed; real edge/device proof has not occurred; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
+- Missing prerequisites: physical-device/second-device/incognito/slow-network proof; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
 - Deviations from pack assumptions: mounted repository initially had no `origin`; it was safely connected to the verified non-empty remote and fast-forwarded to `origin/main`
 
 ## Active milestone
 
 - Milestone: M7 — Deployment and hackathon submission
 - Work items: DC-WI-070 through DC-WI-073; Gate G7
-- Goal: obtain authorization for Vercel's first successful production-target deployment, then prove a generation-disabled Vercel preview
-- Gate state: **engineering-complete / Vercel-proof-pending; Gate G7 not complete**
-- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; no Vercel deployment or alias exists, while the first successful production-target deployment and live request remain unauthorized
+- Goal: retain the verified generation-disabled production release and complete physical/device release proof without enabling OpenAI
+- Gate state: **engineering-complete / public fallback release verified / physical-proof-pending; Gate G7 not complete**
+- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; production `dpl_GtwUnH595kvDhxmfiDchukMuojXp` is Ready, Git integration remains disconnected, and live requests remain unauthorized
 
 ## Working user-visible behavior
 
@@ -32,7 +32,7 @@
 - [x] Procedural hero entity readable
 - [x] Generated story ending works
 - [x] Mobile reduced-quality path works
-- [ ] Public deployment works
+- [x] Public generation-disabled deployment works
 
 ## Verification evidence
 
