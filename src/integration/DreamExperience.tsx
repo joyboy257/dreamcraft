@@ -25,6 +25,7 @@ import {
   DialogueOverlay,
   DreamHud,
   EndingOverlay,
+  MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
 import { createDreamBeacon, createSemanticWorldMarkers } from "./dummyWorldObjects";
@@ -409,6 +410,12 @@ export function DreamExperience({
       return;
     }
     engineRef.current = engine;
+    if (import.meta.env.DEV && navigator.webdriver) {
+      window.__DREAMCRAFT_TEST__ = {
+        getPlayerPosition: () => engine?.getPlayerPosition() ?? null,
+        getViewRotation: () => engine?.getViewRotation() ?? null,
+      };
+    }
 
     const guideX = Math.floor(runtime.staging.guide[0]);
     const guideZ = Math.floor(runtime.staging.guide[2]);
@@ -517,13 +524,18 @@ export function DreamExperience({
       busRef.current = null;
       arcRef.current = null;
       audioRef.current = null;
+      if (import.meta.env.DEV && navigator.webdriver) {
+        delete window.__DREAMCRAFT_TEST__;
+      }
     };
   }, [manifest, preview.seed]);
 
   useEffect(() => {
     audioRef.current?.setMuted(comfort.muted);
     engineRef.current?.setReducedMotion(comfort.reducedMotion);
-  }, [comfort.muted, comfort.reducedMotion]);
+    engineRef.current?.setFieldOfView(comfort.fov);
+    engineRef.current?.setMouseSensitivity(comfort.mouseSensitivity);
+  }, [comfort.fov, comfort.mouseSensitivity, comfort.muted, comfort.reducedMotion]);
 
   useEffect(() => {
     if (!enrichmentManifest) return;
@@ -627,7 +639,24 @@ export function DreamExperience({
               onOpenPause={openPause}
             />
           ) : null}
-          {failure ? <p className="experience-failure" role="alert">{failure}</p> : null}
+          {entered && !paused && !snapshot?.dialogue && !ending ? (
+            <>
+              <MobileControls
+                onControlChange={(control, pressed) => engineRef.current?.setControl(control, pressed)}
+                onLook={(deltaX, deltaY) => engineRef.current?.lookBy(deltaX, deltaY)}
+              />
+              <p className="dc-mobile-landscape-hint" role="status">
+                Rotate to landscape for a wider view and easier controls.
+              </p>
+            </>
+          ) : null}
+          {failure ? (
+            <div className="experience-failure" role="alert">
+              <strong>The dream could not open on this device.</strong>
+              <p>{failure}</p>
+              <button type="button" onClick={onRemix}>Return to your description</button>
+            </div>
+          ) : null}
           {dialogue ? (
             <DialogueOverlay dialogue={dialogue} onChoose={chooseDialogue} />
           ) : null}

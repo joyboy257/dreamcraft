@@ -99,3 +99,11 @@ These decisions are locked unless the root Sol thread records a replacement with
 ## D-018 — Evidence is part of completion
 
 **Decision:** A milestone is not complete without commands, test results, browser evidence, and updated status. Documentation may not claim behavior that has not been demonstrated.
+
+## D-019 — Sequential model allocation through G7
+
+**Decision:** Use one worker at a time until Gate G7. Luna owns normal implementation, tests, documentation, and routine fixes. Terra owns difficult systems work, debugging, security review, and gate verification. Sol is reserved for architecture decisions, scope arbitration, integration authority, and final release review.
+
+**Supersedes:** The parallel-worker portion of D-005 and earlier worker-wave guidance. Directory ownership and root shared-contract authority remain unchanged.
+
+**Context policy:** Keep unused MCP/connectors idle and load only the repository context needed for the active gate.

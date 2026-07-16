@@ -16,6 +16,7 @@ import {
   type TrustedDreamManifest,
 } from "./dream";
 import { publicEnv } from "./config/publicEnv";
+import { prepareDreamRuntime } from "./app/materialization";
 import {
   DreamInputForm,
   FragmentNotice,
@@ -114,6 +115,7 @@ export default function App(): React.JSX.Element {
             event.result.core,
             event.result.issues,
           );
+          prepareDreamRuntime(trustedManifest);
           const progressiveMetadata: GenerationMetadata = {
             ...event.result.metadata,
             compileDurationMs: Math.max(
@@ -160,6 +162,7 @@ export default function App(): React.JSX.Element {
       setMaterialization("generating-spawn");
       await yieldToBrowser();
       if (controller.signal.aborted) return;
+      prepareDreamRuntime(trustedManifest);
       setMaterialization("staging");
       await yieldToBrowser();
       if (controller.signal.aborted) return;
@@ -228,7 +231,18 @@ export default function App(): React.JSX.Element {
   }
 
   if (materialization) {
-    return <main className="app-shell"><MaterializationOverlay step={materialization} /></main>;
+    return (
+      <main className="app-shell">
+        <MaterializationOverlay
+          step={materialization}
+          onCancel={() => {
+            generationController.current?.abort();
+            generationController.current = null;
+            setMaterialization(null);
+          }}
+        />
+      </main>
+    );
   }
 
   if (pendingFragment) {
@@ -259,7 +273,7 @@ export default function App(): React.JSX.Element {
           <span className="brand-mark" aria-hidden="true">✦</span>
           DreamCraft
         </a>
-        <span className="build-chip">G3 generation-ready</span>
+        <span className="build-chip">Playable dream compiler</span>
       </header>
 
       <div className="hero-grid" id="top">
@@ -289,17 +303,17 @@ export default function App(): React.JSX.Element {
 
         <aside className="world-panel world-promise" aria-label="Current playable promise">
           <div className="promise-orbit" aria-hidden="true"><i /><i /><i /></div>
-          <p className="eyebrow">Deterministic vertical slice</p>
-          <h2>Meet the Lantern Keeper. Wake the moonwell.</h2>
+          <p className="eyebrow">A different rulebook for every memory</p>
+          <h2>Your details shape the terrain, movement, guide, objective, and ending.</h2>
           <p>
-            Every local seed builds the same bounded chunks. Walk, look, jump,
-            collide, break and place blocks, speak with the guide, and complete
-            the fragment.
+            Explore on desktop or touch controls, follow the objective in the
+            world, and finish a short playable arc. If generation is unavailable,
+            a deterministic local fragment remains ready.
           </p>
           <dl>
-            <div><dt>World</dt><dd>16×16 chunks</dd></div>
-            <div><dt>Renderer</dt><dd>Combined faces</dd></div>
-            <div><dt>Runtime</dt><dd>Server-safe</dd></div>
+            <div><dt>World</dt><dd>Bounded</dd></div>
+            <div><dt>Controls</dt><dd>Desktop + touch</dd></div>
+            <div><dt>Fallback</dt><dd>Always local</dd></div>
           </dl>
         </aside>
       </div>

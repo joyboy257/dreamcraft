@@ -3,6 +3,7 @@ import { MATERIALIZATION_COPY } from "./uiModel";
 
 interface MaterializationOverlayProps {
   step: MaterializationStep;
+  onCancel?: () => void;
 }
 
 const STEPS: readonly MaterializationStep[] = [
@@ -16,6 +17,7 @@ const STEPS: readonly MaterializationStep[] = [
 
 export function MaterializationOverlay({
   step,
+  onCancel,
 }: MaterializationOverlayProps): React.JSX.Element {
   const copy = MATERIALIZATION_COPY[step];
   const activeIndex = STEPS.indexOf(step);
@@ -47,6 +49,11 @@ export function MaterializationOverlay({
           </li>
         ))}
       </ol>
+      {onCancel ? (
+        <button className="dc-text-button dc-materialization-cancel" type="button" onClick={onCancel}>
+          Cancel and return to your description
+        </button>
+      ) : null}
     </section>
   );
 }

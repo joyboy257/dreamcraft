@@ -5,9 +5,9 @@
 ## Baseline
 
 - Date/time: 2026-07-16 (Asia/Singapore)
-- Branch / commit: `main`; G3 synchronized at `5baa437`; G4 engineering changes awaiting the validated checkpoint commit
+- Branch / commit: `main`; G4 synchronized with `origin/main` at `798401f`; independently certified G5 changes await the checkpoint commit
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Working tree: validated G4 engineering changes pending checkpoint commit
+- Working tree: independently certified G5 engineering changes and evidence pending checkpoint commit
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
@@ -16,11 +16,11 @@
 
 ## Active milestone
 
-- Milestone: M4 — Dream richness and game feel
-- Work items: DC-WI-040 through DC-WI-044; Gate G4
-- Goal: preserve generated mechanical, visual, atmospheric, audio, and staging differences in the trusted runtime
-- Gate state: **engineering-complete / independently recertified PASS**
-- Owners/agents: root integration plus physics, EntityKit, atmosphere/audio implementers and an independent architecture reviewer; no live request authorized
+- Milestone: M5 — Product experience and PWA
+- Work items: DC-WI-050 through DC-WI-054; Gate G5
+- Goal: make the complete desktop journey understandable and recoverable while proving usable mobile controls and an offline production shell
+- Gate state: **engineering-complete / independently certified PASS**
+- Owners/agents: root integration, bounded Luna implementation/documentation, and independent Terra gate verification; no live request authorized
 
 ## Working user-visible behavior
 
@@ -31,7 +31,7 @@
 - [x] Local fallback works
 - [x] Procedural hero entity readable
 - [x] Generated story ending works
-- [ ] Mobile reduced-quality path works
+- [x] Mobile reduced-quality path works
 - [ ] Public deployment works
 
 ## Verification evidence
@@ -41,10 +41,11 @@
 | Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
 | Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-15 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
-| Unit/integration tests | `corepack pnpm test` | Pass, 184/184 | includes G3 mocked failure coverage plus G4 physical PlayGraph input adapters, atomic dialogue branching, node-scoped response resolution, `any` physical alternatives, optional-beat priority, branching endings, physics, EntityKit, crumble/respawn, camera targeting, atmosphere/audio, staging, and scenario coverage |
-| Browser smoke | `corepack pnpm e2e` | Pass, 2/2 Chromium | API-disabled same-origin route, stable-fragment messaging, playable entry, reload, console/page/network errors clean; six required G4 dreams reach playable state and produce six unique canvas render hashes |
+| Unit/integration tests | `corepack pnpm test` | Pass, 46 files and 189/189 tests | includes G3 mocked failure coverage, G4 runtime richness, real materialization preflight, and production-only service-worker registration behavior |
+| Browser smoke | `corepack pnpm test:e2e` | Pass, 4/4 Playwright journeys | complete deterministic desktop journey, six unique G4 renders, materialization cancellation/retry with preserved input, and real mobile touch look/interaction/movement; console and page errors clean |
+| Production PWA | `corepack pnpm test:pwa` | Pass, 1/1 Chromium | production service-worker control, manifest and hashed shell assets cached, then usable input shell reloads offline |
 | Dream evals | `corepack pnpm eval` | Pass, 5/5 | six-dream G4 distinction gate, representative compiler corpus, hostile path budget, and ten-prompt mocked single/director benchmark |
-| Production build | `corepack pnpm build` | Pass | Vite 8 output; 269.75 kB main gzip; existing 500 kB minified chunk advisory remains for G6 |
+| Production build | `corepack pnpm build` | Pass | Vite 8 output: index 1.35 kB raw / 0.60 kB gzip, CSS 23.74 / 5.81 kB, JavaScript 979.63 / 271.02 kB; the raw 500 kB advisory remains nonblocking and is owned by G6 |
 | Performance | focused metrics tests + headed render inspection | Pass for G1 gate | combined per-chunk geometry, bounded one-job-per-frame scheduling, quality tiers, disposal, and runtime metric recorder |
 | Dependency/security checks | `corepack pnpm audit --prod --audit-level high`; ignored-aware pack validator; independent architecture/test/security diff review | Pass | no known production advisories; no High/Critical findings; prior cache/rate/cancellation findings remediated; validator suppresses values and excludes ignored secret files |
 | Install integrity | `corepack pnpm install --frozen-lockfile` | Pass | 222 lock entries pass supply-chain policy; OpenAI SDK pinned to mature `6.46.0` |
@@ -72,15 +73,19 @@
 - Procedural audio creates no context before the Enter gesture and follows mute, pause/resume, and disposal lifecycle.
 - Vercel remains the selected Vite/serverless host with no database/auth/extra backend; `docs/16_VERCEL_RELEASE_PLAN.md` records the disabled-by-default preview and production sequence.
 - G4 was independently recertified PASS after adversarial regressions for real physical PlayGraph inputs, dialogue gating/effect atomicity, multi-node response identity, optional concurrency, alternative branches, and runtime-selected endings.
+- G5 ties materialization copy to validated compilation and real spawn preparation, supports cancellation/retry without losing the description, and progressively reveals the playable canvas.
+- Mobile touch controls feed the same engine paths as desktop movement, look, jump, and interaction; automated Chromium measures actual camera and player changes while reduced quality bounds particle work.
+- The PWA service worker is production-only, excludes API traffic, versions only DreamCraft-owned caches, discovers hashed build assets, and preserves a tested offline shell.
+- G5 was independently verified by Terra and returned PASS with no OpenAI request and no deployment.
 
 ## Known issues
 
 | Severity | Issue | Owner | Next action |
 |---|---|---|---|
-| Low | Vite reports the client entry chunk above its 500 kB minified advisory threshold | Root/engine | Reassess code splitting during G6; G3 gzip is 249.56 kB and current functionality passes |
+| Low | Vite reports the 979.63 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Profile and reassess justified code splitting during G6; current gzip is 271.02 kB and G5 functionality passes |
 | Low | In-memory application rate limiting is per serverless instance | Root/release | Pair with Vercel platform/WAF rate protection before public production traffic |
-| Low | Browser E2E does not directly assert pointer-locked movement, jumping, collision, or block editing | Root/QA | Add focused browser instrumentation during G6; source review and unit tests cover G1 |
-| Low | Comfort controls do not yet propagate live FOV and mouse-sensitivity changes into the engine; mute and reduced-motion are wired | Root/UI | Complete remaining control propagation during G5/G6 accessibility work |
+| Low | Automated mobile Chromium proves touch paths but not real-device ergonomics, GPU performance, or thermal behavior | Root/QA | Run the G6 real-device and performance pass before deployment |
+| Low | PWA shell changes can remain stale if the service-worker cache name is not version-bumped | Root/release | Require a cache-version bump whenever cached shell behavior or assets change |
 | Low | Chunk generation/meshing is bounded to one job per frame but remains on the main thread | Root/engine | Add worker offload during the G6 performance pass if thresholds require it |
 
 ## External blockers
@@ -91,6 +96,6 @@
 
 ## Next worker wave
 
-- Commit and synchronize the independently reviewed G4 checkpoint on `main`.
-- Continue M5–M6 local product polish, accessibility, performance, and release certification without live OpenAI calls.
+- Commit and synchronize the independently certified G5 checkpoint on `main`.
+- Continue M6 reliability, failure injection, accessibility, security, performance, and real-device certification without live OpenAI calls.
 - After G6 is certified, create/link the Vercel project, configure secrets server-side, deploy and verify a preview, then request explicit production-deployment authorization.

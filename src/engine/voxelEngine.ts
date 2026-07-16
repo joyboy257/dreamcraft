@@ -84,6 +84,12 @@ export interface VoxelEngine {
   start(): void;
   pause(): void;
   dispose(): void;
+  setControl(control: VoxelControl, pressed: boolean): void;
+  lookBy(deltaX: number, deltaY: number): void;
+  setFieldOfView(fieldOfView: number): void;
+  setMouseSensitivity(sensitivity: number): void;
+  getPlayerPosition(): Readonly<{ x: number; y: number; z: number }>;
+  getViewRotation(): Readonly<{ yaw: number; pitch: number }>;
   getMetrics(): RuntimeMetrics;
   applyAtmosphere(
     state: VoxelAtmosphereState,
@@ -94,6 +100,8 @@ export interface VoxelEngine {
   applyPhysicsTransition(transitionId: string): void;
   readonly world: VoxelWorld;
 }
+
+export type VoxelControl = "forward" | "back" | "left" | "right" | "jump" | "interact";
 
 export function cameraRotationToward(
   from: { x: number; y: number; z: number },
@@ -164,7 +172,8 @@ export function createVoxelEngine(
   renderer.toneMappingExposure = 1.05;
 
   let particlePlan = options.particles;
-  const particleCount = Math.max(0, Math.min(500, Math.floor(particlePlan?.count ?? 0)));
+  const particleLimit = profile.tier === "reduced" ? 120 : 500;
+  const particleCount = Math.max(0, Math.min(particleLimit, Math.floor(particlePlan?.count ?? 0)));
   const particleGeometry = new THREE.BufferGeometry();
   const particlePositions = new Float32Array(500 * 3);
   for (let index = 0; index < 500; index += 1) {
@@ -224,8 +233,10 @@ export function createVoxelEngine(
   scene.add(selection);
 
   const keys = new Set<string>();
+  const externalControls = new Set<VoxelControl>();
   let yaw = 0;
   let pitch = 0;
+  let mouseSensitivity = 1;
   if (options.initialLookAt) {
     const rotation = cameraRotationToward(
       { x: player.state.position.x, y: player.state.position.y + 1.62, z: player.state.position.z },
@@ -373,8 +384,10 @@ export function createVoxelEngine(
   }
 
   function update(): void {
-    const forward = Number(keys.has("KeyW")) - Number(keys.has("KeyS"));
-    const strafe = Number(keys.has("KeyD")) - Number(keys.has("KeyA"));
+    const forward = Number(keys.has("KeyW") || externalControls.has("forward"))
+      - Number(keys.has("KeyS") || externalControls.has("back"));
+    const strafe = Number(keys.has("KeyD") || externalControls.has("right"))
+      - Number(keys.has("KeyA") || externalControls.has("left"));
     if (physicsTransitionId && physicsTransitionBase) {
       physicsTransitionElapsedMs += FIXED_DELTA_SECONDS * 1_000;
       physicsProfile = samplePhysicsTransition(
@@ -413,16 +426,17 @@ export function createVoxelEngine(
       );
     }
     crumbleScheduler.update(world, nowMs);
-    const vertical = Number(keys.has("Space")) - Number(keys.has("ControlLeft") || keys.has("ControlRight"));
+    const jumpPressed = keys.has("Space") || externalControls.has("jump");
+    const vertical = Number(jumpPressed) - Number(keys.has("ControlLeft") || keys.has("ControlRight"));
     player.step(
       {
         moveX: strafe * Math.cos(yaw) - forward * Math.sin(yaw),
         moveZ: -strafe * Math.sin(yaw) - forward * Math.cos(yaw),
         sprint: keys.has("ShiftLeft") || keys.has("ShiftRight"),
-        jump: keys.has("Space"),
+        jump: jumpPressed,
         moveY: vertical,
         dash: keys.has("KeyQ"),
-        glide: keys.has("Space"),
+        glide: jumpPressed,
         fly: Boolean(physicsProfile?.player.abilities.flight),
         swim: Boolean(physicsProfile?.player.abilities.swim),
       },
@@ -562,7 +576,7 @@ export function createVoxelEngine(
       particlePlan = nextParticles;
       particleMaterial.color.setHex(runtimeParticleColor(nextParticles.kind, state.sky.top));
       particleMaterial.size = Math.max(0.03, Math.min(0.3, nextParticles.pointSize));
-      const count = Math.max(0, Math.min(500, Math.floor(nextParticles.count)));
+      const count = Math.max(0, Math.min(particleLimit, Math.floor(nextParticles.count)));
       particleGeometry.setDrawRange(0, reducedMotion ? Math.min(48, count) : count);
       particles.visible = count > 0;
     }
@@ -571,7 +585,7 @@ export function createVoxelEngine(
 
   function setReducedMotion(value: boolean): void {
     reducedMotion = value;
-    const count = Math.max(0, Math.min(500, Math.floor(particlePlan?.count ?? 0)));
+    const count = Math.max(0, Math.min(particleLimit, Math.floor(particlePlan?.count ?? 0)));
     particleGeometry.setDrawRange(0, value ? Math.min(48, count) : count);
     if (value) {
       particles.rotation.set(0, 0, 0);
@@ -599,6 +613,37 @@ export function createVoxelEngine(
     desiredRunning = false;
     renderer.setAnimationLoop(null);
     keys.clear();
+    externalControls.clear();
+  }
+
+  function interactWithTarget(): void {
+    if (target?.kind === "entity") options.onEntityInteract?.(target.entityId);
+  }
+
+  function lookBy(deltaX: number, deltaY: number): void {
+    if (disposed) return;
+    const scale = 0.0022 * mouseSensitivity;
+    yaw -= deltaX * scale;
+    pitch = Math.max(-Math.PI * 0.49, Math.min(Math.PI * 0.49, pitch - deltaY * scale));
+  }
+
+  function setFieldOfView(fieldOfView: number): void {
+    camera.fov = Math.max(55, Math.min(95, fieldOfView));
+    camera.updateProjectionMatrix();
+  }
+
+  function setMouseSensitivity(sensitivity: number): void {
+    mouseSensitivity = Math.max(0.2, Math.min(2, sensitivity));
+  }
+
+  function setControl(control: VoxelControl, pressed: boolean): void {
+    if (disposed) return;
+    if (control === "interact") {
+      if (pressed) interactWithTarget();
+      return;
+    }
+    if (pressed) externalControls.add(control);
+    else externalControls.delete(control);
   }
 
   const resize = (): void => {
@@ -617,9 +662,7 @@ export function createVoxelEngine(
     keys.add(event.code);
     if (event.code === "Digit1") selectedBlock = 2;
     if (event.code === "Digit2") selectedBlock = 5;
-    if (event.code === "KeyE" && target?.kind === "entity") {
-      options.onEntityInteract?.(target.entityId);
-    }
+    if (event.code === "KeyE") interactWithTarget();
     if (["Space", "ControlLeft", "ControlRight", "KeyQ", "KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) event.preventDefault();
   };
   const handleKeyUp = (event: KeyboardEvent): void => {
@@ -627,8 +670,7 @@ export function createVoxelEngine(
   };
   const handleMouseMove = (event: MouseEvent): void => {
     if (document.pointerLockElement !== canvas) return;
-    yaw -= event.movementX * 0.0022;
-    pitch = Math.max(-Math.PI * 0.49, Math.min(Math.PI * 0.49, pitch - event.movementY * 0.0022));
+    lookBy(event.movementX, event.movementY);
   };
   const handleCanvasClick = (): void => {
     if (document.pointerLockElement === canvas) return;
@@ -672,6 +714,7 @@ export function createVoxelEngine(
     if (document.hidden) {
       renderer.setAnimationLoop(null);
       keys.clear();
+      externalControls.clear();
     } else if (desiredRunning && !contextLost) {
       previousFrameAt = 0;
       renderer.setAnimationLoop(frame);
@@ -682,6 +725,7 @@ export function createVoxelEngine(
     contextLost = true;
     renderer.setAnimationLoop(null);
     keys.clear();
+    externalControls.clear();
     options.onFailure("The 3D context paused while the browser attempts recovery.");
   };
   const handleContextRestore = (): void => {
@@ -711,6 +755,12 @@ export function createVoxelEngine(
     world,
     start,
     pause,
+    setControl,
+    lookBy,
+    setFieldOfView,
+    setMouseSensitivity,
+    getPlayerPosition: () => ({ ...player.state.position }),
+    getViewRotation: () => ({ yaw, pitch }),
     applyAtmosphere,
     setReducedMotion,
     applyPhysicsTransition,

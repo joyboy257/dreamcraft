@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { AppErrorBoundary } from "./app/AppErrorBoundary";
+import { registerDreamcraftServiceWorker } from "./app/pwa";
 import "./styles.css";
 import "./ui/dreamcraft-ui.css";
 
@@ -18,3 +19,5 @@ createRoot(rootElement).render(
     </AppErrorBoundary>
   </StrictMode>,
 );
+
+void registerDreamcraftServiceWorker();

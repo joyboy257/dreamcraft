@@ -1,4 +1,24 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function completeCurrentDream(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /step into the dream/i }).click();
+  await expect(page.getByText("Meet Fragment Guide")).toBeVisible();
+  await expect(page.getByText("Speak with Fragment Guide")).toBeVisible();
+
+  await page.keyboard.press("KeyE");
+  await expect(page.getByRole("heading", { name: "Fragment Guide" })).toBeVisible();
+  await page.getByRole("button", { name: /follow the dream/i }).click();
+  await expect(
+    page.getByLabel("Current objective").getByText("Awaken the Fragment", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("status").getByText("Awaken the Fragment", { exact: true }),
+  ).toBeVisible();
+
+  await page.keyboard.press("KeyE");
+  await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The Fragment Holds" })).toBeVisible();
+}
 
 test("boots the deterministic local shell without an API key", async ({ page }) => {
   const browserFailures: string[] = [];
@@ -20,6 +40,7 @@ test("boots the deterministic local shell without an API key", async ({ page }) 
   });
 
   await page.goto("/");
+  const rememberedDream = await page.getByLabel(/what do you remember/i).inputValue();
   await expect(
     page.getByRole("heading", { name: /describe a dream/i }),
   ).toBeVisible();
@@ -29,27 +50,21 @@ test("boots the deterministic local shell without an API key", async ({ page }) 
   ).toBeVisible();
   await page.getByRole("button", { name: /enter the fragment/i }).click();
   await expect(page.getByTestId("dream-canvas")).toBeVisible();
-  await page.getByRole("button", { name: /step into the dream/i }).click();
-  await expect(page.getByText("Meet Fragment Guide")).toBeVisible();
-  await expect(page.getByText("Speak with Fragment Guide")).toBeVisible();
+  await completeCurrentDream(page);
 
-  await page.keyboard.press("KeyE");
-  await expect(
-    page.getByRole("heading", { name: "Fragment Guide" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: /follow the dream/i }).click();
-  await expect(
-    page.getByLabel("Current objective").getByText("Awaken the Fragment", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("status").getByText("Awaken the Fragment", { exact: true }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Replay" }).click();
+  await expect(page.getByRole("button", { name: /step into the dream/i })).toBeVisible();
+  await completeCurrentDream(page);
 
-  await page.keyboard.press("KeyE");
-  await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "The Fragment Holds" }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: /remix this dream/i }).click();
+  await expect(page.getByRole("heading", { name: /describe a dream/i })).toBeVisible();
+  await expect(page.getByLabel(/what do you remember/i)).toHaveValue(rememberedDream);
+
+  await page.getByRole("button", { name: /^enter dream$/i }).click();
+  await page.getByRole("button", { name: /enter the fragment/i }).click();
+  await completeCurrentDream(page);
+  await page.getByRole("button", { name: /remember another/i }).click();
+  await expect(page.getByLabel(/what do you remember/i)).toHaveValue("");
 
   await page.reload();
   await expect(

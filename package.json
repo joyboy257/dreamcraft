@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "test:e2e": "playwright test",
+    "test:pwa": "pnpm build && playwright test --config playwright.pwa.config.ts",
     "eval": "vitest run tests/eval",
     "eval:dreams": "vitest run tests/eval",
     "validate:g3:live": "node scripts/validate-g3-live.mjs"

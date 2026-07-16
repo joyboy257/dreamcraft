@@ -8,3 +8,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  __DREAMCRAFT_TEST__?: {
+    getPlayerPosition(): Readonly<{ x: number; y: number; z: number }> | null;
+    getViewRotation(): Readonly<{ yaw: number; pitch: number }> | null;
+  };
+}

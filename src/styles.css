@@ -584,13 +584,22 @@ footer {
   right: 20px;
   bottom: 20px;
   max-width: 360px;
-  margin: 0;
   border: 1px solid rgba(255, 170, 176, 0.35);
   border-radius: 12px;
   padding: 12px 14px;
   color: #ffd4d7;
   background: rgba(36, 11, 18, 0.88);
   font-size: 12px;
+}
+
+.experience-failure p { margin: 6px 0 10px; color: #e7bdc2; line-height: 1.5; }
+.experience-failure button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
 }
 
 .experience-shell.is-high-contrast .dc-hud {

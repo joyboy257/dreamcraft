@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title">
+  <title id="title">DreamCraft placeholder icon</title>
+  <defs>
+    <linearGradient id="sky" x1="20" y1="14" x2="170" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#30255f"/>
+      <stop offset="1" stop-color="#090a19"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#sky)"/>
+  <path d="M127 42c-35 5-51 46-29 72 12 15 33 20 51 12-13 24-44 34-69 19-29-17-36-57-15-82 15-19 40-27 62-21Z" fill="#ffe6a6"/>
+  <path d="m51 126 45-24 45 24-45 26-45-26Z" fill="#8171d8"/>
+  <path d="m51 126 45 26v20l-45-27v-19Z" fill="#443978"/>
+  <path d="m141 126-45 26v20l45-27v-19Z" fill="#2e2856"/>
+  <circle cx="145" cy="53" r="5" fill="#fff4cd"/>
+  <circle cx="46" cy="73" r="3" fill="#c9beff"/>
+</svg>

@@ -447,6 +447,16 @@ Deliver manifest, icons/placeholders, service-worker strategy, shell caching, of
 
 A new user can understand, generate, enter, complete, replay, and recover without developer guidance on desktop; mobile remains demonstrably usable.
 
+**Current status (2026-07-16):** engineering-complete / independently certified PASS.
+The no-login desktop flow covers input, real staged materialization, fallback,
+entry, completion, replay, remix, cancellation, retry, and recovery. A mobile
+Chromium journey verifies real touch movement, look, and interaction paths; a
+production-browser check proves the cached shell reloads offline. Typecheck,
+lint, 189 tests, 5 evals, production build, 4 Playwright journeys, and the PWA
+offline journey pass without an OpenAI call or deployment. Real-device mobile
+and performance certification remain in G6. Evidence:
+`docs/17_G5_ENGINEERING_EVIDENCE.md`.
+
 ---
 
 ## M6 — Reliability, performance, security, and accessibility
