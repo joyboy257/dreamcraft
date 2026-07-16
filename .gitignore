@@ -13,6 +13,7 @@ test-results/
 !.env.example
 
 # Tooling and operating-system files
+.vercel/
 *.tsbuildinfo
 .DS_Store
 .idea/
