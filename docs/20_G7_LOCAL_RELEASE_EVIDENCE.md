@@ -167,8 +167,10 @@ CI structural pass cannot substitute for the hardware proof.
 - Complete incognito, second-device, physical-mobile, slow-network, offline,
   and full bundled-ending checks against the public production URL. These are
   human/device proofs and cannot be represented by the CI software renderer.
-- Configure GitHub required checks/branch protection once the final evidence
-  update has passed CI.
+- GitHub branch protection is active on `main`: `release-checks` is required
+  and strict, while force pushes and branch deletion are disabled. The final
+  evidence update passed GitHub Actions run
+  [`29493914628`](https://github.com/joyboy257/dreamcraft/actions/runs/29493914628).
 - Obtain owner approval before adopting the MIT draft as `LICENSE`.
 - Rotate/fund the OpenAI key and obtain separate explicit authorization before
   the locked ten-prompt proof.
