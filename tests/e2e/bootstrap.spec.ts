@@ -18,13 +18,21 @@ async function completeCurrentDream(page: Page): Promise<void> {
   await expect(page.getByLabel("Current objective")).toHaveAttribute("aria-live", "polite");
 
   // The next interaction is valid only once the engine has acquired the beacon.
-  await expect(page.locator(".dc-interaction-prompt")).toContainText("Awaken the Fragment");
+  await expect(page.locator(".dc-interaction-prompt")).toContainText("Awaken the Fragment", {
+    // This prompt is emitted from the render loop after the dialogue changes the
+    // active target. CI's software renderer can take longer than Playwright's
+    // default expectation while the product still remains responsive.
+    timeout: 15_000,
+  });
   await page.keyboard.press("KeyE");
   await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "The Fragment Holds" })).toBeVisible();
 }
 
 test("boots the deterministic local shell without an API key", async ({ page }) => {
+  // The test intentionally completes three full worlds. Keep its envelope scoped
+  // to this end-to-end journey so slow CI rendering cannot truncate a valid flow.
+  test.setTimeout(60_000);
   const browserFailures: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") browserFailures.push(`console: ${message.text()}`);

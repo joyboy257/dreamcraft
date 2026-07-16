@@ -75,7 +75,11 @@ test("mobile controls move, look, and interact with the real dream runtime", asy
       bounds.top + bounds.height / 2,
     ) === button;
   })).toBe(true);
-  await interact.click();
+  // The shipped control responds on pointerdown for immediate touch feedback.
+  // It may open the dialogue and unmount before a synthetic click finishes, so
+  // exercise that real handler rather than forcing Playwright to click a removed
+  // element. The elementFromPoint assertion above still proves the hit layer.
+  await interact.dispatchEvent("pointerdown", { pointerId: 10, pointerType: "touch" });
   await expect(page.getByRole("heading", { name: "Fragment Guide" })).toBeVisible();
   await page.getByRole("button", { name: /follow the dream/i }).click();
   await expect(page.getByRole("group", { name: "Touch game controls" })).toBeVisible();
