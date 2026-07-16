@@ -14,6 +14,7 @@ interface FunctionRule {
 const config = JSON.parse(
   readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"),
 ) as {
+  installCommand: string;
   buildCommand: string;
   outputDirectory: string;
   functions: Record<string, FunctionRule>;
@@ -53,7 +54,8 @@ describe("Vercel release security headers", () => {
   });
 
   it("keeps the Vite output and both serverless functions explicitly bounded", () => {
-    expect(config.buildCommand).toBe("pnpm build");
+    expect(config.installCommand).toBe("corepack pnpm install --frozen-lockfile");
+    expect(config.buildCommand).toBe("corepack pnpm build");
     expect(config.outputDirectory).toBe("dist");
     expect(config.functions).toEqual({
       "api/health.ts": { maxDuration: 5 },
