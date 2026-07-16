@@ -1,9 +1,14 @@
 import * as THREE from "three";
+import type { SemanticAnchorStaging } from "../dream";
 
 export interface DreamBeacon {
   readonly root: THREE.Group;
   setAwakened(awakened: boolean): void;
   dispose(): void;
+}
+
+export interface SemanticObjective extends DreamBeacon {
+  readonly kind: "entity" | "structure" | "prop" | "zone" | "fallback";
 }
 
 export interface SemanticWorldMarkers {
@@ -113,6 +118,85 @@ export function createDreamBeacon(): DreamBeacon {
       baseMaterial.dispose();
       crystalMaterial.dispose();
       ringMaterial.dispose();
+    },
+  };
+}
+
+function objectiveKind(anchor: SemanticAnchorStaging): SemanticObjective["kind"] {
+  if (anchor.source === "fallback") return "fallback";
+  if (anchor.representation === "prop") return "prop";
+  if (anchor.source === "entity" || anchor.representation === "entity") return "entity";
+  if (anchor.source === "zone" || anchor.representation === "zone") return "zone";
+  return "structure";
+}
+
+/** Creates a small semantic highlight around an authored target, never a generic replacement. */
+export function createSemanticObjective(
+  anchor: SemanticAnchorStaging,
+  color: number,
+): SemanticObjective {
+  const kind = objectiveKind(anchor);
+  if (kind === "fallback") return { ...createDreamBeacon(), kind };
+
+  const root = new THREE.Group();
+  root.name = `semantic-objective-${anchor.sourceId ?? anchor.anchorId}`;
+  const geometries: THREE.BufferGeometry[] = [];
+  const materials: THREE.MeshStandardMaterial[] = [];
+  const material = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.5,
+    roughness: 0.36,
+    metalness: 0.12,
+  });
+  materials.push(material);
+  const add = (geometry: THREE.BufferGeometry, position: readonly [number, number, number]): THREE.Mesh => {
+    geometries.push(geometry);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    root.add(mesh);
+    return mesh;
+  };
+  const words = `${anchor.sourcePhrase} ${anchor.concept} ${anchor.sourceId ?? ""}`.toLowerCase();
+
+  if (kind === "prop" && words.includes("cup")) {
+    add(new THREE.CylinderGeometry(0.75, 0.95, 1.25, 10, 1, true), [0, 0.85, 0]);
+    add(new THREE.TorusGeometry(0.38, 0.09, 6, 12), [0.9, 0.9, 0]);
+  } else if (kind === "prop" && words.includes("bowl")) {
+    add(new THREE.TorusGeometry(0.9, 0.16, 8, 16), [0, 0.42, 0]);
+    add(new THREE.CylinderGeometry(0.75, 0.95, 0.28, 12), [0, 0.22, 0]);
+  } else if (kind === "prop" && (words.includes("sign") || words.includes("jackpot") || words.includes("board"))) {
+    add(new THREE.BoxGeometry(1.6, 0.9, 0.12), [0, 1.35, 0]);
+    add(new THREE.CylinderGeometry(0.08, 0.1, 1.2, 6), [0, 0.55, 0]);
+  } else if (kind === "prop" && words.includes("instrument")) {
+    add(new THREE.BoxGeometry(1.2, 0.26, 0.65), [0, 0.65, 0]);
+    add(new THREE.CylinderGeometry(0.12, 0.14, 1.55, 8), [0, 1.35, 0]);
+  } else if (kind === "zone") {
+    add(new THREE.TorusGeometry(1.2, 0.08, 8, 24), [0, 0.08, 0]).rotation.x = Math.PI / 2;
+  } else if (kind === "entity") {
+    add(new THREE.TorusGeometry(0.75, 0.07, 8, 18), [0, 1.8, 0]).rotation.x = Math.PI / 2;
+  } else {
+    add(new THREE.TorusGeometry(1.05, 0.08, 8, 24), [0, 0.1, 0]).rotation.x = Math.PI / 2;
+    add(new THREE.BoxGeometry(0.12, 1.35, 0.12), [0, 0.72, 0]);
+  }
+
+  let disposed = false;
+  return {
+    kind,
+    root,
+    setAwakened(awakened) {
+      if (disposed) return;
+      material.emissiveIntensity = awakened ? 2.5 : 0.5;
+      root.scale.setScalar(awakened ? 1.25 : 1);
+    },
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      root.removeFromParent();
+      root.clear();
+      for (const geometry of geometries) geometry.dispose();
+      for (const item of materials) item.dispose();
     },
   };
 }

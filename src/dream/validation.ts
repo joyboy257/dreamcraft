@@ -351,14 +351,17 @@ export function validateDreamSpecReferences(spec: DreamSpecV1): DreamIssue[] {
   const representedAnchors = new Set([
     ...spec.structures.flatMap(({ tags: structureTags }) => structureTags),
     ...spec.entities.flatMap(({ tags: entityTags }) => entityTags),
+    ...spec.world.zones.flatMap(({ tags: zoneTags }) => zoneTags),
   ]);
   spec.blueprint.semanticAnchors.forEach((anchor, index) => {
     if (!representedAnchors.has(anchor.id)) {
       issues.push({
-        code: "unstaged_semantic_anchor",
-        severity: "warning",
+        code: anchor.mustAppear && anchor.importance >= 4
+          ? "required_semantic_anchor_unrepresented"
+          : "unstaged_semantic_anchor",
+        severity: anchor.mustAppear && anchor.importance >= 4 ? "error" : "warning",
         path: `blueprint.semanticAnchors[${index}]`,
-        message: `Semantic anchor ${anchor.id} has no tagged structure or entity`,
+        message: `Semantic anchor ${anchor.id} has no tagged structure, entity, or zone`,
         repaired: false,
       });
     }

@@ -27,8 +27,14 @@ export interface CompiledGeneratorDescriptor {
 export interface SemanticAnchorStaging {
   anchorId: string;
   concept: string;
+  sourcePhrase: string;
+  representation: DreamSpecV1["blueprint"]["semanticAnchors"][number]["representation"];
+  gameplayRole: DreamSpecV1["blueprint"]["semanticAnchors"][number]["gameplayRole"];
+  importance: DreamSpecV1["blueprint"]["semanticAnchors"][number]["importance"];
+  mustAppear: boolean;
   position: Vec3;
-  source: "structure" | "entity" | "fallback";
+  source: "structure" | "entity" | "zone" | "fallback";
+  sourceId: string | null;
 }
 
 export interface TrustedDreamManifest {
@@ -250,6 +256,10 @@ function sourcePositionForEntity(entity: DreamSpecV1["entities"][number], spec: 
   }
 }
 
+function sourcePositionForZone(zone: DreamSpecV1["world"]["zones"][number]): Vec3 {
+  return zone.center;
+}
+
 function fallbackAnchorPosition(
   generator: CompiledGeneratorDescriptor,
   spawn: Vec3,
@@ -274,12 +284,25 @@ function stageAnchors(
   return spec.blueprint.semanticAnchors.map((anchor, index) => {
     const structure = spec.structures.find(({ tags }) => tags.includes(anchor.id));
     const entity = spec.entities.find(({ tags }) => tags.includes(anchor.id));
+    const zone = spec.world.zones.find(({ tags }) => tags.includes(anchor.id));
     let source: SemanticAnchorStaging["source"] = "fallback";
+    let sourceId: string | null = null;
     let position = structure === undefined ? null : sourcePositionForStructure(structure);
-    if (position !== null) source = "structure";
+    if (structure !== undefined && position !== null) {
+      source = "structure";
+      sourceId = structure.id;
+    }
     if (position === null && entity !== undefined) {
       position = sourcePositionForEntity(entity, spec);
-      if (position !== null) source = "entity";
+      if (position !== null) {
+        source = "entity";
+        sourceId = entity.id;
+      }
+    }
+    if (position === null && zone !== undefined) {
+      position = sourcePositionForZone(zone);
+      source = "zone";
+      sourceId = zone.id;
     }
     const tooFar =
       position !== null &&
@@ -288,6 +311,7 @@ function stageAnchors(
     if (position === null || tooFar) {
       position = fallbackAnchorPosition(generator, spawn, index);
       source = "fallback";
+      sourceId = null;
       diagnostics.push(
         descriptorIssue(
           "semantic_anchor_staged",
@@ -299,7 +323,18 @@ function stageAnchors(
       const [x, z] = clampToTerrainDisk(position[0], position[2], generator.radius - 2);
       position = [x, sampleSurfaceHeight(generator, x, z) + 1, z];
     }
-    return { anchorId: anchor.id, concept: anchor.concept, position, source };
+    return {
+      anchorId: anchor.id,
+      concept: anchor.concept,
+      sourcePhrase: anchor.sourcePhrase,
+      representation: anchor.representation,
+      gameplayRole: anchor.gameplayRole,
+      importance: anchor.importance,
+      mustAppear: anchor.mustAppear,
+      position,
+      source,
+      sourceId,
+    };
   });
 }
 

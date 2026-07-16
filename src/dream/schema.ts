@@ -36,7 +36,10 @@ export const DreamIssueSchema = z.strictObject({
 const SemanticAnchorSchema = z.strictObject({
   id: identifier,
   concept: text,
+  sourcePhrase: text,
   role: z.enum(["environment", "character", "object", "event", "emotion"]),
+  representation: z.enum(["structure", "entity", "prop", "zone", "objective"]),
+  gameplayRole: z.enum(["landmark", "guide", "objective", "route", "obstacle", "ending"]),
   importance: z.union([
     z.literal(1),
     z.literal(2),
@@ -45,6 +48,7 @@ const SemanticAnchorSchema = z.strictObject({
     z.literal(5),
   ]),
   nearSpawn: z.boolean(),
+  mustAppear: z.boolean(),
 });
 
 const DreamBlueprintSchema = z.strictObject({
@@ -191,6 +195,19 @@ const StructureSpecSchema = z.strictObject({
     "blob",
     "ring",
     "room",
+    "corridor",
+    "school",
+    "kitchen",
+    "house",
+    "stage",
+    "doorway",
+    "giant_cup",
+    "bowl",
+    "instrument",
+    "sign",
+    "jackpot_board",
+    "platform",
+    "floating_island",
     "stair",
     "landmark",
     "interactive_object",

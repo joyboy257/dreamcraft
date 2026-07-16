@@ -40,6 +40,35 @@ describe("compileDreamDescriptor", () => {
     }
   });
 
+  it("preserves the high-priority prompt-to-world grounding contract", () => {
+    const manifest = compile(example);
+    const forest = manifest.anchorStaging.find(({ anchorId }) => anchorId === "anchor_forest");
+
+    expect(forest).toMatchObject({
+      concept: "candy-cane forest with licorice trees",
+      sourcePhrase: "candy-cane forest with licorice trees",
+      representation: "structure",
+      gameplayRole: "landmark",
+      importance: 5,
+      mustAppear: true,
+      source: "structure",
+    });
+    expect(forest?.sourceId).toBeTruthy();
+  });
+
+  it("rejects a must-appear high-priority anchor without a physical binding", () => {
+    const candidate = structuredClone(example);
+    candidate.structures.forEach((structure) => {
+      structure.tags = structure.tags.filter((tag) => tag !== "anchor_forest");
+    });
+
+    const sanitized = sanitizeDreamSpec(candidate);
+    expect(sanitized.success).toBe(false);
+    expect(sanitized.issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "required_semantic_anchor_unrepresented", severity: "error" }),
+    ]));
+  });
+
   it("repairs an all-air request with emergency ground", () => {
     const candidate = structuredClone(example);
     for (const block of candidate.blocks) block.solid = false;
