@@ -551,21 +551,24 @@ Prepare project description, category recommendation, repository URL placeholder
 
 The public deployment passes incognito, second-device, slow-network, and API-disabled smoke checks. The repository and submission package are judge-ready.
 
-**Current status (2026-07-16): engineering-complete / preview-proof-pending;
+**Current status (2026-07-16): engineering-complete / Vercel-proof-pending;
 Gate G7 is not complete.** Gate G6 is synchronized at `112d3da`. Terra returned
 PASS for the G7 release-security review, and Sol certified the complete local
 candidate through the full serialized release matrix. Health/smoke/CI,
 same-origin enforcement, repository/judge/demo readiness, and exact rollback
 instructions are complete locally. Vercel project `dreamcraft` is linked with
-Git integration disconnected. A first preview-intended command omitted an
-explicit target and created failed deployment
-`dpl_CiC9DEQH949T2FBYPvsZqTt77d39`, reported as target `production`; it failed
-before application output because a nested PATH pnpm 10.28 violated the pnpm 11
-engine and made no OpenAI request. The record is non-release evidence and must
-be removed before retry. No Ready preview, authorized production release, or
-live proof exists. Evidence: `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`. Next:
-synchronize the direct-build repair, remove the failed record, and retry only
-with explicit `--target=preview` before edge/device verification.
+Git integration disconnected. The failed pre-build attempt and the subsequent
+Ready first-success deployment have both been removed, so no deployment or alias
+remains. The latter was invoked with `--target=preview`, but Vercel classified
+the first successful deployment in the new project as production and assigned a
+production alias; it was removed without any HTTP application/API request.
+Vercel documents that first-deployment promotion behavior. The seven safe,
+non-secret generation-disabled settings are present in both Preview and
+Production and no OpenAI key is configured. No Ready preview, authorized
+production release, or live proof exists. Evidence:
+`docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`. Next: obtain explicit owner
+authorization for the first successful production-target deployment, then prove
+the generation-disabled preview and complete edge/device verification.
 
 ---
 

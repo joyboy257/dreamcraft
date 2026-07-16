@@ -1,16 +1,19 @@
 # G7 Release and Rollback Runbook
 
-Status: **preview retry pending after a failed non-release build attempt**.
+Status: **engineering-complete / Vercel-proof-pending**.
 
-This runbook creates a generation-disabled preview first. It does not authorize
-a production deployment or an OpenAI request.
+This runbook never authorizes an OpenAI request. Vercel's documented behavior
+for a new project changes the deployment order: its first successful deployment
+is automatically promoted to production. The first successful DreamCraft
+deployment therefore needs separate, explicit owner authorization even though
+it keeps generation disabled and has no OpenAI key.
 
-The initial preview-intended command omitted an explicit target and created
-failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39`, which Vercel reported as
-target `production`. The build stopped before application output when a nested
-unqualified `pnpm` resolved to 10.28 under a pnpm 11-only engine. The repository
-fix removes that recursive package-manager call. The failed deployment is not a
-preview proof and must be removed before the retry below.
+The initial preview-intended build failed before application output when a nested
+unqualified `pnpm` resolved to 10.28 under a pnpm 11-only engine. Its deployment
+record was removed. A repaired command with `--target=preview` then built Ready,
+but Vercel classified the first successful deployment as production and assigned
+a production alias. It was immediately removed without any HTTP application/API
+request. There is now no deployment or alias.
 
 ## 1. Preconditions
 
@@ -21,12 +24,14 @@ preview proof and must be removed before the retry below.
 - The Vercel CLI is authenticated to the intended team.
 - The local project link points to Vercel project `dreamcraft` in team
   `deonaqwx-9156s-projects`; Git integration remains disconnected.
-- Before retry, confirm failed deployment
-  `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` has been removed. It still exists at the
-  time of this runbook revision. No Ready preview exists yet.
+- `vercel ls --scope deonaqwx-9156s-projects` reports no DreamCraft deployment;
+  no alias remains. No Ready preview exists.
+- Preview and Production each contain exactly the seven safe non-secret settings
+  listed below; neither contains `OPENAI_API_KEY`.
 - The previously exposed local development key is not reused, funded, or
   uploaded.
-- Production deployment/promotion has separate explicit owner authorization.
+- Explicit owner authorization is required before the first successful
+  production-target deployment. Without it, stop here.
 
 ## 2. Vercel project configuration
 
@@ -47,11 +52,14 @@ The project is already linked. Do not relink it or enable Git integration during
 the preview-first phase. The ignored `.vercel/project.json` identifies project
 `dreamcraft`; it must never be committed.
 
-CLI preview deployments are sufficient and must name the target explicitly.
+Vercel documents that the first successful deployment in a new project is
+automatically promoted to production. `--target=preview` is still required for
+subsequent preview deployments, but it does not override that first-deployment
+promotion behavior.
 
 ## 3. Generation-disabled Preview environment
 
-Set these values for **Preview** in the Vercel dashboard:
+These values are already set for **both Preview and Production**:
 
 ```text
 DREAMCRAFT_OPENAI_ENABLED=false
@@ -63,26 +71,24 @@ DREAMCRAFT_REQUEST_TIMEOUT_MS=12000
 DREAMCRAFT_ENABLE_DEBUG_METRICS=false
 ```
 
-Do **not** create `OPENAI_API_KEY` in Preview. If one already exists, remove it
-before deploying. Do not add any secret under a `VITE_*` name. Environment
-changes apply only to a new deployment.
+Do **not** create `OPENAI_API_KEY` in either environment. Do not add any secret
+under a `VITE_*` name. Environment changes apply only to a new deployment.
 
-Use the same generation-disabled/no-key values for the initial Production
-environment, but do not deploy Production until the owner authorizes it.
+## 4. First successful deployment — owner authorization required
 
-## 4. Create and inspect a preview
-
-First remove the failed non-release deployment. This cleanup command is an
-instruction and was not run while preparing the repository fix:
+Do not run this command unless the owner has explicitly authorized the first
+successful production-target deployment. It is safe with respect to generation:
+Production has the seven disabled/non-secret settings above and no OpenAI key.
 
 ```bash
-vercel remove dpl_CiC9DEQH949T2FBYPvsZqTt77d39 --yes --scope deonaqwx-9156s-projects
+cd /Users/deon/Developer/Dreamcraft
+FIRST_PRODUCTION_URL="$(vercel deploy --yes --prod --scope deonaqwx-9156s-projects)"
+vercel inspect "$FIRST_PRODUCTION_URL" --scope deonaqwx-9156s-projects
 ```
 
-Only after removal and a clean synchronized local checkpoint, create an
-explicit Preview deployment. Vercel CLI 54 exposes `--target <TARGET>` and
-`--prod` is the production shorthand, so the retry must spell out
-`--target=preview`:
+Record the deployment ID and URL, then run only the generation-disabled smoke
+and security checks. Do not enable a key or live generation. After this approved
+first deployment exists, create a true preview with the explicit target:
 
 ```bash
 cd /Users/deon/Developer/Dreamcraft
@@ -100,7 +106,7 @@ The smoke validator requires an explicit credential-free HTTPS origin and:
 5. requires `api_disabled` deterministic fallback and identical DreamSpec data;
 6. never prints dream text, keys, billing state, or response internals.
 
-Record after a pass:
+Record after each applicable pass:
 
 ```text
 Preview URL: [PENDING]

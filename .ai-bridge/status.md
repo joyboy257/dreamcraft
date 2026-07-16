@@ -11,16 +11,16 @@
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
-- Missing prerequisites: failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` must be removed before an explicit-target Preview retry; real edge/device proof has not occurred; production needs explicit authorization; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
+- Missing prerequisites: no Vercel deployment or alias remains; Vercel automatically promotes a new project's first successful deployment to production, so the first successful deployment needs explicit owner authorization before preview proof can proceed; real edge/device proof has not occurred; live G3 proof needs a rotated/funded OpenAI project key and separate explicit authorization; repository license adoption needs owner approval
 - Deviations from pack assumptions: mounted repository initially had no `origin`; it was safely connected to the verified non-empty remote and fast-forwarded to `origin/main`
 
 ## Active milestone
 
 - Milestone: M7 — Deployment and hackathon submission
 - Work items: DC-WI-070 through DC-WI-073; Gate G7
-- Goal: synchronize the certified local candidate, then prove a generation-disabled Vercel preview before any authorized production action
-- Gate state: **engineering-complete / preview-proof-pending; Gate G7 not complete**
-- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; one failed preview-intended deployment record exists, while no production release or live request is authorized
+- Goal: obtain authorization for Vercel's first successful production-target deployment, then prove a generation-disabled Vercel preview
+- Gate state: **engineering-complete / Vercel-proof-pending; Gate G7 not complete**
+- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; no Vercel deployment or alias exists, while the first successful production-target deployment and live request remain unauthorized
 
 ## Working user-visible behavior
 
@@ -71,12 +71,17 @@
 - Three bundled showcase prompts warm a bounded memory-only validated cache; exact last-known-good entries are restored only after validation, while novel failures still reach the deterministic local generator.
 - Vercel CLI `54.18.1` and MCP are authenticated to team `deonaqwx-9156s-projects`; no DreamCraft project was created and no deployment was attempted before local release certification.
 - Vercel project `dreamcraft` was subsequently linked with Git integration
-  disconnected. A preview-intended `vercel deploy --yes --scope ...` omitted an
-  explicit target; Vercel recorded failed deployment
-  `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` as target `production`, then stopped before
-  application output because a nested PATH pnpm 10.28 violated the pnpm 11
-  engine. It is non-release evidence, made no OpenAI request, and must be
-  removed before an explicit `--target=preview` retry.
+  disconnected. The original preview-intended attempt failed before application
+  output because a nested PATH pnpm 10.28 violated the pnpm 11 engine; its
+  record was removed. The repaired `--target=preview` attempt built Ready, but
+  Vercel classified the first successful deployment in the new project as
+  production and assigned a production alias. It was immediately removed without
+  an HTTP application/API request. Vercel's documented first-deployment
+  promotion means an explicitly authorized first successful production-target
+  deployment is now required before a preview can be proven.
+- Preview and Production each contain exactly seven safe non-secret settings:
+  generation disabled, director disabled, `single-sol`, character/body/deadline
+  bounds, and debug metrics disabled. Neither environment has `OPENAI_API_KEY`.
 - The original pack validator was hardened after it printed an ignored local key: it now scans only tracked/nonignored files and suppresses matched values.
 - G4 maps eight safe scenario archetypes into contextual mechanics and copy rather than executing generated code.
 - The six required G4 dreams now have distinct mechanics, movement, silhouettes, atmosphere, audio, and physics fingerprints under deterministic local generation.
@@ -117,9 +122,9 @@
 - Terra returned PASS for G7 release security, including exact same-origin
   enforcement and immutable GitHub Action pins. Sol then reran the complete
   serialized release matrix and certified the local candidate.
-- The accurate G7 state is engineering-complete / preview-proof-pending. The
-  project is linked, but no Ready preview, authorized production release,
-  public URL, or live OpenAI proof exists. Evidence:
+- The accurate G7 state is engineering-complete / Vercel-proof-pending. The
+  project is linked, but no deployment, alias, Ready preview, authorized
+  production release, public URL, or live OpenAI proof exists. Evidence:
   `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`.
 
 ## Known issues
@@ -129,7 +134,7 @@
 | Low | Vite reports the 980.52 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Reassess code splitting before release only if it materially improves loading; current gzip is 271.31 kB and measured runtime budgets pass |
 | Medium | In-memory application rate limiting is per serverless instance | Root/release | Configure Vercel Firewall/shared rate protection or approve a distributed limiter before public live generation |
 | Low | Exact same-origin enforcement is locally certified but not yet verified at the Vercel edge | Release | Probe missing, foreign, and exact origins against the generation-disabled preview |
-| Medium | Failed non-release deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39` remains in Vercel after the recursive pnpm build failure | Release | Remove it, synchronize the direct-build repair, then retry only with explicit `--target=preview` |
+| Medium | Vercel promotes a new project's first successful deployment to production even when the command names `--target=preview` | Release | Obtain explicit owner authorization for the first successful production-target deployment; then create/verify a generation-disabled preview |
 | Low | Automated Pixel 7 Chromium proves touch paths and reduced-profile budgets but not physical-device ergonomics, GPU-driver behavior, or thermals | Root/QA | Confirm on the physical demo device during G7 release verification |
 | Low | PWA shell changes can remain stale if the service-worker cache name is not version-bumped | Root/release | Require a cache-version bump whenever cached shell behavior or assets change |
 | Low | Chunk generation/meshing remains on the main thread | Root/engine | Keep the measured sub-5 ms p95 guard; add worker offload only if future content breaks it |
@@ -146,9 +151,10 @@
 
 ## Next worker wave
 
-- Remove the failed deployment record, keep the existing disconnected-Git
-  project link and safe Preview environment, then retry from the synchronized
-  repair checkpoint with explicit `--target=preview` and verify the preview.
+- Keep the existing disconnected-Git project link and matching safe Preview/
+  Production environments. On explicit owner authorization only, create the
+  first successful production-target deployment; then create and verify the
+  generation-disabled preview.
 - Configure required checks/branch protection after the CI workflow is present
   on the remote.
 - Populate preview evidence and request explicit production authorization only

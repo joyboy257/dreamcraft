@@ -9,7 +9,7 @@ real ending. It is a browser-first OpenAI Build Week 2026 project for the
 
 | Judge link | Status |
 | --- | --- |
-| Live demo | **PENDING — no Vercel preview or production URL exists yet** |
+| Live demo | **PENDING — no Vercel deployment or alias exists; first successful deployment needs explicit production authorization** |
 | Demo video | **PENDING — public under-three-minute video not recorded/uploaded** |
 | Repository | [github.com/joyboy257/dreamcraft](https://github.com/joyboy257/dreamcraft) |
 
@@ -202,10 +202,12 @@ G7 release work.
 ## Deployment
 
 Vercel is the selected Vite/serverless host: Node 24, frozen pnpm install,
-`corepack pnpm build`, and `dist/`. Preview must be created first with live generation
-disabled and **no OpenAI key**. Production deployment requires explicit owner
-authorization. Funding/rotating a key and running the live ten-prompt proof are
-separate later actions.
+`corepack pnpm build`, and `dist/`. Preview and Production each have the same
+seven safe, non-secret, generation-disabled settings and **no OpenAI key**.
+Vercel automatically promotes a new project's first successful deployment to
+production, so the first deployment now requires explicit owner authorization;
+no deployment or alias remains. Funding/rotating a key and running the live
+ten-prompt proof are separate later actions.
 
 Exact preview, smoke, production, and rollback steps are in
 [`docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md`](docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md).

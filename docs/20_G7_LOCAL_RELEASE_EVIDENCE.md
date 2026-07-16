@@ -1,27 +1,36 @@
 # G7 Local Release Candidate Evidence
 
-Status: **engineering-complete / preview-proof-pending**.
+Status: **engineering-complete / Vercel-proof-pending**.
 
 Gate G7 is not complete. This report certifies the local repository candidate;
 it does not claim a Ready preview, authorized production release, live OpenAI
 proof, or public URL.
 
-## Failed deployment attempt and corrective action
+## Vercel deployment behavior and evidence
 
-The Vercel project is now linked with Git integration disconnected and the safe
-Preview environment contains no OpenAI key. A first preview-intended CLI command
-omitted an explicit target and created failed deployment
-`dpl_CiC9DEQH949T2FBYPvsZqTt77d39`; inspection reported target `production` and
-status `Error`. It failed before application output because Vercel entered the
-build with Corepack pnpm 11.13, while the package build script recursively ran
-an unqualified PATH `pnpm` that resolved to 10.28 and violated the repository's
-pnpm 11 engine requirement.
+The Vercel project is linked with Git integration disconnected. Preview and
+Production each have exactly seven safe non-secret generation-disabled settings,
+and neither environment has `OPENAI_API_KEY`. No OpenAI API request was made.
 
-This attempt made no OpenAI request and produced no live application/API proof.
-It is non-release evidence and must be removed before retry. The durable fix
-makes `build` execute `tsc --noEmit && vite build` directly inside the original
-Corepack-controlled pnpm process and locks that invariant with a static test.
-The Preview retry command now explicitly uses `--target=preview`.
+The initial preview-intended build failed before application output because a
+nested PATH pnpm 10.28 violated the pnpm 11 engine. Its deployment record was
+removed. The durable repair makes `build` execute `tsc --noEmit && vite build`
+inside the original Corepack-controlled pnpm process and locks that invariant
+with a static test.
+
+The repaired deployment was invoked with `--target=preview` and built Ready.
+Vercel nevertheless classified it as production and created a production alias,
+because Vercel automatically promotes a new project's first successful
+deployment to production. It was immediately removed without any HTTP
+application/API request. `vercel ls` now reports zero deployments and no alias
+remains. This is not a production release or preview proof. The official
+behavior is documented at
+[Vercel: Default Production Domain](https://vercel.com/blog/default-production-domain).
+
+An independently verifiable preview cannot be created until there is a first
+successful production-target deployment. That next action is a human-only
+authorization gate; it must be explicitly authorized by the owner, and it will
+remain generation-disabled with no key.
 
 ## Independent release-security review
 
@@ -83,16 +92,22 @@ than hidden.
 ## External activity statement
 
 - No OpenAI API request was made.
-- Vercel project `dreamcraft` was linked with Git integration disconnected.
-- One failed deployment record was created before application output; it is not
-  a Ready preview or an authorized production release and must be removed.
+- Vercel project `dreamcraft` is linked with Git integration disconnected.
+- The failed pre-build record and the Ready first-success record have both been
+  removed. No deployment or alias remains, and no HTTP application/API request
+  was made against either record.
+- Preview and Production each have exactly seven safe non-secret settings and
+  no `OPENAI_API_KEY`.
 - No environment secret was read, uploaded, staged, or committed.
 - The deterministic local generator remains the mandatory fallback.
 
 ## Remaining Gate G7 proof and human actions
 
-- Remove failed deployment `dpl_CiC9DEQH949T2FBYPvsZqTt77d39`.
-- Retry only from the synchronized release-candidate checkpoint with
+- Obtain explicit owner authorization for the first successful production-target
+  deployment. The exact conditional command is in
+  `docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md`.
+- After that authorized deployment exists, create and verify the
+  generation-disabled preview with
   `vercel deploy --yes --target=preview --scope deonaqwx-9156s-projects`.
 - Prove the real edge health, same-origin, CSP/security-header, and deterministic
   fallback behavior with the deployed smoke.
@@ -109,4 +124,4 @@ than hidden.
 - Populate the deployment/video/team/session placeholders before submission.
 
 Until these items pass, the accurate release state is
-**engineering-complete / preview-proof-pending**, not Gate G7 complete.
+**engineering-complete / Vercel-proof-pending**, not Gate G7 complete.
