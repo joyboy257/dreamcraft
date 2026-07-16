@@ -1,7 +1,7 @@
 import type { DreamSpecV1, TrustedDreamManifest, Vec3 } from "../dream";
 import type { CompiledVoxelStructure } from "./structureMaterializer";
 
-const MAX_RUNTIME_ENTITY_INSTANCES = 16;
+const MAX_RUNTIME_ENTITY_INSTANCES = 12;
 
 export interface RuntimeEntityInstance {
   instanceId: string;

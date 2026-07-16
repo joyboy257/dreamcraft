@@ -160,8 +160,13 @@ export function DreamExperience({
     guideRoot.add((proceduralGuide ?? legacyGuide)!.root);
     const entityRoots = new Map<string, THREE.Group[]>();
     if (runtime.heroEntity) entityRoots.set(runtime.heroEntity.id, [guideRoot]);
+    const primaryHeroInstance = runtime.entityInstances.find(
+      ({ entityId }) => entityId === runtime.heroEntity?.id,
+    );
     const auxiliaryEntities = runtime.entityInstances
-      .filter(({ entityId }) => entityId !== runtime.heroEntity?.id)
+      .filter(({ entityId, instanceId }) =>
+        entityId !== runtime.heroEntity?.id || instanceId !== primaryHeroInstance?.instanceId,
+      )
       .map((instance) => {
         const actor = createProceduralEntity({
           id: instance.instanceId,
