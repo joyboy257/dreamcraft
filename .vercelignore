@@ -1,0 +1,21 @@
+# Secret and local configuration
+.env
+.env.local
+.env.*.local
+.vercel/
+
+# Source-control and dependency metadata
+.git/
+node_modules/
+
+# Generated build, test, and local evidence
+dist/
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+artifacts/local/
+
+# Local operating-system and log files
+*.log
+.DS_Store
