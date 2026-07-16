@@ -15,6 +15,11 @@ import {
 import { sampleSurfaceHeight, type DreamSpecV1, type TrustedDreamManifest } from "../dream";
 import { compileDreamAtmosphere, type DreamAtmospherePlan } from "./dreamAtmosphere";
 import { compileRuntimeStaging, type RuntimeStaging } from "./semanticStaging";
+import {
+  compileVoxelStructures,
+  materializeVoxelStructures,
+  type CompiledVoxelStructure,
+} from "./structureMaterializer";
 
 export interface AdaptedDreamRuntime {
   generator: ChunkGenerator;
@@ -33,6 +38,7 @@ export interface AdaptedDreamRuntime {
   audio: DreamSpecV1["audio"];
   physicsProfile: RuntimePhysicsProfile;
   heroEntity: DreamSpecV1["entities"][number] | null;
+  voxelStructures: readonly CompiledVoxelStructure[];
 }
 
 function colorChannels(color: number): readonly [number, number, number] {
@@ -66,6 +72,13 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     .map((id) => numericIds.get(id))
     .find((id): id is number => id !== undefined) ?? 1;
   const hero = spec.entities.find(({ role }) => role === "hero") ?? spec.entities[0];
+  const voxelStructures = compileVoxelStructures(spec.structures, {
+    seed: spec.seed,
+    radius: manifest.generator.radius,
+    height: manifest.generator.height,
+    spawn: manifest.spawn,
+    surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
+  });
   const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
   const fallbackEnding = spec.playGraph.endings[0]!;
   const sourceDialogue = hero
@@ -205,6 +218,14 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
           }
         }
       }
+      materializeVoxelStructures(
+        voxels,
+        chunkX,
+        chunkZ,
+        voxelStructures,
+        numericIds,
+        safeSpawnBlock,
+      );
       return { chunkX, chunkZ, voxels };
     },
   };
@@ -243,5 +264,6 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     audio: structuredClone(spec.audio),
     physicsProfile: profile,
     heroEntity: hero ? structuredClone(hero) : null,
+    voxelStructures,
   };
 }

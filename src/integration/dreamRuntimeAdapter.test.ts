@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MockLocalGenerationProvider, compileDreamDescriptor } from "../dream";
-import { voxelIndex } from "../engine/chunkMath";
+import { MockLocalGenerationProvider, compileDreamDescriptor, type DreamSpecV1 } from "../dream";
+import { voxelIndex, worldToChunk } from "../engine/chunkMath";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 
 describe("adaptDreamManifest", () => {
@@ -24,5 +24,36 @@ describe("adaptDreamManifest", () => {
     expect(runtime.scenario.kind).toBe("transformation");
     expect(runtime.staging.objectivePath[0]).toEqual(manifest.spawn);
     expect(runtime.atmosphere.particles.count).toBeLessThanOrEqual(250);
+  });
+
+  it("materializes an authored structure above its terrain surface", async () => {
+    const result = await new MockLocalGenerationProvider().generate({
+      dreamText: "A moonlit kitchen with a giant cup",
+      intensity: "vivid",
+      strategy: "mock-local",
+      clientRequestId: "structure-adapter-test",
+    }, new AbortController().signal);
+    const kitchenStructure: DreamSpecV1["structures"][number] = {
+      id: "moonlit-kitchen",
+      kind: "kitchen",
+      position: [14, 0, -8],
+      width: 10,
+      height: 7,
+      depth: 8,
+      block: result.core.world.layers[0]?.block ?? "air",
+      tags: ["kitchen"],
+    };
+    const core: DreamSpecV1 = {
+      ...result.core,
+      structures: [...result.core.structures, kitchenStructure],
+    };
+    const runtime = adaptDreamManifest(compileDreamDescriptor(core, result.issues));
+    const kitchen = runtime.voxelStructures.find(({ id }) => id === "moonlit-kitchen");
+    expect(kitchen).toBeDefined();
+    const chunkX = worldToChunk(kitchen!.position[0]);
+    const chunkZ = worldToChunk(kitchen!.position[2]);
+    const chunk = runtime.generator.generate({ chunkX: chunkX.chunk, chunkZ: chunkZ.chunk });
+
+    expect(chunk.voxels[voxelIndex(chunkX.local, kitchen!.position[1], chunkZ.local)]).not.toBe(0);
   });
 });
