@@ -26,6 +26,7 @@ interface Window {
     }> | null;
     getMetrics(): import("./contracts/runtime").RuntimeMetrics | null;
     getRendererDiagnostics(): import("./engine/voxelEngine").RendererDiagnostics | null;
+    focusActiveInteraction(): boolean;
     playAudioCaption(): string;
   };
 }

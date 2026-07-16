@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { createProceduralAudioController, type ProceduralAudioController } from "../audio";
 import type { LocalPreview } from "../app/localPreview";
 import type { TrustedDreamManifest } from "../dream";
-import { createVoxelEngine, type VoxelEngine } from "../engine/voxelEngine";
+import { cameraRotationToward, createVoxelEngine, type VoxelEngine } from "../engine/voxelEngine";
 import type { InteractiveEntityTarget } from "../engine/interaction";
 import {
   createDreamGuide,
@@ -430,6 +430,25 @@ export function DreamExperience({
         getQualityProfile: () => engine?.getQualityProfile() ?? null,
         getMetrics: () => engine?.getMetrics() ?? null,
         getRendererDiagnostics: () => engine?.getRendererDiagnostics() ?? null,
+        focusActiveInteraction: () => {
+          const target = getInteractiveEntities()[0];
+          if (!engine || !target) return false;
+          const player = engine.getPlayerPosition();
+          const current = engine.getViewRotation();
+          const desired = cameraRotationToward(
+            { x: player.x, y: player.y + 1.62, z: player.z },
+            target.position,
+          );
+          const yawDelta = Math.atan2(
+            Math.sin(desired.yaw - current.yaw),
+            Math.cos(desired.yaw - current.yaw),
+          );
+          const sensitivity = engine.getComfortSettings().mouseSensitivity;
+          const scale = 0.0022 * sensitivity;
+          engine.lookBy(-yawDelta / scale, (current.pitch - desired.pitch) / scale);
+          engine.refreshInteractionTarget();
+          return true;
+        },
         playAudioCaption: () => {
           const cueId = runtime.audio.cues[0]?.id;
           const caption = cueId

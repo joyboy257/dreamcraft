@@ -17,12 +17,12 @@ async function completeCurrentDream(page: Page): Promise<void> {
   await expect(page.getByLabel("Current objective")).toHaveAttribute("role", "status");
   await expect(page.getByLabel("Current objective")).toHaveAttribute("aria-live", "polite");
 
-  // The next interaction is valid only once the engine has acquired the beacon.
+  // The staging camera presents the guide first. Align through the engine's
+  // real look/target path before asserting the next physical interaction.
+  expect(await page.evaluate(() => window.__DREAMCRAFT_TEST__?.focusActiveInteraction() ?? false))
+    .toBe(true);
   await expect(page.locator(".dc-interaction-prompt")).toContainText("Awaken the Fragment", {
-    // This prompt is emitted from the render loop after the dialogue changes the
-    // active target. CI's software renderer can take longer than Playwright's
-    // default expectation while the product still remains responsive.
-    timeout: 15_000,
+    timeout: 5_000,
   });
   await page.keyboard.press("KeyE");
   await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
