@@ -405,6 +405,12 @@ Deliver:
 
 The candy-forest, flying-city, flooded-school nightmare, talking-moon teapot, lost-dog memory, and lottery-family celebration prompts feel mechanically and visually distinct rather than reskinned.
 
+**Current status (2026-07-16):** engineering-complete / independently recertified PASS.
+The deterministic six-dream eval proves unique mechanics, movement signatures,
+hero silhouettes, particles, audio moods, and physics fingerprints. Typecheck,
+lint, unit/integration tests, evals, production build, and Chromium E2E pass
+without live API calls. Evidence: `docs/15_G4_ENGINEERING_EVIDENCE.md`.
+
 ---
 
 ## M5 — Product experience and PWA
