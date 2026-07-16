@@ -77,6 +77,22 @@ describe("OpenAIResponsesGateway", () => {
     expect(JSON.stringify(capturedBody)).not.toContain("OPENAI_API_KEY");
   });
 
+  it("uses stronger bounded reasoning only for the director grounding stage", () => {
+    const body = buildOpenAIRequestBody({
+      kind: "director",
+      model: "gpt-5.6-terra",
+      dreamText: "A kitchen floated over a flooded school.",
+      intensity: "vivid",
+      requestId: "director-grounding",
+    });
+
+    expect(body).toMatchObject({
+      reasoning: { effort: "medium" },
+      max_output_tokens: 2_500,
+      store: false,
+    });
+  });
+
   it.each([
     [{ name: "AuthenticationError", status: 401, code: "invalid_api_key" }, "authentication", false],
     [{ name: "RateLimitError", status: 429, code: "insufficient_quota" }, "quota", false],
@@ -213,7 +229,7 @@ describe("OpenAIResponsesGateway", () => {
     const maximumOutputCost =
       (4_000 * tenPromptMaximumAttempts * 30) / 1_000_000;
 
-    expect(bytes).toBe(69_427);
-    expect(conservativeInputCost + maximumOutputCost).toBeLessThanOrEqual(9.35);
+    expect(bytes).toBe(70_349);
+    expect(conservativeInputCost + maximumOutputCost).toBeLessThanOrEqual(9.44);
   });
 });

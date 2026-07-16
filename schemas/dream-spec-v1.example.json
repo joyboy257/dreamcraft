@@ -16,23 +16,35 @@
       {
         "id": "anchor_forest",
         "concept": "candy-cane forest with licorice trees",
+        "sourcePhrase": "candy-cane forest with licorice trees",
         "role": "environment",
+        "representation": "structure",
+        "gameplayRole": "landmark",
         "importance": 5,
-        "nearSpawn": true
+        "nearSpawn": true,
+        "mustAppear": true
       },
       {
         "id": "anchor_guardian",
         "concept": "giant translucent gummy bear guardian",
+        "sourcePhrase": "giant translucent gummy bear guardian",
         "role": "character",
+        "representation": "entity",
+        "gameplayRole": "guide",
         "importance": 5,
-        "nearSpawn": true
+        "nearSpawn": true,
+        "mustAppear": true
       },
       {
         "id": "anchor_chest",
         "concept": "singing treasure chest",
+        "sourcePhrase": "singing treasure chest",
         "role": "object",
+        "representation": "prop",
+        "gameplayRole": "objective",
         "importance": 4,
-        "nearSpawn": true
+        "nearSpawn": true,
+        "mustAppear": true
       }
     ],
     "artDirection": {

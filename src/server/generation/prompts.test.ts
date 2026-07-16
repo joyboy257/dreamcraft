@@ -14,6 +14,8 @@ describe("DreamCraft runtime prompts", () => {
     });
 
     expect(prompt.instructions.startsWith(DREAMCRAFT_STABLE_PREFIX)).toBe(true);
+    expect(prompt.instructions).toContain("source phrase");
+    expect(prompt.instructions).toContain("decorative prose is never a substitute");
     expect(prompt.instructions).not.toContain(dreamText);
     expect(prompt.userInput).toContain("untrusted dream data");
     expect(prompt.userInput.endsWith(`${dreamText}\n</dream-data>`)).toBe(true);

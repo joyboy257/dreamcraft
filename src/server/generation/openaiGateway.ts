@@ -124,7 +124,7 @@ export function buildOpenAIRequestBody(
       },
       verbosity: "low",
     },
-    reasoning: { effort: "low" },
+    reasoning: { effort: input.kind === "director" ? "medium" : "low" },
     max_output_tokens: outputFormat.maxOutputTokens,
     prompt_cache_key: outputFormat.cacheKey,
     store: false,

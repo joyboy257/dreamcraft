@@ -39,8 +39,14 @@ export function compileRuntimeStaging(manifest: TrustedDreamManifest): RuntimeSt
   const fallbackAnchors = [0, 1, 2].map((index): SemanticAnchorStaging => ({
     anchorId: `runtime_fallback_${index}`,
     concept: "runtime staging",
+    sourcePhrase: "runtime fallback",
+    representation: "structure",
+    gameplayRole: "landmark",
+    importance: 1,
+    mustAppear: false,
     position: fallbackPosition(manifest, index),
     source: "fallback",
+    sourceId: null,
   }));
   const pool = [...anchors, ...fallbackAnchors];
   const guideAnchor = selectAnchor(pool, ["guide", "friend", "family", "dog", "character"], pool[0]!);
