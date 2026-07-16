@@ -11,6 +11,10 @@ const DREAMS = [
 ] as const;
 
 test("renders all six G4 gate dreams as distinct playable worlds", async ({ page }) => {
+  // This is a six-scenario visual regression: each scenario materializes a new
+  // world, enters it, and captures a canvas image. A 60s envelope gives slower
+  // CI renderers ten seconds per real world without changing any assertion.
+  test.setTimeout(60_000);
   const renderHashes: string[] = [];
   for (const dream of DREAMS) {
     await page.goto("/");

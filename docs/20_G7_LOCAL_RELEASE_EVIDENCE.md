@@ -74,11 +74,11 @@ audit all passed without a deployment or OpenAI request.
 | --- | --- |
 | Typecheck | Pass |
 | Lint | Pass, zero warnings |
-| Unit/integration | 49 files, 202/202 passed |
+| Unit/integration | 50 files, 204/204 passed |
 | Deployed-smoke validator | 4/4 passed |
 | Dream evals | 4 files, 6/6 passed |
-| Production build | Pass; JavaScript 980.52 kB raw / 271.31 kB gzip |
-| Chromium E2E | 9/9 passed, serialized |
+| Production build | Pass; JavaScript 981.62 kB raw / 271.80 kB gzip |
+| Chromium E2E | 9/9 passed, serialized, twice consecutively after CI repair |
 | Production PWA | 1/1 passed |
 | Pack validator | Pass |
 | Smoke/live/service-worker script syntax | Pass |
@@ -88,6 +88,29 @@ audit all passed without a deployment or OpenAI request.
 The raw bundle remains above Vite's 500 kB advisory, but the separately
 certified desktop/mobile runtime budgets pass. The advisory is recorded rather
 than hidden.
+
+## CI semantic-readiness repair
+
+GitHub run `29484083270` exposed three renderer-speed-sensitive E2E failures;
+the runtime performance contracts continued to pass and were not relaxed.
+
+- The awakened objective was incorrectly asserted through the transient aiming
+  prompt. The objective now has a polite live `status` semantic, while the
+  bootstrap flow waits for the real `Awaken the Fragment` interaction prompt
+  before issuing `E`.
+- The mobile interaction flow now waits for the resolved guide prompt and
+  verifies that the Interact control is the actual hit target before invoking a
+  normal click. It does not use forced clicks, retries, skips, or delay-based
+  synchronization.
+- The six-world screenshot regression now has a test-local 60-second envelope
+  (ten seconds per complete materialization/entry/capture scenario), rather
+  than the global 30-second single-scenario default. Visual distinctness and
+  all six captures remain mandatory.
+
+Verification after the repair: lint and typecheck passed; the full 9-test E2E
+suite passed twice consecutively (34.2 seconds each); unit/integration,
+deployed-smoke, evals, production build, production PWA, pack validation,
+service-worker syntax validation, and production dependency audit all passed.
 
 ## CI renderer attestation and empirical performance proof
 

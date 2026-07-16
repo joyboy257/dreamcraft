@@ -36,7 +36,12 @@ export function DreamHud({
       </header>
 
       {objective ? (
-        <section className="dc-objective" aria-label="Current objective">
+        <section
+          className="dc-objective"
+          aria-label="Current objective"
+          aria-live="polite"
+          role="status"
+        >
           <p className="dc-kicker">Remember</p>
           <strong>{objective.title}</strong>
           {objective.detail ? <span>{objective.detail}</span> : null}

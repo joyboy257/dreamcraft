@@ -13,10 +13,12 @@ async function completeCurrentDream(page: Page): Promise<void> {
   await expect(
     page.getByLabel("Current objective").getByText("Awaken the Fragment", { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("status").getByText("Awaken the Fragment", { exact: true }),
-  ).toBeVisible();
+  // Objective updates are announced independently of the transient aim prompt.
+  await expect(page.getByLabel("Current objective")).toHaveAttribute("role", "status");
+  await expect(page.getByLabel("Current objective")).toHaveAttribute("aria-live", "polite");
 
+  // The next interaction is valid only once the engine has acquired the beacon.
+  await expect(page.locator(".dc-interaction-prompt")).toContainText("Awaken the Fragment");
   await page.keyboard.press("KeyE");
   await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "The Fragment Holds" })).toBeVisible();

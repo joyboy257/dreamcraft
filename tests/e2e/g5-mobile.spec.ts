@@ -17,6 +17,9 @@ test("mobile controls move, look, and interact with the real dream runtime", asy
 
   await expect(page.getByRole("group", { name: "Touch game controls" })).toBeVisible();
   await expect(page.getByText(/rotate to landscape/i)).toBeVisible();
+  // The controls are usable only after the engine has resolved the guide target.
+  // This is a semantic readiness signal, not a timing delay.
+  await expect(page.getByText("Speak with Fragment Guide")).toBeVisible();
 
   const viewBefore = await page.evaluate(() => window.__DREAMCRAFT_TEST__?.getViewRotation());
   expect(viewBefore).toBeTruthy();
@@ -62,7 +65,17 @@ test("mobile controls move, look, and interact with the real dream runtime", asy
     clientY: 350,
   });
 
-  await page.getByRole("button", { name: "Interact" }).click();
+  const interact = page.getByRole("button", { name: "Interact" });
+  // Assert the real hit target before interacting. This catches stacking/input
+  // regressions without bypassing them with a forced click.
+  await expect.poll(() => interact.evaluate((button) => {
+    const bounds = button.getBoundingClientRect();
+    return document.elementFromPoint(
+      bounds.left + bounds.width / 2,
+      bounds.top + bounds.height / 2,
+    ) === button;
+  })).toBe(true);
+  await interact.click();
   await expect(page.getByRole("heading", { name: "Fragment Guide" })).toBeVisible();
   await page.getByRole("button", { name: /follow the dream/i }).click();
   await expect(page.getByRole("group", { name: "Touch game controls" })).toBeVisible();

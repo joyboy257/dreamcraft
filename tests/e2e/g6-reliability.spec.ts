@@ -50,7 +50,7 @@ test("keyboard, modal focus, comfort propagation, and audio captions remain acce
   await page.getByRole("button", { name: /step into the dream/i }).click();
 
   await expect(page.getByTestId("entry-scrim")).toHaveCount(0);
-  await expect(page.getByRole("status")).toContainText("Speak with Fragment Guide");
+  await expect(page.locator(".dc-interaction-prompt")).toContainText("Speak with Fragment Guide");
   await page.keyboard.press("KeyE");
   const dialogue = page.getByRole("dialog", { name: "Fragment Guide" });
   await expect(dialogue).toBeVisible();
