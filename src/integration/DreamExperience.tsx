@@ -28,7 +28,7 @@ import {
   MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
-import { createDreamBeacon, createSemanticWorldMarkers } from "./dummyWorldObjects";
+import { createSemanticObjective, createSemanticWorldMarkers } from "./dummyWorldObjects";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 import {
   PLAY_GRAPH_INTERACTION_ID,
@@ -158,23 +158,26 @@ export function DreamExperience({
     const guideRoot = new THREE.Group();
     guideRoot.name = "dream-guide-staging";
     guideRoot.add((proceduralGuide ?? legacyGuide)!.root);
-    const entityRoots = new Map<string, THREE.Group>();
-    if (runtime.heroEntity) entityRoots.set(runtime.heroEntity.id, guideRoot);
-    const auxiliaryEntities = manifest.spec.entities
-      .filter(({ id }) => id !== runtime.heroEntity?.id)
-      .map((entity) => {
+    const entityRoots = new Map<string, THREE.Group[]>();
+    if (runtime.heroEntity) entityRoots.set(runtime.heroEntity.id, [guideRoot]);
+    const auxiliaryEntities = runtime.entityInstances
+      .filter(({ entityId }) => entityId !== runtime.heroEntity?.id)
+      .map((instance) => {
         const actor = createProceduralEntity({
-          id: entity.id,
-          visual: entity.visual,
-          role: entity.role,
+          id: instance.instanceId,
+          visual: instance.entity.visual,
+          role: instance.entity.role,
           seed: preview.seed,
           intendedDistance: 12,
         });
         const stagingRoot = new THREE.Group();
-        stagingRoot.name = `staged-${entity.id}`;
-        stagingRoot.visible = false;
+        stagingRoot.name = `staged-${instance.instanceId}`;
+        stagingRoot.visible = instance.visibleAtEntry;
+        stagingRoot.position.set(...instance.position);
         stagingRoot.add(actor.root);
-        entityRoots.set(entity.id, stagingRoot);
+        const roots = entityRoots.get(instance.entityId) ?? [];
+        roots.push(stagingRoot);
+        entityRoots.set(instance.entityId, roots);
         return { actor, stagingRoot };
       });
     const updateGuide = (elapsedSeconds: number, deltaSeconds: number): void => {
@@ -190,7 +193,10 @@ export function DreamExperience({
         legacyGuide?.setState(state);
       }
     };
-    const beacon = createDreamBeacon();
+    const objectiveVisual = createSemanticObjective(
+      runtime.staging.objectiveAnchor,
+      runtime.heroEntity?.visual.palette.accent ?? 0xf4d58d,
+    );
     const markers = createSemanticWorldMarkers(
       runtime.staging.landmark,
       runtime.staging.objectivePath,
@@ -242,7 +248,7 @@ export function DreamExperience({
         if (effect.kind === "play_audio_cue") {
           setToast(audio.playCue(effect.cueId).textAlternative);
         }
-        if (effect.kind === "transform_structure") beacon.setAwakened(true);
+        if (effect.kind === "transform_structure") objectiveVisual.setAwakened(true);
         if (effect.kind === "apply_physics_transition") engine?.applyPhysicsTransition(effect.transitionId);
         if (effect.kind === "change_atmosphere") {
           const patch = runtime.atmosphere.patches.find(({ id }) => id === effect.patchId);
@@ -251,10 +257,11 @@ export function DreamExperience({
         if (effect.kind === "set_entity_state") {
           bus.emit({ type: "entity_state_changed", entityId: effect.entityId, state: effect.state });
         }
-        if (effect.kind === "move_entity") entityRoots.get(effect.entityId)?.position.set(...effect.destination);
+        if (effect.kind === "move_entity") {
+          for (const root of entityRoots.get(effect.entityId) ?? []) root.position.set(...effect.destination);
+        }
         if (effect.kind === "spawn_entity") {
-          const root = entityRoots.get(effect.entityId);
-          if (root) {
+          for (const root of entityRoots.get(effect.entityId) ?? []) {
             root.visible = true;
             root.position.set(...effect.position);
           }
@@ -269,7 +276,7 @@ export function DreamExperience({
       const physicalTarget = graph.pendingConditions
         .map((condition) => objectiveWorldTarget(condition, manifest.spec.world.zones))
         .find((target) => target !== null) ?? null;
-      if (physicalTarget) beacon.root.position.set(...physicalTarget);
+      if (physicalTarget) objectiveVisual.root.position.set(...physicalTarget);
 
       if (arc.getSnapshot().phase !== "awaken_beacon") return;
       const deferredDialogueId = deferredDialogueIds.shift();
@@ -329,7 +336,7 @@ export function DreamExperience({
           gatedInteractionIds.has(condition.targetId) &&
           !graph.unlockedInteractionIds.includes(condition.targetId)
         ) return [];
-        const position = condition.kind === "entity_state" ? guideRoot.position : beacon.root.position;
+        const position = condition.kind === "entity_state" ? guideRoot.position : objectiveVisual.root.position;
         return [{
           id: PLAY_GRAPH_INTERACTION_ID,
           position: {
@@ -369,7 +376,7 @@ export function DreamExperience({
         if (event) recordPlayGraphEvent(event);
       },
       getInteractiveEntities,
-      sceneObjects: [guideRoot, beacon.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
+      sceneObjects: [guideRoot, objectiveVisual.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
       onFixedUpdate: (elapsedSeconds, deltaSeconds, playerPosition) => {
         updateGuide(elapsedSeconds, deltaSeconds);
         if (arc.getSnapshot().phase !== "awaken_beacon") return;
@@ -415,7 +422,7 @@ export function DreamExperience({
       bus.clear();
       (proceduralGuide ?? legacyGuide)?.dispose();
       for (const { actor } of auxiliaryEntities) actor.dispose();
-      beacon.dispose();
+      objectiveVisual.dispose();
       markers.dispose();
       busRef.current = null;
       arcRef.current = null;
@@ -464,10 +471,10 @@ export function DreamExperience({
     const guideZ = Math.floor(runtime.staging.guide[2]);
     const guideSurface = engine.world.getSurfaceY(guideX, guideZ) ?? 6;
     guideRoot.position.set(guideX + 0.5, guideSurface + 0.2, guideZ + 0.5);
-    const beaconX = Math.floor(runtime.staging.objective[0]);
-    const beaconZ = Math.floor(runtime.staging.objective[2]);
-    const beaconSurface = engine.world.getSurfaceY(beaconX, beaconZ) ?? guideSurface;
-    beacon.root.position.set(beaconX + 0.5, beaconSurface + 0.2, beaconZ + 0.5);
+    const objectiveX = Math.floor(runtime.staging.objective[0]);
+    const objectiveZ = Math.floor(runtime.staging.objective[2]);
+    const objectiveSurface = engine.world.getSurfaceY(objectiveX, objectiveZ) ?? guideSurface;
+    objectiveVisual.root.position.set(objectiveX + 0.5, objectiveSurface + 0.2, objectiveZ + 0.5);
 
     const syncSnapshot = (): void => setSnapshot(arc.getSnapshot());
     unsubscribers.push(
@@ -504,7 +511,7 @@ export function DreamExperience({
         syncSnapshot();
       }),
       bus.on("world_transformation_started", (event) => {
-        beacon.setAwakened(true);
+        objectiveVisual.setAwakened(true);
         transformationDurationMs = Math.max(0, Math.min(5_000, event.transformation.durationMs));
         setEndingRevealed(false);
         const patch = runtime.atmosphere.patches.find(
@@ -564,7 +571,7 @@ export function DreamExperience({
       bus.clear();
       (proceduralGuide ?? legacyGuide)?.dispose();
       for (const { actor } of auxiliaryEntities) actor.dispose();
-      beacon.dispose();
+      objectiveVisual.dispose();
       markers.dispose();
       void audio.dispose();
       engineRef.current = null;

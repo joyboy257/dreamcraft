@@ -15,6 +15,7 @@ import {
 import { sampleSurfaceHeight, type DreamSpecV1, type TrustedDreamManifest } from "../dream";
 import { compileDreamAtmosphere, type DreamAtmospherePlan } from "./dreamAtmosphere";
 import { compileRuntimeStaging, type RuntimeStaging } from "./semanticStaging";
+import { compileEntityInstances, type RuntimeEntityInstance } from "./entityMaterializer";
 import {
   compileVoxelStructures,
   materializeVoxelStructures,
@@ -39,6 +40,7 @@ export interface AdaptedDreamRuntime {
   physicsProfile: RuntimePhysicsProfile;
   heroEntity: DreamSpecV1["entities"][number] | null;
   voxelStructures: readonly CompiledVoxelStructure[];
+  entityInstances: readonly RuntimeEntityInstance[];
 }
 
 function colorChannels(color: number): readonly [number, number, number] {
@@ -79,6 +81,11 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     spawn: manifest.spawn,
     surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
   });
+  const entityInstances = compileEntityInstances(
+    manifest,
+    voxelStructures,
+    (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
+  );
   const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
   const fallbackEnding = spec.playGraph.endings[0]!;
   const sourceDialogue = hero
@@ -112,7 +119,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     },
     transformation: {
       id: `${beat.id}-transformation`,
-      structureId: DREAM_BEACON_ID,
+      structureId: staging.objectiveAnchor.sourceId ?? DREAM_BEACON_ID,
       structureState: "complete",
       physicsTransitionId: spec.physics.transitions[0]?.id ?? "stable-transition",
       atmospherePatchId: spec.atmosphere.patches[0]?.id ?? "stable-atmosphere",
@@ -265,5 +272,6 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     physicsProfile: profile,
     heroEntity: hero ? structuredClone(hero) : null,
     voxelStructures,
+    entityInstances,
   };
 }

@@ -6,6 +6,8 @@ export interface RuntimeStaging {
   landmark: Vec3;
   cameraTarget: Vec3;
   objectivePath: readonly [Vec3, Vec3, Vec3];
+  objectiveAnchor: SemanticAnchorStaging;
+  cameraAnchor: SemanticAnchorStaging;
   heroScale: number;
 }
 
@@ -19,24 +21,8 @@ function fallbackPosition(manifest: TrustedDreamManifest, index: number): Vec3 {
   ];
 }
 
-function selectAnchor(
-  anchors: readonly SemanticAnchorStaging[],
-  terms: readonly string[],
-  fallback: SemanticAnchorStaging,
-): SemanticAnchorStaging {
-  return anchors.find(({ anchorId, concept }) => {
-    const text = `${anchorId} ${concept}`.toLowerCase();
-    return terms.some((term) => text.includes(term));
-  }) ?? fallback;
-}
-
-function copy(position: Vec3): Vec3 {
-  return [...position] as Vec3;
-}
-
-export function compileRuntimeStaging(manifest: TrustedDreamManifest): RuntimeStaging {
-  const anchors = manifest.anchorStaging;
-  const fallbackAnchors = [0, 1, 2].map((index): SemanticAnchorStaging => ({
+function fallbackAnchor(manifest: TrustedDreamManifest, index: number): SemanticAnchorStaging {
+  return {
     anchorId: `runtime_fallback_${index}`,
     concept: "runtime staging",
     sourcePhrase: "runtime fallback",
@@ -47,21 +33,59 @@ export function compileRuntimeStaging(manifest: TrustedDreamManifest): RuntimeSt
     position: fallbackPosition(manifest, index),
     source: "fallback",
     sourceId: null,
-  }));
-  const pool = [...anchors, ...fallbackAnchors];
-  const guideAnchor = selectAnchor(pool, ["guide", "friend", "family", "dog", "character"], pool[0]!);
-  const objectiveAnchor = selectAnchor(pool, ["beacon", "objective", "stage", "home", "heart"], pool[1]!);
-  const landmarkAnchor = selectAnchor(pool, ["landscape", "landmark", "city", "school", "forest"], pool[2]!);
-  // The engine opens facing negative Z. Keep the first two readable interaction
-  // anchors inside that camera corridor while preserving authored anchor identity
-  // for the landmark and path semantics.
-  const guide: Vec3 = [manifest.spawn[0], guideAnchor.position[1], manifest.spawn[2] - 4];
-  const objective: Vec3 = [manifest.spawn[0], objectiveAnchor.position[1], manifest.spawn[2] - 5.75];
-  const landmark: Vec3 = [manifest.spawn[0], landmarkAnchor.position[1], manifest.spawn[2] - 10];
+  };
+}
+
+function copy(position: Vec3): Vec3 {
+  return [...position] as Vec3;
+}
+
+function priority(anchor: SemanticAnchorStaging): number {
+  return anchor.importance * 10
+    + (anchor.mustAppear ? 5 : 0)
+    + (anchor.source === "fallback" ? 0 : 1);
+}
+
+function selectAnchor(
+  anchors: readonly SemanticAnchorStaging[],
+  predicate: (anchor: SemanticAnchorStaging) => boolean,
+  fallback: SemanticAnchorStaging,
+): SemanticAnchorStaging {
+  return anchors
+    .filter(predicate)
+    .sort((left, right) => priority(right) - priority(left))[0] ?? fallback;
+}
+
+export function compileRuntimeStaging(manifest: TrustedDreamManifest): RuntimeStaging {
+  const fallbacks = [0, 1, 2].map((index) => fallbackAnchor(manifest, index));
+  const anchors = [...manifest.anchorStaging, ...fallbacks];
+  const guideAnchor = selectAnchor(
+    anchors,
+    ({ gameplayRole, representation }) => gameplayRole === "guide" || representation === "entity",
+    fallbacks[0]!,
+  );
+  const objectiveAnchor = selectAnchor(
+    anchors,
+    ({ gameplayRole, representation }) => gameplayRole === "objective" || representation === "objective" || representation === "prop",
+    fallbacks[1]!,
+  );
+  const landmarkAnchor = selectAnchor(
+    anchors,
+    ({ gameplayRole }) => gameplayRole === "landmark",
+    objectiveAnchor,
+  );
+  const cameraAnchor = selectAnchor(
+    anchors,
+    ({ source }) => source !== "fallback",
+    landmarkAnchor,
+  );
+  const guide = copy(guideAnchor.position);
+  const objective = copy(objectiveAnchor.position);
+  const landmark = copy(landmarkAnchor.position);
   const midpoint: Vec3 = [
-    (guide[0] + objective[0]) / 2,
-    Math.max(guide[1], objective[1]),
-    (guide[2] + objective[2]) / 2,
+    (manifest.spawn[0] + objective[0]) / 2,
+    Math.max(manifest.spawn[1], objective[1]),
+    (manifest.spawn[2] + objective[2]) / 2,
   ];
   const hero = manifest.spec.entities.find(({ role }) => role === "hero") ?? manifest.spec.entities[0];
 
@@ -69,8 +93,10 @@ export function compileRuntimeStaging(manifest: TrustedDreamManifest): RuntimeSt
     guide,
     objective,
     landmark,
-    cameraTarget: [landmark[0], landmark[1] + 2, landmark[2]],
+    cameraTarget: [cameraAnchor.position[0], cameraAnchor.position[1] + 2, cameraAnchor.position[2]],
     objectivePath: [copy(manifest.spawn), midpoint, copy(objective)],
+    objectiveAnchor,
+    cameraAnchor,
     heroScale: Math.min(3, Math.max(0.5, hero?.visual.scale ?? 1)),
   };
 }
