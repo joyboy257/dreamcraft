@@ -6,9 +6,19 @@ interface HeaderRule {
   headers: Array<{ key: string; value: string }>;
 }
 
+interface FunctionRule {
+  maxDuration: number;
+  supportsCancellation?: boolean;
+}
+
 const config = JSON.parse(
   readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"),
-) as { headers: HeaderRule[] };
+) as {
+  buildCommand: string;
+  outputDirectory: string;
+  functions: Record<string, FunctionRule>;
+  headers: HeaderRule[];
+};
 
 function headersFor(source: string): Map<string, string> {
   const rule = config.headers.find((candidate) => candidate.source === source);
@@ -40,5 +50,14 @@ describe("Vercel release security headers", () => {
     expect(headers.get("referrer-policy")).toBe("no-referrer");
     expect(headers.get("cross-origin-opener-policy")).toBe("same-origin");
     expect(headersFor("/api/(.*)").get("cache-control")).toBe("no-store");
+  });
+
+  it("keeps the Vite output and both serverless functions explicitly bounded", () => {
+    expect(config.buildCommand).toBe("pnpm build");
+    expect(config.outputDirectory).toBe("dist");
+    expect(config.functions).toEqual({
+      "api/health.ts": { maxDuration: 5 },
+      "api/dream.ts": { maxDuration: 30, supportsCancellation: true },
+    });
   });
 });

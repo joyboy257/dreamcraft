@@ -551,6 +551,17 @@ Prepare project description, category recommendation, repository URL placeholder
 
 The public deployment passes incognito, second-device, slow-network, and API-disabled smoke checks. The repository and submission package are judge-ready.
 
+**Current status (2026-07-16): engineering-complete / preview-proof-pending;
+Gate G7 is not complete.** Gate G6 is synchronized at `112d3da`. Terra returned
+PASS for the G7 release-security review, and Sol certified the complete local
+candidate through the full serialized release matrix. Health/smoke/CI,
+same-origin enforcement, repository/judge/demo readiness, and exact rollback
+instructions are complete locally. No Vercel project has been created/linked,
+no preview or production deployment exists, no OpenAI request was made, and the
+live proof remains separately locked. Evidence:
+`docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`. Next: synchronize this candidate, then
+perform generation-disabled preview edge/device verification.
+
 ---
 
 # 48-hour execution shape

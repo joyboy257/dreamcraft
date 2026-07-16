@@ -24,6 +24,21 @@ if (process.env.G3_LIVE_CONFIRM !== CONFIRMATION) {
 const endpoint =
   process.env.DREAMCRAFT_LIVE_ENDPOINT ??
   "http://127.0.0.1:5173/api/dream";
+const endpointUrl = new URL(endpoint);
+const endpointIsLoopback = endpointUrl.hostname === "localhost"
+  || endpointUrl.hostname === "127.0.0.1"
+  || endpointUrl.hostname === "[::1]";
+if (
+  (endpointUrl.protocol !== "https:" && !(endpointUrl.protocol === "http:" && endpointIsLoopback))
+  || endpointUrl.username
+  || endpointUrl.password
+  || endpointUrl.pathname !== "/api/dream"
+  || endpointUrl.search
+  || endpointUrl.hash
+) {
+  throw new Error("The live endpoint must be a credential-free HTTPS /api/dream URL or a loopback development URL.");
+}
+const endpointOrigin = endpointUrl.origin;
 const evidence = [];
 let inputTokens = 0;
 let outputTokens = 0;
@@ -35,7 +50,10 @@ async function postWithRateLimit(body) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        origin: endpointOrigin,
+      },
       body: JSON.stringify(body),
     });
     if (response.status !== 429 || attempt === 1) return response;

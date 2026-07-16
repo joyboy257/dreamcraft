@@ -4,6 +4,12 @@ import { DreamSpecV1Schema } from "../dream/schema";
 import { createDreamRoute } from "./dreamRoute";
 import { DreamGenerationService, type StructuredModelGateway } from "./generation/service";
 
+function sameOriginRequest(url: string, init: RequestInit = {}): Request {
+  const headers = new Headers(init.headers);
+  headers.set("origin", new URL(url).origin);
+  return new Request(url, { ...init, headers });
+}
+
 describe("Dream generation HTTP route", () => {
   it("returns a playable deterministic fragment without invoking the SDK when the API is disabled", async () => {
     let gatewayCalls = 0;
@@ -30,7 +36,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "server-request-1",
       rateLimit: async () => ({ allowed: true }),
     });
-    const request = new Request("http://dreamcraft.test/api/dream", {
+    const request = sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -58,6 +64,64 @@ describe("Dream generation HTTP route", () => {
     });
   });
 
+  it("rejects foreign and missing origins before rate limiting, body parsing, or generation", async () => {
+    let gatewayCalls = 0;
+    let rateLimitCalls = 0;
+    const service = new DreamGenerationService({
+      gateway: {
+        generate: async () => {
+          gatewayCalls += 1;
+          return { type: "failure", category: "unknown", retryable: false };
+        },
+      },
+      liveEnabled: true,
+      models: { sol: "gpt-5.6-sol", terra: "gpt-5.6-terra", luna: "gpt-5.6-luna" },
+      timeoutMs: 1_000,
+    });
+    const route = createDreamRoute({
+      service,
+      maximumBodyBytes: 8_192,
+      maximumDreamCharacters: 1_200,
+      createRequestId: () => "origin-rejected-request",
+      rateLimit: async () => {
+        rateLimitCalls += 1;
+        return { allowed: true };
+      },
+    });
+    const requestBody = JSON.stringify({
+      dreamText: "A moonlit library unfolded into a garden of blue lanterns.",
+      intensity: "vivid",
+      strategy: "single-sol",
+      clientRequestId: "origin-test",
+    });
+
+    const responses = await Promise.all([
+      route(new Request("https://dreamcraft.test/api/dream", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://hostile.example",
+        },
+        body: requestBody,
+      })),
+      route(new Request("https://dreamcraft.test/api/dream", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: requestBody,
+      })),
+    ]);
+
+    expect(responses.map(({ status }) => status)).toEqual([403, 403]);
+    for (const response of responses) {
+      expect(response.headers.get("access-control-allow-origin")).toBeNull();
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: "origin_not_allowed" },
+      });
+    }
+    expect(rateLimitCalls).toBe(0);
+    expect(gatewayCalls).toBe(0);
+  });
+
   it("rejects oversized bodies before generation", async () => {
     let gatewayCalls = 0;
     const service = new DreamGenerationService({
@@ -78,7 +142,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "oversized-request",
       rateLimit: async () => ({ allowed: true }),
     });
-    const response = await route(new Request("http://dreamcraft.test/api/dream", {
+    const response = await route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ dreamText: "x".repeat(500) }),
@@ -108,7 +172,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "strict-request",
       rateLimit: async () => ({ allowed: true }),
     });
-    const response = await route(new Request("http://dreamcraft.test/api/dream", {
+    const response = await route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -145,7 +209,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "limited-request",
       rateLimit: async () => ({ allowed: false, retryAfterSeconds: 30 }),
     });
-    const response = await route(new Request("http://dreamcraft.test/api/dream", {
+    const response = await route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: "not even parsed",
@@ -176,7 +240,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "stream-request",
       rateLimit: async () => ({ allowed: true }),
     });
-    const response = await route(new Request("http://dreamcraft.test/api/dream", {
+    const response = await route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: {
         accept: "application/x-ndjson",
@@ -229,7 +293,7 @@ describe("Dream generation HTTP route", () => {
       rateLimit: async () => ({ allowed: true }),
     });
     const controller = new AbortController();
-    const pending = route(new Request("http://dreamcraft.test/api/dream", {
+    const pending = route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -272,7 +336,7 @@ describe("Dream generation HTTP route", () => {
       createRequestId: () => "normalized-request",
       rateLimit: async () => ({ allowed: true }),
     });
-    await route(new Request("http://dreamcraft.test/api/dream", {
+    await route(sameOriginRequest("http://dreamcraft.test/api/dream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -311,18 +375,18 @@ describe("Dream generation HTTP route", () => {
       rateLimit: async () => ({ allowed: true }),
     });
     const responses = await Promise.all([
-      route(new Request("http://dreamcraft.test/api/dream", { method: "GET" })),
-      route(new Request("http://dreamcraft.test/api/dream", {
+      route(sameOriginRequest("http://dreamcraft.test/api/dream", { method: "GET" })),
+      route(sameOriginRequest("http://dreamcraft.test/api/dream", {
         method: "POST",
         headers: { "content-type": "text/plain" },
         body: "not json",
       })),
-      route(new Request("http://dreamcraft.test/api/dream", {
+      route(sameOriginRequest("http://dreamcraft.test/api/dream", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: "{broken",
       })),
-      route(new Request("http://dreamcraft.test/api/dream", {
+      route(sameOriginRequest("http://dreamcraft.test/api/dream", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -332,7 +396,7 @@ describe("Dream generation HTTP route", () => {
           clientRequestId: "short",
         }),
       })),
-      route(new Request("http://dreamcraft.test/api/dream", {
+      route(sameOriginRequest("http://dreamcraft.test/api/dream", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({

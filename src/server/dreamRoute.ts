@@ -97,6 +97,16 @@ function safeRequestId(value: string): string {
   return normalized || "dreamcraft-request";
 }
 
+function hasExactSameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try {
+    return origin === new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
 async function readBoundedBody(
   request: Request,
   maximumBytes: number,
@@ -155,6 +165,14 @@ export function createDreamRoute(
         405,
         requestId,
         { allow: "POST" },
+      );
+    }
+    if (!hasExactSameOrigin(request)) {
+      finish("rejected", 403, "origin_not_allowed");
+      return jsonResponse(
+        { error: { code: "origin_not_allowed", message: "This dream request must come from the DreamCraft page." } },
+        403,
+        requestId,
       );
     }
     const contentType = request.headers.get("content-type") ?? "";

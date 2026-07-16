@@ -11,7 +11,10 @@ describe("createDreamHandler safety gate", () => {
     const response = await handler(
       new Request("http://dreamcraft.test/api/dream", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          origin: "http://dreamcraft.test",
+        },
         body: JSON.stringify({
           dreamText: "A silent library grew wings above a field of lanterns.",
           intensity: "vivid",

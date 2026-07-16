@@ -3,6 +3,9 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "functions": {
+    "api/health.ts": {
+      "maxDuration": 5
+    },
     "api/dream.ts": {
       "maxDuration": 30,
       "supportsCancellation": true

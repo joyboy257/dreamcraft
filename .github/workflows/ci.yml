@@ -1,0 +1,79 @@
+name: DreamCraft CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dreamcraft-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      DREAMCRAFT_OPENAI_ENABLED: "false"
+      DREAMCRAFT_ENABLE_DIRECTOR_PIPELINE: "false"
+      OPENAI_API_KEY: ""
+      G3_LIVE_CONFIRM: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Enable pinned pnpm through Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.13.0 --activate
+
+      - name: Install dependencies from lockfile
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Install Chromium runtime
+        run: corepack pnpm exec playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: corepack pnpm typecheck
+
+      - name: Lint
+        run: corepack pnpm lint
+
+      - name: Unit and integration tests
+        run: corepack pnpm test
+
+      - name: Deployed smoke validator tests
+        run: corepack pnpm test:smoke-deployed
+
+      - name: Dream evals
+        run: corepack pnpm eval
+
+      - name: Production build
+        run: corepack pnpm build
+
+      - name: Chromium end-to-end tests
+        run: corepack pnpm test:e2e
+
+      - name: Production PWA offline test
+        run: corepack pnpm exec playwright test --config playwright.pwa.config.ts
+
+      - name: Validate repository pack
+        run: bash scripts/validate-pack.sh
+
+      - name: Validate service-worker syntax
+        run: node --check public/sw.js
+
+      - name: Audit production dependencies
+        run: corepack pnpm audit --prod --audit-level high
