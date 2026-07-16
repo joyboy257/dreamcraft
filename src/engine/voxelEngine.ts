@@ -87,6 +87,7 @@ export interface VoxelEngine {
   dispose(): void;
   setControl(control: VoxelControl, pressed: boolean): void;
   setInputEnabled(enabled: boolean): void;
+  refreshInteractionTarget(): void;
   lookBy(deltaX: number, deltaY: number): void;
   setFieldOfView(fieldOfView: number): void;
   setMouseSensitivity(sensitivity: number): void;
@@ -636,6 +637,11 @@ export function createVoxelEngine(
     }
   }
 
+  function refreshInteractionTarget(): void {
+    if (disposed) return;
+    updateTarget();
+  }
+
   function getRendererDiagnostics(): RendererDiagnostics {
     const context = renderer.getContext();
     const debugInfo = context.getExtension("WEBGL_debug_renderer_info");
@@ -799,6 +805,7 @@ export function createVoxelEngine(
     pause,
     setInputEnabled,
     setControl,
+    refreshInteractionTarget,
     lookBy,
     setFieldOfView,
     setMouseSensitivity,

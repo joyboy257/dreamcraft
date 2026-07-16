@@ -622,6 +622,9 @@ export function DreamExperience({
     setPaused(false);
     engineRef.current?.setInputEnabled(true);
     engineRef.current?.start();
+    // Dialogue can change the active target while rendering is paused. Refresh
+    // the cue before the next frame so the resumed world is immediately usable.
+    engineRef.current?.refreshInteractionTarget();
     if (canvasRef.current) requestCanvasPointerLock(canvasRef.current);
   };
 
