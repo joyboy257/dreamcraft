@@ -349,7 +349,10 @@ export function DreamExperience({
             y: position.y + 1.55,
             z: position.z,
           },
-          radius: 1.75,
+          // Semantic objectives can legitimately be farther from spawn than
+          // the legacy corridor target; this keeps a visible, authored target
+          // discoverable within the engine's fixed eight-unit interaction reach.
+          radius: 3,
           prompt: graph.activeBeat?.title ?? runtime.story.awakenObjective.title,
         }];
       }

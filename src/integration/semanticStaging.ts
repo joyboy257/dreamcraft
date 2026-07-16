@@ -43,7 +43,10 @@ function copy(position: Vec3): Vec3 {
 function priority(anchor: SemanticAnchorStaging): number {
   return anchor.importance * 10
     + (anchor.mustAppear ? 5 : 0)
-    + (anchor.source === "fallback" ? 0 : 1);
+    + (anchor.source === "fallback" ? 0 : 1)
+    // An entry guide is the most readable opening anchor: facing it preserves
+    // the first interaction without moving any authored positions.
+    + (anchor.gameplayRole === "guide" ? 15 : 0);
 }
 
 function selectAnchor(

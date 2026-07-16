@@ -21,6 +21,7 @@ describe("compileRuntimeStaging", () => {
     expect(staging.guide).toEqual(manifest.anchorStaging.find(({ anchorId }) => anchorId === "anchor_guide")?.position);
     expect(staging.objective).toEqual(manifest.anchorStaging.find(({ anchorId }) => anchorId === "anchor_beacon")?.position);
     expect(staging.objectiveAnchor.anchorId).toBe("anchor_beacon");
+    expect(staging.cameraAnchor.anchorId).toBe("anchor_guide");
     for (const position of [staging.guide, staging.objective, staging.landmark]) {
       expect(Math.hypot(position[0] - manifest.spawn[0], position[2] - manifest.spawn[2]))
         .toBeLessThanOrEqual(28);
