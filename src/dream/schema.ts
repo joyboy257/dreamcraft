@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { STRUCTURAL_LIMITS } from "./limits";
+import { STRUCTURAL_LIMITS } from "./limits.js";
 
 const finite = z.number().finite();
 const nonNegative = finite.nonnegative();

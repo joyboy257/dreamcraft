@@ -1,5 +1,5 @@
-import { DREAM_LIMITS } from "./limits";
-import type { DreamCondition, DreamIssue, DreamSpecV1 } from "./schema";
+import { DREAM_LIMITS } from "./limits.js";
+import type { DreamCondition, DreamIssue, DreamSpecV1 } from "./schema.js";
 
 type GameEffect = DreamSpecV1["playGraph"]["beats"][number]["onStart"][number];
 

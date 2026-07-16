@@ -6,14 +6,14 @@ import {
   type DreamGenerationProgressEvent,
   type DreamGenerationProgressListener,
   type GenerationTokenUsage,
-} from "../../dream/provider";
+} from "../../dream/provider.js";
 import {
   applyDreamEnrichmentPatch,
   DreamBlueprintSchema,
   DreamEnrichmentPatchSchema,
-} from "../../dream/enrichment";
-import { sanitizeDreamSpec } from "../../dream/sanitizer";
-import type { DreamIssue, DreamSpecV1 } from "../../dream/schema";
+} from "../../dream/enrichment.js";
+import { sanitizeDreamSpec } from "../../dream/sanitizer.js";
+import type { DreamIssue, DreamSpecV1 } from "../../dream/schema.js";
 
 export interface GenerationModels {
   sol: string;

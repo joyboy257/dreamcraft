@@ -1,8 +1,8 @@
-import { readServerGenerationConfig } from "./config";
+import { readServerGenerationConfig } from "./config.js";
 import {
   createHealthRoute,
   resolveSafeVersionIdentifier,
-} from "./healthRoute";
+} from "./healthRoute.js";
 
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
 

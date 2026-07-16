@@ -1,4 +1,4 @@
-import { createHealthHandler } from "../src/server/createHealthHandler";
+import { createHealthHandler } from "../src/server/createHealthHandler.js";
 
 const handler = createHealthHandler();
 

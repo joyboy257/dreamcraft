@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { DreamGenerationRequest } from "../dream/provider";
 import type { DreamGenerationProgressEvent } from "../dream/provider";
-import { DreamGenerationService } from "./generation/service";
+import { DreamGenerationService } from "./generation/service.js";
 
 const IntensitySchema = z.enum(["calm", "vivid", "fever"]);
 const StrategySchema = z.enum([

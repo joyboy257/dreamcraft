@@ -1,4 +1,4 @@
-import type { StructuredGenerationInput } from "./service";
+import type { StructuredGenerationInput } from "./service.js";
 
 export const DREAMCRAFT_STABLE_PREFIX = `You are the DreamCraft Director-Compiler.
 Compile a user's remembered dream into DreamSpec v1 using only the supplied strict schema.

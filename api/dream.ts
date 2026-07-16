@@ -1,4 +1,4 @@
-import { createDreamHandler } from "../src/server/createDreamHandler";
+import { createDreamHandler } from "../src/server/createDreamHandler.js";
 
 const handler = createDreamHandler();
 

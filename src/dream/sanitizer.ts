@@ -1,12 +1,12 @@
-import { DREAM_LIMITS } from "./limits";
+import { DREAM_LIMITS } from "./limits.js";
 import {
   DreamSpecV1Schema,
   type DreamCondition,
   type DreamIssue,
   type DreamSpecV1,
   type Vec3,
-} from "./schema";
-import { validateDreamSpecReferences } from "./validation";
+} from "./schema.js";
+import { validateDreamSpecReferences } from "./validation.js";
 
 export type DreamSanitizeResult =
   | { success: true; spec: DreamSpecV1; issues: DreamIssue[] }

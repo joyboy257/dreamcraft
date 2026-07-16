@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { DREAM_LIMITS } from "./limits";
-import { sanitizeDreamSpec } from "./sanitizer";
-import { DreamSpecV1Schema, type DreamSpecV1 } from "./schema";
+import { DREAM_LIMITS } from "./limits.js";
+import { sanitizeDreamSpec } from "./sanitizer.js";
+import { DreamSpecV1Schema, type DreamSpecV1 } from "./schema.js";
 
 const boundedText = z.string().trim().min(1).max(DREAM_LIMITS.textLength);
 

@@ -5,14 +5,14 @@ import { z } from "zod";
 import {
   DreamBlueprintSchema,
   DreamEnrichmentPatchSchema,
-} from "../../dream/enrichment";
-import { DreamSpecV1Schema } from "../../dream/schema";
-import { buildDreamPrompt } from "./prompts";
+} from "../../dream/enrichment.js";
+import { DreamSpecV1Schema } from "../../dream/schema.js";
+import { buildDreamPrompt } from "./prompts.js";
 import type {
   StructuredGenerationInput,
   StructuredModelGateway,
   StructuredModelOutcome,
-} from "./service";
+} from "./service.js";
 
 interface ParsedOpenAIResponse {
   status?: string | undefined;

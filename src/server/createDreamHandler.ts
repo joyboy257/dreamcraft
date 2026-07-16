@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { readServerGenerationConfig } from "./config";
-import { createDreamRoute } from "./dreamRoute";
-import { createOpenAIResponsesGateway } from "./generation/openaiGateway";
+import { readServerGenerationConfig } from "./config.js";
+import { createDreamRoute } from "./dreamRoute.js";
+import { createOpenAIResponsesGateway } from "./generation/openaiGateway.js";
 import {
   DreamGenerationService,
   type StructuredModelGateway,
-} from "./generation/service";
-import { InMemoryRateLimitHook } from "./rateLimit";
+} from "./generation/service.js";
+import { InMemoryRateLimitHook } from "./rateLimit.js";
 
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
 
