@@ -54,5 +54,7 @@ export interface CanvasEntryProps {
   isReady: boolean;
   isEntered: boolean;
   onEnter: () => void;
+  /** Fires only after the opening scrim has left the interaction surface. */
+  onInputReady?: () => void;
   children?: ReactNode;
 }

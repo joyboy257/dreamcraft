@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function completeCurrentDream(page: Page): Promise<void> {
   await page.getByRole("button", { name: /step into the dream/i }).click();
+  // Input becomes available only once the opening scrim has relinquished the canvas.
+  await expect(page.getByTestId("entry-scrim")).toHaveCount(0);
   await expect(page.getByText("Meet Fragment Guide")).toBeVisible();
   await expect(page.getByText("Speak with Fragment Guide")).toBeVisible();
 

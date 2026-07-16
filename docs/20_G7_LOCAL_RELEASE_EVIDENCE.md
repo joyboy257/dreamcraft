@@ -89,6 +89,23 @@ The raw bundle remains above Vite's 500 kB advisory, but the separately
 certified desktop/mobile runtime budgets pass. The advisory is recorded rather
 than hidden.
 
+## CI renderer attestation and empirical performance proof
+
+GitHub-hosted Chromium is a software-rendered environment, not a representative
+desktop GPU or physical mobile device. The normal `pnpm test:e2e` suite therefore
+attests the WebGL renderer and verifies real rendering plus all renderer-
+independent release constraints: quality profile, draw calls, triangle count,
+chunk completion, time-to-playable, and restart-memory stability. Its attached
+performance JSON explicitly records `hardwarePerformanceAttested: false` when
+the backend is software; it does not present VM frame cadence as a physical
+frame-rate result.
+
+The unchanged empirical contracts remain mandatory: desktop >=50 FPS with p95
+frame time <22 ms, and reduced mobile >=30 FPS with p95 <34 ms. Run
+`pnpm test:performance:hardware` on an attested hardware renderer to prove
+those numbers. That command fails closed on software or unknown renderers, so a
+CI structural pass cannot substitute for the hardware proof.
+
 ## External activity statement
 
 - No OpenAI API request was made.

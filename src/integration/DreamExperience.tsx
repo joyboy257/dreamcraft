@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { createProceduralAudioController, type ProceduralAudioController } from "../audio";
 import type { LocalPreview } from "../app/localPreview";
@@ -106,6 +106,7 @@ export function DreamExperience({
   const [endingRevealed, setEndingRevealed] = useState(false);
   const [ready, setReady] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [inputReady, setInputReady] = useState(false);
   const [paused, setPaused] = useState(false);
   const [prompt, setPrompt] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -200,6 +201,7 @@ export function DreamExperience({
     setSnapshot(arc.getSnapshot());
     setEndingRevealed(false);
     setReady(false);
+    setInputReady(false);
     setFailure(null);
 
     const releasePointerForModal = (): void => {
@@ -427,6 +429,7 @@ export function DreamExperience({
         getComfortSettings: () => engine?.getComfortSettings() ?? null,
         getQualityProfile: () => engine?.getQualityProfile() ?? null,
         getMetrics: () => engine?.getMetrics() ?? null,
+        getRendererDiagnostics: () => engine?.getRendererDiagnostics() ?? null,
         playAudioCaption: () => {
           const cueId = runtime.audio.cues[0]?.id;
           const caption = cueId
@@ -576,11 +579,18 @@ export function DreamExperience({
     const engine = engineRef.current;
     if (!canvas || !engine) return;
     setEntered(true);
+    setInputReady(false);
     setPaused(false);
+    engine.setInputEnabled(false);
     engine.start();
     void audioRef.current?.unlockFromGesture();
     requestCanvasPointerLock(canvas);
   };
+
+  const enableInput = useCallback((): void => {
+    setInputReady(true);
+    engineRef.current?.setInputEnabled(true);
+  }, []);
 
   const openPause = (): void => {
     engineRef.current?.pause();
@@ -594,6 +604,7 @@ export function DreamExperience({
 
   const resume = (): void => {
     setPaused(false);
+    engineRef.current?.setInputEnabled(true);
     engineRef.current?.start();
     void audioRef.current?.resumeFromGesture();
     if (canvasRef.current) requestCanvasPointerLock(canvasRef.current);
@@ -609,6 +620,7 @@ export function DreamExperience({
     });
     if (arcRef.current?.getSnapshot().dialogue) return;
     setPaused(false);
+    engineRef.current?.setInputEnabled(true);
     engineRef.current?.start();
     if (canvasRef.current) requestCanvasPointerLock(canvasRef.current);
   };
@@ -658,7 +670,12 @@ export function DreamExperience({
         <span className="build-chip">{generationLabel}</span>
       </header>
       <section className="experience-world" id="dream-world" aria-label="Playable dream world">
-        <CanvasEntry isReady={ready} isEntered={entered} onEnter={enter}>
+        <CanvasEntry
+          isReady={ready}
+          isEntered={entered}
+          onEnter={enter}
+          onInputReady={enableInput}
+        >
           <canvas
             ref={canvasRef}
             className="dream-game-canvas"
@@ -675,7 +692,7 @@ export function DreamExperience({
               onOpenPause={openPause}
             />
           ) : null}
-          {entered && !paused && !snapshot?.dialogue && !ending ? (
+          {entered && inputReady && !paused && !snapshot?.dialogue && !ending ? (
             <>
               <MobileControls
                 onControlChange={(control, pressed) => engineRef.current?.setControl(control, pressed)}

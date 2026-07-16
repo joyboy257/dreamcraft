@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { CanvasEntryProps } from "./types";
 
 export function CanvasEntry({
   isReady,
   isEntered,
   onEnter,
+  onInputReady,
   children,
 }: CanvasEntryProps): React.JSX.Element {
   const [revealing, setRevealing] = useState(false);
 
+  const finishReveal = useCallback((): void => {
+    setRevealing(false);
+  }, []);
+
   useEffect(() => {
     if (!isEntered || !revealing) return;
-    const timer = window.setTimeout(() => setRevealing(false), 520);
+    // The transition event is the normal completion path. The bounded fallback
+    // preserves a usable input surface in browsers that suppress transitions.
+    const timer = window.setTimeout(finishReveal, 650);
     return () => window.clearTimeout(timer);
-  }, [isEntered, revealing]);
+  }, [finishReveal, isEntered, revealing]);
+
+  useEffect(() => {
+    if (isEntered && !revealing) onInputReady?.();
+  }, [isEntered, onInputReady, revealing]);
 
   const enter = (): void => {
     setRevealing(true);
@@ -26,7 +37,11 @@ export function CanvasEntry({
       {!isEntered || revealing ? (
         <div
           className={`dc-entry-scrim${revealing ? " is-revealing" : ""}`}
+          data-testid="entry-scrim"
           aria-hidden={revealing || undefined}
+          onTransitionEnd={(event) => {
+            if (event.target === event.currentTarget && event.propertyName === "opacity") finishReveal();
+          }}
         >
           <div>
             <p className="dc-kicker">{isReady ? "Dream stabilized" : "World forming"}</p>

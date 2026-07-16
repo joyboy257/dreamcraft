@@ -86,6 +86,7 @@ export interface VoxelEngine {
   pause(): void;
   dispose(): void;
   setControl(control: VoxelControl, pressed: boolean): void;
+  setInputEnabled(enabled: boolean): void;
   lookBy(deltaX: number, deltaY: number): void;
   setFieldOfView(fieldOfView: number): void;
   setMouseSensitivity(sensitivity: number): void;
@@ -94,6 +95,7 @@ export interface VoxelEngine {
   getComfortSettings(): Readonly<{ fieldOfView: number; mouseSensitivity: number; reducedMotion: boolean }>;
   getQualityProfile(): Readonly<ReturnType<typeof qualityProfile>>;
   getMetrics(): RuntimeMetrics;
+  getRendererDiagnostics(): RendererDiagnostics;
   applyAtmosphere(
     state: VoxelAtmosphereState,
     durationMs?: number,
@@ -105,6 +107,12 @@ export interface VoxelEngine {
 }
 
 export type VoxelControl = "forward" | "back" | "left" | "right" | "jump" | "interact";
+
+export interface RendererDiagnostics {
+  readonly classification: "hardware" | "software" | "unknown";
+  readonly renderer: string | null;
+  readonly vendor: string | null;
+}
 
 export function cameraRotationToward(
   from: { x: number; y: number; z: number },
@@ -250,6 +258,7 @@ export function createVoxelEngine(
   }
   let disposed = false;
   let desiredRunning = false;
+  let inputEnabled = false;
   let contextLost = false;
   let previousFrameAt = 0;
   let accumulator = 0;
@@ -619,6 +628,34 @@ export function createVoxelEngine(
     externalControls.clear();
   }
 
+  function setInputEnabled(enabled: boolean): void {
+    inputEnabled = enabled;
+    if (!enabled) {
+      keys.clear();
+      externalControls.clear();
+    }
+  }
+
+  function getRendererDiagnostics(): RendererDiagnostics {
+    const context = renderer.getContext();
+    const debugInfo = context.getExtension("WEBGL_debug_renderer_info");
+    if (!debugInfo) {
+      return { classification: "unknown", renderer: null, vendor: null };
+    }
+    const rendererName = String(context.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) ?? "");
+    const vendorName = String(context.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) ?? "");
+    const identity = `${vendorName} ${rendererName}`;
+    const softwareRenderer = /swiftshader|llvmpipe|software rasterizer|mesa offscreen|\bwarp\b|osmesa/i
+      .test(identity);
+    const hardwareRenderer = /apple|nvidia|amd|radeon|intel|adreno|mali|powervr|qualcomm|imagination|\barm\b/i
+      .test(identity);
+    return {
+      classification: softwareRenderer ? "software" : hardwareRenderer ? "hardware" : "unknown",
+      renderer: rendererName || null,
+      vendor: vendorName || null,
+    };
+  }
+
   function interactWithTarget(): void {
     if (target?.kind === "entity") options.onEntityInteract?.(target.entityId);
   }
@@ -640,7 +677,7 @@ export function createVoxelEngine(
   }
 
   function setControl(control: VoxelControl, pressed: boolean): void {
-    if (disposed) return;
+    if (disposed || !inputEnabled) return;
     if (control === "interact") {
       if (pressed) interactWithTarget();
       return;
@@ -662,6 +699,7 @@ export function createVoxelEngine(
   resize();
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    if (!inputEnabled) return;
     keys.add(event.code);
     if (event.code === "Digit1") selectedBlock = 2;
     if (event.code === "Digit2") selectedBlock = 5;
@@ -672,11 +710,11 @@ export function createVoxelEngine(
     keys.delete(event.code);
   };
   const handleMouseMove = (event: MouseEvent): void => {
-    if (document.pointerLockElement !== canvas) return;
+    if (!inputEnabled || document.pointerLockElement !== canvas) return;
     lookBy(event.movementX, event.movementY);
   };
   const handleCanvasClick = (): void => {
-    if (document.pointerLockElement === canvas) return;
+    if (!inputEnabled || document.pointerLockElement === canvas) return;
     try {
       void canvas.requestPointerLock().catch(() => undefined);
     } catch {
@@ -684,7 +722,7 @@ export function createVoxelEngine(
     }
   };
   const handleMouseDown = (event: MouseEvent): void => {
-    if (document.pointerLockElement !== canvas || !target) return;
+    if (!inputEnabled || document.pointerLockElement !== canvas || !target) return;
     if (event.button === 0 && target.kind === "entity") {
       options.onEntityInteract?.(target.entityId);
       return;
@@ -759,6 +797,7 @@ export function createVoxelEngine(
     world,
     start,
     pause,
+    setInputEnabled,
     setControl,
     lookBy,
     setFieldOfView,
@@ -767,6 +806,7 @@ export function createVoxelEngine(
     getViewRotation: () => ({ yaw, pitch }),
     getComfortSettings: () => ({ fieldOfView: camera.fov, mouseSensitivity, reducedMotion }),
     getQualityProfile: () => ({ ...profile }),
+    getRendererDiagnostics,
     applyAtmosphere,
     setReducedMotion,
     applyPhysicsTransition,

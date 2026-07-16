@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "test:e2e": "playwright test",
+    "test:performance:hardware": "DREAMCRAFT_REQUIRE_HARDWARE_PERFORMANCE=true playwright test tests/e2e/g6-performance.spec.ts tests/e2e/g6-performance-mobile.spec.ts",
     "test:pwa": "tsc --noEmit && vite build && playwright test --config playwright.pwa.config.ts",
     "eval": "vitest run tests/eval",
     "eval:dreams": "vitest run tests/eval",

@@ -13,6 +13,7 @@ test("mobile controls move, look, and interact with the real dream runtime", asy
   await page.getByRole("button", { name: /enter the fragment/i }).click();
   await expect(page.getByTestId("dream-canvas")).toBeVisible();
   await page.getByRole("button", { name: /step into the dream/i }).click();
+  await expect(page.getByTestId("entry-scrim")).toHaveCount(0);
 
   await expect(page.getByRole("group", { name: "Touch game controls" })).toBeVisible();
   await expect(page.getByText(/rotate to landscape/i)).toBeVisible();
