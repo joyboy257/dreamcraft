@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { normalizeBaseUrl, runDeployedSmoke } from "./smoke-deployed.mjs";
+import {
+  normalizeBaseUrl,
+  parseDeploymentBaseUrl,
+  runDeployedSmoke,
+} from "./smoke-deployed.mjs";
 
 const fallbackCore = {
   version: 1,
@@ -126,6 +130,33 @@ describe("deployed smoke validator", () => {
     assert.throws(
       () => normalizeBaseUrl("http://preview.dreamcraft.test"),
       /must use HTTPS/,
+    );
+  });
+
+  it("accepts pnpm's standalone argument separator and rejects ambiguous CLI input", () => {
+    assert.equal(
+      parseDeploymentBaseUrl(["--", "https://preview.dreamcraft.test/"]),
+      "https://preview.dreamcraft.test",
+    );
+    assert.equal(
+      parseDeploymentBaseUrl(["https://preview.dreamcraft.test/"]),
+      "https://preview.dreamcraft.test",
+    );
+    assert.throws(
+      () => parseDeploymentBaseUrl([]),
+      /exactly one deployment base URL/,
+    );
+    assert.throws(
+      () => parseDeploymentBaseUrl(["--"]),
+      /exactly one deployment base URL/,
+    );
+    assert.throws(
+      () => parseDeploymentBaseUrl(["https://one.test", "https://two.test"]),
+      /exactly one deployment base URL/,
+    );
+    assert.throws(
+      () => parseDeploymentBaseUrl(["--", "not a url"]),
+      /deployment base URL is invalid/,
     );
   });
 

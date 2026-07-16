@@ -71,6 +71,13 @@ export function normalizeBaseUrl(value) {
   return parsed.origin;
 }
 
+export function parseDeploymentBaseUrl(argv) {
+  assert(Array.isArray(argv), "Provide an explicit deployment base URL.");
+  const values = argv.filter((value) => value !== "--");
+  assert(values.length === 1, "Provide exactly one deployment base URL.");
+  return normalizeBaseUrl(values[0]);
+}
+
 async function safeFetch(fetchImpl, url, init, timeoutMs, label) {
   try {
     return await fetchImpl(url, {
@@ -172,7 +179,8 @@ const isMain = process.argv[1]
   : false;
 
 if (isMain) {
-  runDeployedSmoke(process.argv[2])
+  Promise.resolve()
+    .then(() => runDeployedSmoke(parseDeploymentBaseUrl(process.argv.slice(2))))
     .then(() => console.info("DreamCraft generation-disabled deployed smoke passed."))
     .catch((error) => {
       const message = error instanceof SmokeFailure
