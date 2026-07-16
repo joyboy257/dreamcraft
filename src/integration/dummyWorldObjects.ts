@@ -6,6 +6,49 @@ export interface DreamBeacon {
   dispose(): void;
 }
 
+export interface SemanticWorldMarkers {
+  readonly root: THREE.Group;
+  dispose(): void;
+}
+
+export function createSemanticWorldMarkers(
+  landmark: readonly [number, number, number],
+  path: readonly (readonly [number, number, number])[],
+  color: number,
+): SemanticWorldMarkers {
+  const root = new THREE.Group();
+  root.name = "semantic-world-staging";
+  const material = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.45,
+    roughness: 0.5,
+  });
+  const landmarkGeometry = new THREE.ConeGeometry(1.4, 7, 6);
+  const markerGeometry = new THREE.OctahedronGeometry(0.16, 0);
+  const tower = new THREE.Mesh(landmarkGeometry, material);
+  tower.position.set(landmark[0], landmark[1] + 3.5, landmark[2]);
+  tower.name = "camera-facing-landmark";
+  root.add(tower);
+  for (const [index, point] of path.entries()) {
+    const marker = new THREE.Mesh(markerGeometry, material);
+    marker.position.set(point[0], point[1] + 0.2, point[2]);
+    marker.scale.setScalar(index === path.length - 1 ? 1.5 : 1);
+    marker.name = `objective-path-${index}`;
+    root.add(marker);
+  }
+  return {
+    root,
+    dispose() {
+      root.removeFromParent();
+      root.clear();
+      landmarkGeometry.dispose();
+      markerGeometry.dispose();
+      material.dispose();
+    },
+  };
+}
+
 export function createDreamBeacon(): DreamBeacon {
   const root = new THREE.Group();
   root.name = "moonwell-beacon";

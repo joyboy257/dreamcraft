@@ -1,5 +1,5 @@
 import { sanitizeDreamSpec } from "./sanitizer";
-import type { DreamIssue, DreamSpecV1 } from "./schema";
+import type { DreamCondition, DreamIssue, DreamSpecV1 } from "./schema";
 
 export type GenerationStrategy = "mock-local" | "single-sol" | "director-parallel";
 export type DreamIntensity = "calm" | "vivid" | "fever";
@@ -151,6 +151,245 @@ function localTitle(text: string, theme: LocalTheme): string {
   return words.length <= 72 ? words : `${words.slice(0, 69)}...`;
 }
 
+type LocalScenarioPreset =
+  | "candy_forest"
+  | "flying_city"
+  | "flooded_school"
+  | "moon_teapot"
+  | "lost_dog"
+  | "lottery_family"
+  | "stable_fragment";
+
+function chooseLocalScenario(text: string): LocalScenarioPreset {
+  if (/candy|sweet|sugar/.test(text) && /forest|tree|wood/.test(text)) return "candy_forest";
+  if (/fly|flying|sky|cloud/.test(text) && /city|town|island/.test(text)) return "flying_city";
+  if (/flood|underwater|water/.test(text) && /school|class|hall/.test(text)) return "flooded_school";
+  if (/teapot|tea pot/.test(text) && /moon|talk|spoon/.test(text)) return "moon_teapot";
+  if (/dog|pet|puppy/.test(text) && /lost|find|home|memory/.test(text)) return "lost_dog";
+  if (/lottery|jackpot|won|win/.test(text) && /family|celebrat|dance|party/.test(text)) return "lottery_family";
+  return "stable_fragment";
+}
+
+function applyLocalScenario(candidate: DreamSpecV1, text: string): DreamSpecV1 {
+  const preset = chooseLocalScenario(text);
+  const verb = (mechanic: DreamSpecV1["playGraph"]["availableVerbs"][number]["mechanic"], label: string) => ({
+    mechanic,
+    label,
+    targetTags: ["objective"],
+  });
+  const hero = candidate.entities[0]!;
+  const surface = candidate.physics.materials[0]!;
+
+  switch (preset) {
+    case "candy_forest":
+      candidate.playGraph.experienceTags = ["exploration", "celebration"];
+      candidate.playGraph.availableVerbs = [verb("dash", "Bounce through the candy grove"), verb("emote", "Wake the sugar festival")];
+      candidate.playGraph.playerFantasy = "Bound between springy sweets and wake a forest celebration.";
+      candidate.physics.player.abilities.dash = { speed: 13, durationMs: 260 };
+      candidate.physics.world.gravity = [0, -16, 0];
+      surface.restitution = 0.85;
+      surface.jumpMultiplier = 1.35;
+      surface.contactEffect = "bounce";
+      hero.visual.bodyPlan = "plant_creature";
+      hero.visual.animationStyle.locomotion = "hop";
+      candidate.atmosphere.particleKind = "sugar_sparkles";
+      candidate.audio.mood = "playful_festival";
+      break;
+    case "flying_city":
+      candidate.playGraph.experienceTags = ["adventure", "exploration"];
+      candidate.playGraph.availableVerbs = [verb("fly", "Ride the skyway"), verb("activate", "Light the cloud harbor")];
+      candidate.playGraph.playerFantasy = "Fly between floating districts on visible wind lanes.";
+      candidate.physics.player.abilities.flight = { speed: 11 };
+      candidate.physics.player.abilities.glide = { fallSpeed: 2.4 };
+      candidate.physics.world.gravity = [0, -8, 0];
+      candidate.physics.world.wind = { direction: [1, 0.25, 0.2], strength: 4.5, turbulence: 0.55 };
+      candidate.world.terrain = [
+        { kind: "floating_islands", frequency: 0.28, minY: 8, maxY: 28 },
+        { kind: "waves", direction: [1, 0.25], wavelength: 18, amplitude: 2 },
+      ];
+      hero.visual.bodyPlan = "bird";
+      hero.visual.animationStyle.locomotion = "fly";
+      candidate.atmosphere.particleKind = "mist_streamers";
+      candidate.audio.mood = "airy_soaring";
+      break;
+    case "flooded_school":
+      candidate.playGraph.experienceTags = ["pursuit", "survival"];
+      candidate.playGraph.availableVerbs = [verb("evade", "Swim away from the hallway shadow"), verb("follow", "Reach the stairwell current")];
+      candidate.playGraph.playerFantasy = "Swim through a flooded school while a shadow closes in.";
+      candidate.physics.player.abilities.swim = { speed: 6.5 };
+      candidate.physics.world.gravity = [0, -12, 0];
+      candidate.physics.world.defaultBuoyancy = 9;
+      candidate.physics.world.globalDrag = 1.2;
+      candidate.physics.fields = [{
+        id: "flood_buoyancy",
+        shape: { kind: "box", center: [0, 12, 0], size: [48, 18, 48] },
+        priority: 1,
+        blendDistance: 2,
+        enabled: true,
+        effect: { kind: "buoyancy", strength: 9, drag: 1.2 },
+      }];
+      hero.visual.bodyPlan = "fish";
+      hero.visual.animationStyle.locomotion = "swim";
+      candidate.atmosphere.particleKind = "bubbles";
+      candidate.audio.mood = "eerie_submerged";
+      break;
+    case "moon_teapot":
+      candidate.playGraph.experienceTags = ["mystery", "transformation"];
+      candidate.playGraph.availableVerbs = [verb("talk", "Question the moon teapot"), verb("repair", "Mend the guarded handle")];
+      candidate.playGraph.playerFantasy = "Earn a talking moon teapot's trust and repair its guarded handle.";
+      hero.displayName = "The Moon Teapot";
+      hero.visual.bodyPlan = "floating_object";
+      hero.visual.features = [
+        { kind: "handle", style: "crescent", size: 1, materialSlot: "guide_material" },
+        { kind: "spout", style: "singing", size: 1.2, materialSlot: "guide_material" },
+      ];
+      hero.visual.face = { eyeStyle: "glowing", eyeScale: 0.75, eyeSpacing: 1, mouthStyle: "speaker", defaultExpression: "mysterious" };
+      hero.behavior = { kind: "guard", targetId: "awakening_beacon", warningRadius: 7, chaseRadius: 12, speed: 3 };
+      candidate.physics.world.globalTimeScale = 0.8;
+      candidate.atmosphere.particleKind = "moon_stars";
+      candidate.audio.mood = "clockwork_conversation";
+      break;
+    case "lost_dog":
+      candidate.playGraph.experienceTags = ["reunion", "social", "exploration"];
+      candidate.playGraph.availableVerbs = [verb("follow", "Follow the familiar pawprints"), verb("deliver", "Bring the lost dog home")];
+      candidate.playGraph.playerFantasy = "Recognize a beloved lost dog and guide it through a memory of home.";
+      hero.displayName = "The Remembered Dog";
+      hero.role = "companion";
+      hero.visual.bodyPlan = "quadruped";
+      hero.visual.features = [
+        { kind: "ear", style: "floppy", size: 1, materialSlot: "guide_material" },
+        { kind: "tail", style: "wagging", size: 1, materialSlot: "guide_material" },
+      ];
+      hero.visual.face = { eyeStyle: "round", eyeScale: 0.9, eyeSpacing: 1, mouthStyle: "smile", defaultExpression: "friendly" };
+      hero.behavior = { kind: "follow", target: "player", distance: 2, speed: 5 };
+      candidate.atmosphere.particleKind = "memory_petals";
+      candidate.audio.mood = "gentle_memory_reunion";
+      break;
+    case "lottery_family":
+      candidate.playGraph.experienceTags = ["celebration", "performance"];
+      candidate.playGraph.availableVerbs = [verb("collect", "Gather the lucky stars"), verb("perform", "Lead the family dance")];
+      candidate.playGraph.playerFantasy = "Turn impossible luck into a shared family performance.";
+      hero.displayName = "The Family Band";
+      hero.visual.bodyPlan = "humanoid";
+      hero.visual.animationStyle.locomotion = "walk";
+      hero.visual.animationStyle.emotion = "dance";
+      hero.behavior = { kind: "perform", animation: "family_dance", triggerFlag: "celebration_started" };
+      candidate.playGraph.variables = [{
+        id: "celebration_started",
+        displayName: "Celebration",
+        type: "boolean",
+        initialValue: false,
+        showInHud: false,
+      }];
+      candidate.physics.world.gravity = [0, -18, 0];
+      candidate.physics.world.wind.strength = 1.4;
+      candidate.atmosphere.particleKind = "golden_dust";
+      candidate.audio.mood = "rhythmic_triumph";
+      candidate.audio.cues = [{ id: "finale", kind: "arpeggio", preset: "bright_family_fanfare" }];
+      break;
+    case "stable_fragment":
+      break;
+  }
+
+  if (preset !== "stable_fragment") {
+    const scenarioName = preset.replaceAll("_", " ");
+    const finalAction = candidate.playGraph.availableVerbs.at(-1)!.label;
+    candidate.blueprint.summary = `A deterministic ${preset.replaceAll("_", " ")} dream scenario.`;
+    candidate.blueprint.playerFantasy = candidate.playGraph.playerFantasy;
+    candidate.blueprint.playableArc.meaningfulActions = candidate.playGraph.availableVerbs.map(({ label }) => label);
+    candidate.blueprint.semanticAnchors[0]!.concept = `${scenarioName} landmark`;
+    candidate.playGraph.experienceName = candidate.title;
+    candidate.playGraph.beats[0]!.title = finalAction;
+    candidate.playGraph.beats[0]!.objectiveText = finalAction;
+    candidate.playGraph.endings[0]!.title = `${scenarioName.replace(/\b\w/g, (letter) => letter.toUpperCase())} Remembered`;
+    candidate.playGraph.endings[0]!.narration = `The ${scenarioName} changes in answer to what you did.`;
+    candidate.physics.transitions = [{
+      id: `${preset}_climax_physics`,
+      durationMs: 1_200,
+      easing: "dream_wobble",
+      changes: [
+        { target: "world.gravity", value: [0, candidate.physics.world.gravity[1] * 0.72, 0] },
+        { target: "world.wind.strength", value: candidate.physics.world.wind.strength + 1.5 },
+      ],
+    }];
+    candidate.atmosphere.patches = [{
+      id: `${preset}_climax_atmosphere`,
+      skyTop: candidate.entities[0]!.visual.palette.accent,
+      skyBottom: candidate.entities[0]!.visual.palette.primary,
+      fogColor: candidate.entities[0]!.visual.palette.secondary,
+      particleKind: candidate.atmosphere.particleKind,
+      particleDensity: Math.min(1, candidate.atmosphere.particleDensity + 0.2),
+    }];
+    const actionCount: Record<Exclude<LocalScenarioPreset, "stable_fragment">, number> = {
+      candy_forest: 3,
+      flying_city: 2,
+      flooded_school: 3,
+      moon_teapot: 2,
+      lost_dog: 2,
+      lottery_family: 4,
+    };
+    const conditionFor = (index: number): DreamCondition => {
+      if (preset === "candy_forest") {
+        const zoneId = "festival_circle";
+        if (!candidate.world.zones.some(({ id }) => id === zoneId)) {
+          candidate.world.zones.push({ id: zoneId, kind: "sphere", center: [0, 10, -6], radius: 5, tags: ["ritual"] });
+        }
+        return { kind: "object_placed", itemId: `sugar_note_${index + 1}`, zoneId };
+      }
+      if (preset === "flying_city") {
+        const zoneId = `sky_harbor_${index + 1}`;
+        candidate.world.zones.push({ id: zoneId, kind: "sphere", center: [0, 12, -6 - index * 2], radius: 4, tags: ["flight"] });
+        return { kind: "zone_entered", zoneId };
+      }
+      if (preset === "flooded_school") {
+        const zoneId = `flood_refuge_${index + 1}`;
+        candidate.world.zones.push({ id: zoneId, kind: "box", center: [0, 10, -5 - index * 2], size: [5, 4, 5], tags: ["refuge"] });
+        return { kind: "zone_entered", zoneId };
+      }
+      if (preset === "lost_dog") {
+        const zoneId = index === 0 ? "pawprint_trail" : "remembered_home";
+        candidate.world.zones.push({
+          id: zoneId,
+          kind: "sphere",
+          center: index === 0 ? [6, 10, -6] : [10, 10, -10],
+          radius: 3,
+          tags: index === 0 ? ["trail"] : ["home"],
+        });
+        return { kind: "zone_entered", zoneId };
+      }
+      if (preset === "lottery_family") {
+        const zoneId = `dance_step_${index + 1}`;
+        const dancePositions = [[-4, 10, -6], [0, 10, -10], [4, 10, -6], [0, 10, -2]] as const;
+        candidate.world.zones.push({
+          id: zoneId,
+          kind: "sphere",
+          center: [...dancePositions[index]!] as [number, number, number],
+          radius: 2.5,
+          tags: ["performance", "dance"],
+        });
+        return { kind: "zone_entered", zoneId };
+      }
+      return { kind: "entity_state", entityId: hero.id, state: `handle_repaired_${index + 1}` };
+    };
+    const originalBeat = structuredClone(candidate.playGraph.beats[0]!);
+    const conditions = Array.from({ length: actionCount[preset] }, (_, index) => conditionFor(index));
+    candidate.budgets.storyBeats = conditions.length;
+    candidate.playGraph.beats = conditions.map((condition, index) => ({
+      ...structuredClone(originalBeat),
+      id: `${preset}_beat_${index + 1}`,
+      title: candidate.playGraph.availableVerbs[index % candidate.playGraph.availableVerbs.length]!.label,
+      objectiveText: candidate.playGraph.availableVerbs[index % candidate.playGraph.availableVerbs.length]!.label,
+      startsWhen: index === 0 ? { kind: "always" } : conditions[index - 1]!,
+      completesWhen: condition,
+      onComplete: index === conditions.length - 1
+        ? originalBeat.onComplete
+        : [{ kind: "show_message", text: `${index + 1}/${conditions.length} dream actions complete.` }],
+    }));
+    candidate.playGraph.endings[0]!.condition = conditions.at(-1)!;
+  }
+  return candidate;
+}
+
 function createLocalCandidate(request: DreamGenerationRequest): DreamSpecV1 {
   const normalized = normalizeDreamText(request.dreamText);
   const seed = stableStringHash(`${normalized}|${request.intensity}`) || 1;
@@ -158,7 +397,7 @@ function createLocalCandidate(request: DreamGenerationRequest): DreamSpecV1 {
   const title = localTitle(normalized, theme);
   const intensityScale = request.intensity === "calm" ? 0.65 : request.intensity === "fever" ? 1.25 : 1;
 
-  return {
+  const candidate: DreamSpecV1 = {
     version: 1,
     id: `local_fragment_${seed.toString(16)}`,
     title,
@@ -507,6 +746,7 @@ function createLocalCandidate(request: DreamGenerationRequest): DreamSpecV1 {
       cues: [],
     },
   };
+  return applyLocalScenario(candidate, normalized.toLowerCase());
 }
 
 function abortError(): DOMException {
@@ -528,7 +768,8 @@ export class MockLocalGenerationProvider implements DreamGenerationProvider {
     const sanitized = sanitizeDreamSpec(createLocalCandidate(request));
     assertNotAborted(signal);
     if (!sanitized.success) {
-      throw new Error("Built-in local DreamSpec failed validation");
+      const summary = sanitized.issues.map(({ path, message }) => `${path}: ${message}`).join("; ");
+      throw new Error(`Built-in local DreamSpec failed validation: ${summary}`);
     }
     const result: DreamGenerationResult = {
       core: sanitized.spec,

@@ -175,6 +175,33 @@ export class DreamArcController {
     return applied;
   }
 
+  syncAwakenObjective(objective: ObjectiveView): void {
+    if (this.#disposed || this.#snapshot.phase !== "awaken_beacon") return;
+    const next = copyObjective(objective);
+    this.#snapshot = {
+      ...this.#snapshot,
+      objective: next,
+      revision: this.#snapshot.revision + 1,
+    };
+    this.#bus.emit({ type: "objective_changed", objective: next });
+  }
+
+  completeFromPlayGraph(ending: EndingView): void {
+    if (this.#disposed || this.#snapshot.phase !== "awaken_beacon") return;
+    this.#completeArc(ending);
+  }
+
+  openContextDialogue(dialogue: DialogueView): void {
+    if (this.#disposed || this.#snapshot.phase !== "awaken_beacon" || this.#snapshot.dialogue) return;
+    const next = copyDialogue(dialogue);
+    this.#snapshot = {
+      ...this.#snapshot,
+      dialogue: next,
+      revision: this.#snapshot.revision + 1,
+    };
+    this.#bus.emit({ type: "dialogue_opened", dialogue: next });
+  }
+
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
@@ -208,11 +235,39 @@ export class DreamArcController {
       this.#snapshot.phase === "awaken_beacon" &&
       entityId === DREAM_BEACON_ID
     ) {
-      this.#completeArc();
+      const current = Math.min(
+        this.#definition.awakenObjective.target,
+        this.#snapshot.objective.current + 1,
+      );
+      if (current < this.#definition.awakenObjective.target) {
+        const objective = { ...this.#snapshot.objective, current };
+        this.#snapshot = {
+          ...this.#snapshot,
+          objective,
+          revision: this.#snapshot.revision + 1,
+        };
+        this.#bus.emit({ type: "objective_changed", objective });
+      } else {
+        this.#completeArc();
+      }
     }
   }
 
   #handleDialogueResponse(dialogueId: string, responseId: string): void {
+    if (
+      !this.#disposed &&
+      this.#snapshot.phase === "awaken_beacon" &&
+      this.#snapshot.dialogue?.id === dialogueId &&
+      this.#snapshot.dialogue.responses.some(({ id }) => id === responseId)
+    ) {
+      this.#snapshot = {
+        ...this.#snapshot,
+        dialogue: null,
+        revision: this.#snapshot.revision + 1,
+      };
+      this.#bus.emit({ type: "dialogue_closed", dialogueId });
+      return;
+    }
     if (
       this.#disposed ||
       this.#snapshot.phase !== "meet_guide" ||
@@ -240,10 +295,14 @@ export class DreamArcController {
     });
   }
 
-  #completeArc(): void {
-    const objective = { ...this.#definition.awakenObjective, current: 1, completed: true };
+  #completeArc(endingOverride?: EndingView): void {
+    const objective = {
+      ...this.#snapshot.objective,
+      current: this.#snapshot.objective.target,
+      completed: true,
+    };
     const transformation = { ...this.#definition.transformation };
-    const ending = { ...this.#definition.ending };
+    const ending = { ...(endingOverride ?? this.#definition.ending) };
     this.#snapshot = {
       phase: "completed",
       objective,

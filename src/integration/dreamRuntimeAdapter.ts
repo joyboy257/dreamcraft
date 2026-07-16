@@ -7,13 +7,19 @@ import {
   GUIDE_DIALOGUE_ID,
   GUIDE_RESPONSE_ID,
   createSafePhysicsProfile,
+  compileDreamScenario,
   type DreamArcDefinition,
+  type DreamScenario,
+  type RuntimePhysicsProfile,
 } from "../gameplay";
-import { sampleSurfaceHeight, type TrustedDreamManifest } from "../dream";
+import { sampleSurfaceHeight, type DreamSpecV1, type TrustedDreamManifest } from "../dream";
+import { compileDreamAtmosphere, type DreamAtmospherePlan } from "./dreamAtmosphere";
+import { compileRuntimeStaging, type RuntimeStaging } from "./semanticStaging";
 
 export interface AdaptedDreamRuntime {
   generator: ChunkGenerator;
   blockColors: Readonly<Record<number, readonly [number, number, number]>>;
+  blockMaterials: Readonly<Record<number, string>>;
   safeSpawnBlock: BlockId;
   worldRadius: number;
   spawn: { x: number; z: number };
@@ -21,6 +27,12 @@ export interface AdaptedDreamRuntime {
   guideOptions: DreamGuideOptions;
   playerConfig: Partial<PlayerMotorConfig>;
   fieldOfView: number;
+  scenario: DreamScenario;
+  staging: RuntimeStaging;
+  atmosphere: DreamAtmospherePlan;
+  audio: DreamSpecV1["audio"];
+  physicsProfile: RuntimePhysicsProfile;
+  heroEntity: DreamSpecV1["entities"][number] | null;
 }
 
 function colorChannels(color: number): readonly [number, number, number] {
@@ -33,8 +45,11 @@ function colorChannels(color: number): readonly [number, number, number] {
 
 export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDreamRuntime {
   const spec = manifest.spec;
+  const scenario = compileDreamScenario(spec);
+  const staging = compileRuntimeStaging(manifest);
   const numericIds = new Map<string, BlockId>([["air", 0]]);
   const blockColors: Record<number, readonly [number, number, number]> = {};
+  const blockMaterials: Record<number, string> = {};
   let nextId = 1;
   for (const block of manifest.blocks) {
     if (block.id === "air" || numericIds.has(block.id)) continue;
@@ -44,22 +59,15 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     }
     numericIds.set(block.id, nextId);
     blockColors[nextId] = colorChannels(block.color);
+    blockMaterials[nextId] = block.materialPhysicsId;
     nextId += 1;
   }
   const safeSpawnBlock = manifest.generator.solidBlockIds
     .map((id) => numericIds.get(id))
     .find((id): id is number => id !== undefined) ?? 1;
   const hero = spec.entities.find(({ role }) => role === "hero") ?? spec.entities[0];
-  const completionBeats = spec.playGraph.beats.filter(({ onComplete }) =>
-    onComplete.some(({ kind }) => kind === "complete_experience"),
-  );
-  const beat = completionBeats.find(({ startsWhen, completesWhen }) =>
-    startsWhen.kind === "always" && completesWhen.kind === "always",
-  ) ?? completionBeats[0] ?? spec.playGraph.beats[0]!;
-  const completionEffect = beat.onComplete.find(({ kind }) => kind === "complete_experience");
-  const ending = completionEffect?.kind === "complete_experience"
-    ? spec.playGraph.endings.find(({ id }) => id === completionEffect.endingId) ?? spec.playGraph.endings[0]!
-    : spec.playGraph.endings[0]!;
+  const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
+  const fallbackEnding = spec.playGraph.endings[0]!;
   const sourceDialogue = hero
     ? spec.dialogues.find(({ speakerEntityId }) => speakerEntityId === hero.id)
     : undefined;
@@ -76,15 +84,15 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     awakenObjective: {
       id: beat.id,
       title: beat.title,
-      description: beat.objectiveText,
+      description: `${scenario.actionLabel}: ${beat.objectiveText} · ${scenario.movementSignature}`,
       current: 0,
-      target: 1,
+      target: Math.max(1, spec.playGraph.beats.filter(({ optional }) => !optional).length),
       completed: false,
     },
     dialogue: {
       id: sourceDialogue?.id ?? GUIDE_DIALOGUE_ID,
       speaker: hero?.displayName ?? "The Dream Guide",
-      text: sourceNode?.text ?? `Will you help complete ${spec.playGraph.experienceName}?`,
+      text: sourceNode?.text ?? `${scenario.guidePrompt}. Will you help complete ${spec.playGraph.experienceName}?`,
       responses: sourceNode?.responses.length
         ? sourceNode.responses.map(({ id, text }) => ({ id, label: text }))
         : [{ id: GUIDE_RESPONSE_ID, label: "I will follow the dream." }],
@@ -98,9 +106,9 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
       durationMs: spec.physics.transitions[0]?.durationMs ?? 1_200,
     },
     ending: {
-      id: ending.id,
-      title: ending.title,
-      narration: ending.narration,
+      id: fallbackEnding.id,
+      title: fallbackEnding.title,
+      narration: fallbackEnding.narration,
     },
   };
   const profile = createSafePhysicsProfile({
@@ -112,6 +120,26 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
       jumpVelocity: spec.physics.player.jump.jumpVelocity,
       coyoteTimeMs: spec.physics.player.jump.coyoteTimeMs,
       jumpBufferMs: spec.physics.player.jump.jumpBufferMs,
+      abilities: {
+        ...(spec.physics.player.abilities.dash
+          ? { dash: { ...spec.physics.player.abilities.dash, cooldownMs: 700 } }
+          : {}),
+        ...(spec.physics.player.abilities.glide
+          ? { glide: { ...spec.physics.player.abilities.glide, gravityScale: 0.25 } }
+          : {}),
+        ...(spec.physics.player.abilities.flight
+          ? { flight: { ...spec.physics.player.abilities.flight } }
+          : {}),
+        ...(spec.physics.player.abilities.swim
+          ? {
+              swim: {
+                ...spec.physics.player.abilities.swim,
+                buoyancy: spec.physics.world.defaultBuoyancy,
+                drag: Math.max(1, spec.physics.world.globalDrag),
+              },
+            }
+          : {}),
+      },
     },
     world: {
       gravity: spec.physics.world.gravity,
@@ -120,6 +148,8 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
       globalDrag: spec.physics.world.globalDrag,
       windDirection: spec.physics.world.wind.direction,
       windStrength: spec.physics.world.wind.strength,
+      windTurbulence: spec.physics.world.wind.turbulence,
+      defaultBuoyancy: spec.physics.world.defaultBuoyancy,
     },
     gameFeel: {
       headBob: spec.physics.gameFeel.headBob,
@@ -128,6 +158,16 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
       cameraRollResponse: spec.physics.gameFeel.cameraRollResponse,
       cameraShake: spec.physics.gameFeel.cameraShake,
     },
+    materials: spec.physics.materials.map((material) => {
+      const { crumbleAfterMs, respawnAfterMs, ...required } = material;
+      return {
+        ...required,
+        ...(crumbleAfterMs === undefined ? {} : { crumbleAfterMs }),
+        ...(respawnAfterMs === undefined ? {} : { respawnAfterMs }),
+      };
+    }),
+    fields: structuredClone(spec.physics.fields),
+    transitions: structuredClone(spec.physics.transitions),
   });
 
   const generator: ChunkGenerator = {
@@ -172,6 +212,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
   return {
     generator,
     blockColors,
+    blockMaterials,
     safeSpawnBlock,
     worldRadius: manifest.generator.radius,
     spawn: { x: manifest.spawn[0], z: manifest.spawn[2] },
@@ -192,7 +233,15 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
       jumpBufferMs: profile.player.jumpBufferMs,
       terminalVelocity: profile.world.terminalVelocity,
       gravity: Math.max(1, Math.abs(profile.world.gravity[1])),
+      globalDrag: profile.world.globalDrag,
+      ...profile.player.abilities,
     },
     fieldOfView: profile.gameFeel.fieldOfView,
+    scenario,
+    staging,
+    atmosphere: compileDreamAtmosphere(spec, { quality: "balanced" }),
+    audio: structuredClone(spec.audio),
+    physicsProfile: profile,
+    heroEntity: hero ? structuredClone(hero) : null,
   };
 }

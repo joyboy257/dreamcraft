@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_DREAM_ARC_DEFINITION,
   DREAM_BEACON_ID,
   DREAM_GUIDE_ID,
   GUIDE_DIALOGUE_ID,
@@ -137,6 +138,75 @@ describe("DreamArcController", () => {
       responseId: GUIDE_RESPONSE_ID,
     });
     expect(arc.getSnapshot().revision).toBe(openedRevision);
+  });
+
+  it("supports contextual multi-action objectives before the climax", () => {
+    const bus = new TypedEventBus<GameplayEvent>();
+    const arc = createDreamArc(bus, {
+      ...DEFAULT_DREAM_ARC_DEFINITION,
+      awakenObjective: { ...DEFAULT_DREAM_ARC_DEFINITION.awakenObjective, target: 3 },
+    });
+    bus.emit({ type: "entity_interacted", entityId: DREAM_GUIDE_ID });
+    bus.emit({ type: "dialogue_response", dialogueId: GUIDE_DIALOGUE_ID, responseId: GUIDE_RESPONSE_ID });
+    bus.emit({ type: "entity_interacted", entityId: DREAM_BEACON_ID });
+    bus.emit({ type: "entity_interacted", entityId: DREAM_BEACON_ID });
+    expect(arc.getSnapshot()).toMatchObject({
+      phase: "awaken_beacon",
+      objective: { current: 2, target: 3, completed: false },
+    });
+    bus.emit({ type: "entity_interacted", entityId: DREAM_BEACON_ID });
+    expect(arc.getSnapshot()).toMatchObject({
+      phase: "completed",
+      objective: { current: 3, target: 3, completed: true },
+    });
+  });
+
+  it("uses PlayGraph objective progress and the ending selected at runtime", () => {
+    const bus = new TypedEventBus<GameplayEvent>();
+    const arc = createDreamArc(bus);
+    bus.emit({ type: "entity_interacted", entityId: DREAM_GUIDE_ID });
+    bus.emit({ type: "dialogue_response", dialogueId: GUIDE_DIALOGUE_ID, responseId: GUIDE_RESPONSE_ID });
+
+    arc.syncAwakenObjective({
+      id: "find-home",
+      title: "Follow the pawprints",
+      description: "Reach the remembered doorway.",
+      current: 1,
+      target: 2,
+      completed: false,
+    });
+    expect(arc.getSnapshot().objective).toMatchObject({ id: "find-home", current: 1, target: 2 });
+
+    arc.completeFromPlayGraph({
+      id: "reunion-ending",
+      title: "Home Again",
+      narration: "The remembered dog crosses the doorway.",
+    });
+    expect(arc.getSnapshot()).toMatchObject({
+      phase: "completed",
+      objective: { completed: true },
+      ending: { id: "reunion-ending", title: "Home Again" },
+    });
+  });
+
+  it("keeps multi-node contextual dialogue open until its terminal response", () => {
+    const bus = new TypedEventBus<GameplayEvent>();
+    const arc = createDreamArc(bus);
+    bus.emit({ type: "entity_interacted", entityId: DREAM_GUIDE_ID });
+    bus.emit({ type: "dialogue_response", dialogueId: GUIDE_DIALOGUE_ID, responseId: GUIDE_RESPONSE_ID });
+    arc.openContextDialogue({
+      id: "teapot-dialogue",
+      speaker: "Moon Teapot",
+      text: "Will you mend my handle?",
+      responses: [{ id: "mend", label: "I will." }],
+    });
+    expect(arc.getSnapshot()).toMatchObject({
+      phase: "awaken_beacon",
+      dialogue: { id: "teapot-dialogue" },
+    });
+
+    bus.emit({ type: "dialogue_response", dialogueId: "teapot-dialogue", responseId: "mend" });
+    expect(arc.getSnapshot()).toMatchObject({ phase: "awaken_beacon", dialogue: null });
   });
 
   it("returns defensive snapshot copies", () => {

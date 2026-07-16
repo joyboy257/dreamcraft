@@ -38,12 +38,15 @@ test("boots the deterministic local shell without an API key", async ({ page }) 
     page.getByRole("heading", { name: "Fragment Guide" }),
   ).toBeVisible();
   await page.getByRole("button", { name: /follow the dream/i }).click();
-  await expect(page.getByText("Awaken the Fragment", { exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Current objective").getByText("Awaken the Fragment", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("status").getByText("Awaken the Fragment", { exact: true }),
   ).toBeVisible();
 
   await page.keyboard.press("KeyE");
+  await expect(page.getByText("The dream changes shape around your choice.")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "The Fragment Holds" }),
   ).toBeVisible();

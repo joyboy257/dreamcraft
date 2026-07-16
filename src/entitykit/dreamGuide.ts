@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import type { EntityReadabilityReport, EntityUpdateContext } from "./entityKit";
+
 export type DreamGuideState =
   | "idle"
   | "listening"
@@ -13,22 +15,6 @@ export interface DreamGuideOptions {
   readonly accentColor?: number;
   readonly focalColor?: number;
   readonly scale?: number;
-}
-
-export interface EntityUpdateContext {
-  readonly elapsedSeconds: number;
-  readonly deltaSeconds: number;
-}
-
-export interface EntityReadabilityReport {
-  readonly hasRecognizableBodyPlan: boolean;
-  readonly iconicFeatureCount: number;
-  readonly hasContrastingFocalPoint: boolean;
-  readonly hasDistinctSilhouette: boolean;
-  readonly hasSemanticAnimation: boolean;
-  readonly visibleAtIntendedDistance: boolean;
-  readonly scaleRelativeToPlayer: number;
-  readonly passed: boolean;
 }
 
 export interface ProceduralDreamGuide {

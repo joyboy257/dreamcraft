@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { RuntimeMetrics } from "../contracts/runtime";
 import { CHUNK_SIZE, chunkKey, worldToChunk } from "./chunkMath";
 import { meshChunk } from "./chunkMesher";
+import { CrumbleScheduler } from "./crumbleScheduler";
 import {
   editTargetedBlock,
   resolveCenterTarget,
@@ -10,6 +11,12 @@ import {
 } from "./interaction";
 import { createLocalGenerator, type BlockId, type ChunkGenerator } from "./localGenerator";
 import { PlayerMotor, type PlayerMotorConfig } from "./playerMotor";
+import {
+  applyPhysicsTransition as samplePhysicsTransition,
+  resolvePhysicsAtPoint,
+  resolveSurfaceReaction,
+  type RuntimePhysicsProfile,
+} from "../gameplay/physicsProfile";
 import { detectQualityTier, qualityProfile, type QualityTier } from "./quality";
 import { RuntimeMetricsRecorder } from "./runtimeMetrics";
 import { prepareSafeSpawn } from "./spawnSafety";
@@ -23,9 +30,17 @@ export interface VoxelEngineOptions {
   onFailure: (message: string) => void;
   onInteractionPrompt?: (prompt: string | null) => void;
   onEntityInteract?: (entityId: string) => void;
+  onBlockEdit?: (
+    action: "break" | "place",
+    position: { x: number; y: number; z: number },
+  ) => void;
   getInteractiveEntities?: () => readonly InteractiveEntityTarget[];
   sceneObjects?: readonly THREE.Object3D[];
-  onFixedUpdate?: (elapsedSeconds: number, deltaSeconds: number) => void;
+  onFixedUpdate?: (
+    elapsedSeconds: number,
+    deltaSeconds: number,
+    playerPosition: Readonly<{ x: number; y: number; z: number }>,
+  ) => void;
   generator?: ChunkGenerator;
   worldRadius?: number;
   spawn?: { x: number; z: number };
@@ -33,6 +48,36 @@ export interface VoxelEngineOptions {
   blockColors?: Readonly<Record<number, readonly [number, number, number]>>;
   playerConfig?: Partial<PlayerMotorConfig>;
   fieldOfView?: number;
+  atmosphere?: VoxelAtmosphereState;
+  particles?: VoxelParticlePlan;
+  physicsProfile?: RuntimePhysicsProfile;
+  blockMaterials?: Readonly<Record<number, string>>;
+  initialLookAt?: { x: number; y: number; z: number };
+}
+
+export interface VoxelAtmosphereState {
+  sky: { top: number; bottom: number };
+  fog: { color: number; near: number; far: number };
+  ambient: { color: number; intensity: number };
+  sun: { color: number; intensity: number };
+}
+
+export interface VoxelParticlePlan {
+  kind: string;
+  count: number;
+  speed: number;
+  sway: number;
+  pointSize: number;
+}
+
+function runtimeParticleColor(kind: string, fallback: number): number {
+  if (kind === "bubbles") return 0x91cfff;
+  if (kind === "mist") return 0xc5d8df;
+  if (kind === "petals") return 0xff9ecb;
+  if (kind === "sparkles") return 0xfff4bd;
+  if (kind === "stars") return 0xe8e2ff;
+  if (kind === "dust") return 0xd9b56d;
+  return fallback;
 }
 
 export interface VoxelEngine {
@@ -40,7 +85,28 @@ export interface VoxelEngine {
   pause(): void;
   dispose(): void;
   getMetrics(): RuntimeMetrics;
+  applyAtmosphere(
+    state: VoxelAtmosphereState,
+    durationMs?: number,
+    particles?: VoxelParticlePlan,
+  ): void;
+  setReducedMotion(reduced: boolean): void;
+  applyPhysicsTransition(transitionId: string): void;
   readonly world: VoxelWorld;
+}
+
+export function cameraRotationToward(
+  from: { x: number; y: number; z: number },
+  to: { x: number; y: number; z: number },
+): { yaw: number; pitch: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dz = to.z - from.z;
+  const horizontal = Math.max(0.001, Math.hypot(dx, dz));
+  return {
+    yaw: Math.atan2(-dx, -dz),
+    pitch: Math.max(-Math.PI * 0.49, Math.min(Math.PI * 0.49, Math.atan2(dy, horizontal))),
+  };
 }
 
 const FIXED_DELTA_SECONDS = 1 / 60;
@@ -65,8 +131,13 @@ export function createVoxelEngine(
   }
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x151126);
-  scene.fog = new THREE.Fog(0x211b35, 18, 58);
+  const initialAtmosphere = options.atmosphere;
+  scene.background = new THREE.Color(initialAtmosphere?.sky.bottom ?? 0x151126);
+  scene.fog = new THREE.Fog(
+    initialAtmosphere?.fog.color ?? 0x211b35,
+    initialAtmosphere?.fog.near ?? 18,
+    initialAtmosphere?.fog.far ?? 58,
+  );
 
   const camera = new THREE.PerspectiveCamera(
     Math.max(55, Math.min(95, options.fieldOfView ?? 72)),
@@ -75,8 +146,15 @@ export function createVoxelEngine(
     100,
   );
   camera.rotation.order = "YXZ";
-  const hemisphere = new THREE.HemisphereLight(0xcbbfff, 0x181225, 1.65);
-  const sun = new THREE.DirectionalLight(0xffdfb8, 2.1);
+  const hemisphere = new THREE.HemisphereLight(
+    initialAtmosphere?.ambient.color ?? 0xcbbfff,
+    initialAtmosphere?.sky.top ?? 0x181225,
+    initialAtmosphere?.ambient.intensity ?? 1.65,
+  );
+  const sun = new THREE.DirectionalLight(
+    initialAtmosphere?.sun.color ?? 0xffdfb8,
+    initialAtmosphere?.sun.intensity ?? 2.1,
+  );
   sun.position.set(-12, 22, 8);
   scene.add(hemisphere, sun);
   for (const object of options.sceneObjects ?? []) scene.add(object);
@@ -84,6 +162,31 @@ export function createVoxelEngine(
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
+
+  let particlePlan = options.particles;
+  const particleCount = Math.max(0, Math.min(500, Math.floor(particlePlan?.count ?? 0)));
+  const particleGeometry = new THREE.BufferGeometry();
+  const particlePositions = new Float32Array(500 * 3);
+  for (let index = 0; index < 500; index += 1) {
+    const phase = (options.seed ?? 1) * 0.001 + index * 12.9898;
+    const radial = 4 + ((Math.sin(phase) + 1) / 2) * 28;
+    const angle = phase * 4.123;
+    particlePositions[index * 3] = Math.cos(angle) * radial;
+    particlePositions[index * 3 + 1] = 3 + ((Math.sin(phase * 2.17) + 1) / 2) * 22;
+    particlePositions[index * 3 + 2] = Math.sin(angle) * radial;
+  }
+  particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+  particleGeometry.setDrawRange(0, particleCount);
+  const particleMaterial = new THREE.PointsMaterial({
+    color: runtimeParticleColor(particlePlan?.kind ?? "motes", initialAtmosphere?.sky.top ?? 0xffffff),
+    size: Math.max(0.03, Math.min(0.3, particlePlan?.pointSize ?? 0.1)),
+    transparent: true,
+    opacity: 0.62,
+    depthWrite: false,
+  });
+  const particles = new THREE.Points(particleGeometry, particleMaterial);
+  particles.visible = particleCount > 0;
+  scene.add(particles);
 
   const world = new VoxelWorld(options.generator ?? createLocalGenerator(options.seed ?? 0x5eed), {
     radius: options.worldRadius ?? 64,
@@ -123,11 +226,42 @@ export function createVoxelEngine(
   const keys = new Set<string>();
   let yaw = 0;
   let pitch = 0;
+  if (options.initialLookAt) {
+    const rotation = cameraRotationToward(
+      { x: player.state.position.x, y: player.state.position.y + 1.62, z: player.state.position.z },
+      options.initialLookAt,
+    );
+    yaw = rotation.yaw;
+    pitch = rotation.pitch;
+  }
   let disposed = false;
   let desiredRunning = false;
   let contextLost = false;
   let previousFrameAt = 0;
   let accumulator = 0;
+  let reducedMotion = false;
+  let physicsProfile = options.physicsProfile;
+  let physicsTransitionBase = physicsProfile;
+  let physicsTransitionId: string | null = null;
+  let physicsTransitionElapsedMs = 0;
+  const crumbleScheduler = new CrumbleScheduler();
+  const copyAtmosphere = (state: VoxelAtmosphereState): VoxelAtmosphereState => ({
+    sky: { ...state.sky },
+    fog: { ...state.fog },
+    ambient: { ...state.ambient },
+    sun: { ...state.sun },
+  });
+  const defaultAtmosphere: VoxelAtmosphereState = {
+    sky: { top: 0x181225, bottom: 0x151126 },
+    fog: { color: 0x211b35, near: 18, far: 58 },
+    ambient: { color: 0xcbbfff, intensity: 1.65 },
+    sun: { color: 0xffdfb8, intensity: 2.1 },
+  };
+  let currentAtmosphere = copyAtmosphere(initialAtmosphere ?? defaultAtmosphere);
+  let atmosphereOrigin = copyAtmosphere(currentAtmosphere);
+  let atmosphereTarget = copyAtmosphere(currentAtmosphere);
+  let atmosphereElapsedMs = 0;
+  let atmosphereDurationMs = 0;
   const rayDirection = new THREE.Vector3();
 
   function isWithinRenderRadius(chunk: ChunkCoordinate): boolean {
@@ -241,16 +375,75 @@ export function createVoxelEngine(
   function update(): void {
     const forward = Number(keys.has("KeyW")) - Number(keys.has("KeyS"));
     const strafe = Number(keys.has("KeyD")) - Number(keys.has("KeyA"));
+    if (physicsTransitionId && physicsTransitionBase) {
+      physicsTransitionElapsedMs += FIXED_DELTA_SECONDS * 1_000;
+      physicsProfile = samplePhysicsTransition(
+        physicsTransitionBase,
+        physicsTransitionId,
+        physicsTransitionElapsedMs,
+      );
+    }
+    const physics = physicsProfile
+      ? resolvePhysicsAtPoint(
+          physicsProfile,
+          [player.state.position.x, player.state.position.y, player.state.position.z],
+          performance.now() - initializedAt,
+        )
+      : null;
+    const surfaceBlock = world.getBlock(
+      Math.floor(player.state.position.x),
+      Math.floor(player.state.position.y - 0.04),
+      Math.floor(player.state.position.z),
+    );
+    const materialId = options.blockMaterials?.[surfaceBlock];
+    const surface = physicsProfile && materialId
+      ? resolveSurfaceReaction(physicsProfile, materialId)
+      : undefined;
+    const nowMs = performance.now();
+    const surfaceX = Math.floor(player.state.position.x);
+    const surfaceY = Math.floor(player.state.position.y - 0.04);
+    const surfaceZ = Math.floor(player.state.position.z);
+    if (surface?.crumbleAfterMs !== undefined && surfaceBlock !== 0) {
+      crumbleScheduler.schedule(
+        [surfaceX, surfaceY, surfaceZ],
+        surfaceBlock,
+        nowMs,
+        surface.crumbleAfterMs,
+        surface.respawnAfterMs ?? 2_000,
+      );
+    }
+    crumbleScheduler.update(world, nowMs);
+    const vertical = Number(keys.has("Space")) - Number(keys.has("ControlLeft") || keys.has("ControlRight"));
     player.step(
       {
         moveX: strafe * Math.cos(yaw) - forward * Math.sin(yaw),
         moveZ: -strafe * Math.sin(yaw) - forward * Math.cos(yaw),
         sprint: keys.has("ShiftLeft") || keys.has("ShiftRight"),
         jump: keys.has("Space"),
+        moveY: vertical,
+        dash: keys.has("KeyQ"),
+        glide: keys.has("Space"),
+        fly: Boolean(physicsProfile?.player.abilities.flight),
+        swim: Boolean(physicsProfile?.player.abilities.swim),
       },
       FIXED_DELTA_SECONDS,
       performance.now(),
       world,
+      {
+        ...(physics
+          ? {
+              gravity: physics.gravity,
+              wind: physics.wind,
+              force: physics.force,
+              timeScale: physics.timeScale,
+              buoyancy: physics.buoyancy,
+              drag: physics.drag,
+              movementScale: physics.movementScale,
+            }
+          : {}),
+        ...(surface ? { surface } : {}),
+        swimming: Boolean(physicsProfile?.player.abilities.swim),
+      },
     );
     camera.position.set(
       player.state.position.x,
@@ -273,6 +466,11 @@ export function createVoxelEngine(
     options.onFixedUpdate?.(
       (performance.now() - initializedAt) / 1_000,
       FIXED_DELTA_SECONDS,
+      {
+        x: player.state.position.x,
+        y: player.state.position.y,
+        z: player.state.position.z,
+      },
     );
   }
 
@@ -288,7 +486,104 @@ export function createVoxelEngine(
       accumulator -= FIXED_DELTA_SECONDS;
       steps += 1;
     }
+    if (atmosphereElapsedMs < atmosphereDurationMs) {
+      atmosphereElapsedMs = Math.min(atmosphereDurationMs, atmosphereElapsedMs + frameMs);
+      sampleAtmosphere(atmosphereDurationMs === 0 ? 1 : atmosphereElapsedMs / atmosphereDurationMs);
+    }
+    if (!reducedMotion && particles.visible) {
+      const speed = Math.max(0, Math.min(0.7, particlePlan?.speed ?? 0));
+      const sway = Math.max(0, Math.min(0.4, particlePlan?.sway ?? 0));
+      particles.rotation.y = now * 0.00004 * speed;
+      particles.position.x = Math.sin(now * 0.0003) * sway;
+    }
     renderer.render(scene, camera);
+  }
+
+  function mix(from: number, to: number, amount: number): number {
+    return from + (to - from) * amount;
+  }
+
+  function mixColor(from: number, to: number, amount: number): number {
+    const channel = (shift: number): number => Math.round(mix(
+      (from >>> shift) & 0xff,
+      (to >>> shift) & 0xff,
+      amount,
+    ));
+    return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+  }
+
+  function applyAtmosphereState(state: VoxelAtmosphereState): void {
+    scene.background = new THREE.Color(state.sky.bottom);
+    if (scene.fog instanceof THREE.Fog) {
+      scene.fog.color.setHex(state.fog.color);
+      scene.fog.near = state.fog.near;
+      scene.fog.far = state.fog.far;
+    }
+    hemisphere.color.setHex(state.ambient.color);
+    hemisphere.groundColor.setHex(state.sky.top);
+    hemisphere.intensity = state.ambient.intensity;
+    sun.color.setHex(state.sun.color);
+    sun.intensity = state.sun.intensity;
+  }
+
+  function sampleAtmosphere(amount: number): void {
+    currentAtmosphere = {
+      sky: {
+        top: mixColor(atmosphereOrigin.sky.top, atmosphereTarget.sky.top, amount),
+        bottom: mixColor(atmosphereOrigin.sky.bottom, atmosphereTarget.sky.bottom, amount),
+      },
+      fog: {
+        color: mixColor(atmosphereOrigin.fog.color, atmosphereTarget.fog.color, amount),
+        near: mix(atmosphereOrigin.fog.near, atmosphereTarget.fog.near, amount),
+        far: mix(atmosphereOrigin.fog.far, atmosphereTarget.fog.far, amount),
+      },
+      ambient: {
+        color: mixColor(atmosphereOrigin.ambient.color, atmosphereTarget.ambient.color, amount),
+        intensity: mix(atmosphereOrigin.ambient.intensity, atmosphereTarget.ambient.intensity, amount),
+      },
+      sun: {
+        color: mixColor(atmosphereOrigin.sun.color, atmosphereTarget.sun.color, amount),
+        intensity: mix(atmosphereOrigin.sun.intensity, atmosphereTarget.sun.intensity, amount),
+      },
+    };
+    applyAtmosphereState(currentAtmosphere);
+  }
+
+  function applyAtmosphere(
+    state: VoxelAtmosphereState,
+    durationMs = 0,
+    nextParticles?: VoxelParticlePlan,
+  ): void {
+    atmosphereOrigin = copyAtmosphere(currentAtmosphere);
+    atmosphereTarget = copyAtmosphere(state);
+    atmosphereElapsedMs = 0;
+    atmosphereDurationMs = Math.max(0, Math.min(10_000, durationMs));
+    if (nextParticles) {
+      particlePlan = nextParticles;
+      particleMaterial.color.setHex(runtimeParticleColor(nextParticles.kind, state.sky.top));
+      particleMaterial.size = Math.max(0.03, Math.min(0.3, nextParticles.pointSize));
+      const count = Math.max(0, Math.min(500, Math.floor(nextParticles.count)));
+      particleGeometry.setDrawRange(0, reducedMotion ? Math.min(48, count) : count);
+      particles.visible = count > 0;
+    }
+    if (atmosphereDurationMs === 0) sampleAtmosphere(1);
+  }
+
+  function setReducedMotion(value: boolean): void {
+    reducedMotion = value;
+    const count = Math.max(0, Math.min(500, Math.floor(particlePlan?.count ?? 0)));
+    particleGeometry.setDrawRange(0, value ? Math.min(48, count) : count);
+    if (value) {
+      particles.rotation.set(0, 0, 0);
+      particles.position.set(0, 0, 0);
+    }
+  }
+
+  function applyPhysicsTransition(transitionId: string): void {
+    if (!physicsProfile || !physicsProfile.transitions.some(({ id }) => id === transitionId)) return;
+    physicsTransitionBase = physicsProfile;
+    physicsTransitionId = transitionId;
+    physicsTransitionElapsedMs = 0;
   }
 
   function start(): void {
@@ -325,7 +620,7 @@ export function createVoxelEngine(
     if (event.code === "KeyE" && target?.kind === "entity") {
       options.onEntityInteract?.(target.entityId);
     }
-    if (["Space", "KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) event.preventDefault();
+    if (["Space", "ControlLeft", "ControlRight", "KeyQ", "KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) event.preventDefault();
   };
   const handleKeyUp = (event: KeyboardEvent): void => {
     keys.delete(event.code);
@@ -351,8 +646,16 @@ export function createVoxelEngine(
     }
     if (target.kind !== "voxel" || (event.button !== 0 && event.button !== 2)) return;
     const playerPosition = player.state.position;
-    editTargetedBlock(
-      event.button === 0 ? "break" : "place",
+    const action = event.button === 0 ? "break" : "place";
+    const editedPosition = action === "break"
+      ? { ...target.hit.block }
+      : {
+          x: target.hit.block.x + target.hit.normal.x,
+          y: target.hit.block.y + target.hit.normal.y,
+          z: target.hit.block.z + target.hit.normal.z,
+        };
+    const edited = editTargetedBlock(
+      action,
       target.hit,
       world,
       selectedBlock,
@@ -362,6 +665,7 @@ export function createVoxelEngine(
         z + 1 > playerPosition.z - 0.32 && z < playerPosition.z + 0.32
       ),
     );
+    if (edited) options.onBlockEdit?.(action, editedPosition);
   };
   const handleContextMenu = (event: MouseEvent): void => event.preventDefault();
   const handleVisibility = (): void => {
@@ -407,6 +711,9 @@ export function createVoxelEngine(
     world,
     start,
     pause,
+    applyAtmosphere,
+    setReducedMotion,
+    applyPhysicsTransition,
     getMetrics: () => metrics.snapshot({
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
@@ -432,8 +739,11 @@ export function createVoxelEngine(
       selectionGeometry.dispose();
       selectionMaterial.dispose();
       material.dispose();
+      particleGeometry.dispose();
+      particleMaterial.dispose();
       renderer.dispose();
       world.clear();
+      crumbleScheduler.clear();
       scene.clear();
     },
   };
