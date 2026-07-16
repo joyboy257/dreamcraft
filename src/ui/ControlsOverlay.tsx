@@ -84,5 +84,5 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 }
 
 function Range({ label, value, min, max, step = 1, unit = "", onChange }: { label: string; value: number; min: number; max: number; step?: number; unit?: string; onChange: (value: number) => void }): React.JSX.Element {
-  return <label className="dc-range"><span>{label}<output>{value}{unit}</output></span><input type="range" value={value} min={min} max={max} step={step} onChange={(event) => onChange(event.target.valueAsNumber)} /></label>;
+  return <label className="dc-range"><span>{label}<output aria-hidden="true">{value}{unit}</output></span><input aria-label={label} type="range" value={value} min={min} max={max} step={step} onChange={(event) => onChange(event.target.valueAsNumber)} /></label>;
 }

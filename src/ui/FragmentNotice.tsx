@@ -4,9 +4,15 @@ interface FragmentNoticeProps {
   issueCode?: string | null;
   onEnterFragment: () => void;
   onTryAgain: () => void;
+  onReturn: () => void;
 }
 
-export function FragmentNotice({ issueCode = null, onEnterFragment, onTryAgain }: FragmentNoticeProps): React.JSX.Element {
+export function FragmentNotice({
+  issueCode = null,
+  onEnterFragment,
+  onTryAgain,
+  onReturn,
+}: FragmentNoticeProps): React.JSX.Element {
   const copy = getFragmentCopy(issueCode);
   return (
     <section className="dc-fragment" role="alert" aria-labelledby="dc-fragment-title">
@@ -19,6 +25,7 @@ export function FragmentNotice({ issueCode = null, onEnterFragment, onTryAgain }
       <div className="dc-fragment-actions">
         <button className="dc-primary-action" type="button" onClick={onEnterFragment}>Enter the fragment</button>
         <button className="dc-text-button" type="button" onClick={onTryAgain}>Try this dream again</button>
+        <button className="dc-text-button" type="button" onClick={onReturn}>Change description</button>
       </div>
     </section>
   );

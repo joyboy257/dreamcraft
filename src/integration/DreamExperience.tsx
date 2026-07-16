@@ -59,6 +59,13 @@ const DEFAULT_COMFORT: ComfortSettings = {
   mouseSensitivity: 1,
 };
 
+function initialComfortSettings(): ComfortSettings {
+  return {
+    ...DEFAULT_COMFORT,
+    reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+  };
+}
+
 const GUIDE_STATES: readonly DreamGuideState[] = [
   "idle",
   "listening",
@@ -103,7 +110,7 @@ export function DreamExperience({
   const [prompt, setPrompt] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
-  const [comfort, setComfort] = useState(DEFAULT_COMFORT);
+  const [comfort, setComfort] = useState(initialComfortSettings);
 
   useEffect(() => {
     enteredRef.current = entered;
@@ -230,7 +237,9 @@ export function DreamExperience({
           if (arc.getSnapshot().phase === "awaken_beacon") openContextDialogue(effect.dialogueId);
           else deferredDialogueIds.push(effect.dialogueId);
         }
-        if (effect.kind === "play_audio_cue") audio.playCue(effect.cueId);
+        if (effect.kind === "play_audio_cue") {
+          setToast(audio.playCue(effect.cueId).textAlternative);
+        }
         if (effect.kind === "transform_structure") beacon.setAwakened(true);
         if (effect.kind === "apply_physics_transition") engine?.applyPhysicsTransition(effect.transitionId);
         if (effect.kind === "change_atmosphere") {
@@ -336,6 +345,7 @@ export function DreamExperience({
     engine = createVoxelEngine(canvas, {
       seed: preview.seed,
       onFailure: setFailure,
+      onRecovery: () => setFailure(null),
       onInteractionPrompt: setPrompt,
       onEntityInteract: (entityId) => {
         if (entityId === PLAY_GRAPH_INTERACTION_ID) {
@@ -414,6 +424,17 @@ export function DreamExperience({
       window.__DREAMCRAFT_TEST__ = {
         getPlayerPosition: () => engine?.getPlayerPosition() ?? null,
         getViewRotation: () => engine?.getViewRotation() ?? null,
+        getComfortSettings: () => engine?.getComfortSettings() ?? null,
+        getQualityProfile: () => engine?.getQualityProfile() ?? null,
+        getMetrics: () => engine?.getMetrics() ?? null,
+        playAudioCaption: () => {
+          const cueId = runtime.audio.cues[0]?.id;
+          const caption = cueId
+            ? audio.playCue(cueId).textAlternative
+            : audio.playFootstep().textAlternative;
+          setToast(caption);
+          return caption;
+        },
       };
     }
 
@@ -474,8 +495,12 @@ export function DreamExperience({
         );
         engine?.applyPhysicsTransition(event.transformation.physicsTransitionId);
         const cueId = runtime.audio.cues[0]?.id;
-        if (cueId) audio.playCue(cueId);
-        setToast(runtime.scenario.transformationMessage);
+        const cueCaption = cueId ? audio.playCue(cueId).textAlternative : null;
+        setToast(
+          cueCaption
+            ? `${runtime.scenario.transformationMessage} ${cueCaption}`
+            : runtime.scenario.transformationMessage,
+        );
         syncSnapshot();
       }),
       bus.on("ending_reached", () => {
@@ -588,6 +613,17 @@ export function DreamExperience({
     if (canvasRef.current) requestCanvasPointerLock(canvasRef.current);
   };
 
+  useEffect(() => {
+    if (!entered || paused || snapshot?.dialogue || (snapshot?.ending && endingRevealed)) return;
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      openPause();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [entered, endingRevealed, paused, snapshot?.dialogue, snapshot?.ending]);
+
   const objective = snapshot
     ? {
         title: snapshot.objective.title,
@@ -652,7 +688,7 @@ export function DreamExperience({
           ) : null}
           {failure ? (
             <div className="experience-failure" role="alert">
-              <strong>The dream could not open on this device.</strong>
+              <strong>The 3D view needs attention.</strong>
               <p>{failure}</p>
               <button type="button" onClick={onRemix}>Return to your description</button>
             </div>

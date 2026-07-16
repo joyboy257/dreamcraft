@@ -46,6 +46,7 @@ describe("Dream generation HTTP route", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-request-id")).toBe("server-request-1");
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
     expect(gatewayCalls).toBe(0);
     expect(DreamSpecV1Schema.safeParse(body.core).success).toBe(true);
     expect(body.metadata).toMatchObject({
@@ -289,7 +290,7 @@ describe("Dream generation HTTP route", () => {
     ).toBe(true);
   });
 
-  it("rejects method, media type, malformed JSON, and too-short dreams before generation", async () => {
+  it("rejects method, media type, malformed JSON, and meaningless or too-short dreams before generation", async () => {
     let gatewayCalls = 0;
     const service = new DreamGenerationService({
       gateway: {
@@ -331,9 +332,19 @@ describe("Dream generation HTTP route", () => {
           clientRequestId: "short",
         }),
       })),
+      route(new Request("http://dreamcraft.test/api/dream", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          dreamText: "aaaaaaaaaaaaaaaaaaaaaaaa",
+          intensity: "calm",
+          strategy: "single-sol",
+          clientRequestId: "meaningless",
+        }),
+      })),
     ]);
 
-    expect(responses.map(({ status }) => status)).toEqual([405, 415, 400, 400]);
+    expect(responses.map(({ status }) => status)).toEqual([405, 415, 400, 400, 400]);
     expect(gatewayCalls).toBe(0);
   });
 });

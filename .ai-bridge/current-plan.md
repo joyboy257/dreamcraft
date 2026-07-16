@@ -454,7 +454,8 @@ Chromium journey verifies real touch movement, look, and interaction paths; a
 production-browser check proves the cached shell reloads offline. Typecheck,
 lint, 189 tests, 5 evals, production build, 4 Playwright journeys, and the PWA
 offline journey pass without an OpenAI call or deployment. Real-device mobile
-and performance certification remain in G6. Evidence:
+ergonomics remain a G7 release-verification item; automated performance
+certification passed in G6. Evidence:
 `docs/17_G5_ENGINEERING_EVIDENCE.md`.
 
 ---
@@ -499,6 +500,15 @@ Deliver keyboard navigability outside pointer lock, focus management, readable d
 ### Gate G6
 
 Twenty consecutive eval prompts and the hostile fixture set produce a playable world or safe fragment with no page reload and no uncaught console error. Release performance and security thresholds pass.
+
+**Current status (2026-07-16):** engineering-complete / independently certified PASS.
+The deterministic twenty-prompt single-page journey, hostile fixtures,
+accessibility/comfort paths, WebGL recovery, desktop/mobile performance budgets,
+security boundaries, production headers configuration, and offline PWA shell
+all pass without a live OpenAI call or deployment. The serialized official
+Playwright matrix passed 9/9 three consecutive times under Luna and 9/9 again
+under independent Terra verification. Evidence:
+`docs/18_G6_ENGINEERING_EVIDENCE.md`.
 
 ---
 

@@ -5,9 +5,9 @@
 ## Baseline
 
 - Date/time: 2026-07-16 (Asia/Singapore)
-- Branch / commit: `main`; G4 synchronized with `origin/main` at `798401f`; independently certified G5 changes await the checkpoint commit
+- Branch / commit: `main`; G5 synchronized with `origin/main` at `7bbcf09`; independently certified G6 changes await the checkpoint commit
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Working tree: independently certified G5 engineering changes and evidence pending checkpoint commit
+- Working tree: independently certified G6 hardening, tests, and evidence pending checkpoint commit
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
@@ -16,11 +16,11 @@
 
 ## Active milestone
 
-- Milestone: M5 — Product experience and PWA
-- Work items: DC-WI-050 through DC-WI-054; Gate G5
-- Goal: make the complete desktop journey understandable and recoverable while proving usable mobile controls and an offline production shell
+- Milestone: M6 — Reliability, performance, security, and accessibility
+- Work items: DC-WI-060 through DC-WI-064; Gate G6
+- Goal: certify deterministic failure recovery, accessibility and comfort behavior, desktop/mobile runtime budgets, and release security boundaries
 - Gate state: **engineering-complete / independently certified PASS**
-- Owners/agents: root integration, bounded Luna implementation/documentation, and independent Terra gate verification; no live request authorized
+- Owners/agents: root integration, sequential bounded Luna implementation/documentation, and independent Terra gate verification; no live request authorized
 
 ## Working user-visible behavior
 
@@ -39,15 +39,16 @@
 | Check | Command / route | Result | Evidence |
 |---|---|---|---|
 | Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
-| Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-15 |
+| Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-16 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
-| Unit/integration tests | `corepack pnpm test` | Pass, 46 files and 189/189 tests | includes G3 mocked failure coverage, G4 runtime richness, real materialization preflight, and production-only service-worker registration behavior |
-| Browser smoke | `corepack pnpm test:e2e` | Pass, 4/4 Playwright journeys | complete deterministic desktop journey, six unique G4 renders, materialization cancellation/retry with preserved input, and real mobile touch look/interaction/movement; console and page errors clean |
+| Unit/integration tests | `corepack pnpm test` | Pass, 48 files and 192/192 tests | includes G3 mocked failure coverage, G4 runtime richness, G5 materialization/PWA behavior, request hardening, and locked Vercel security-header configuration |
+| Focused independent verification | changed-path unit, integration, security, and hostile suites | Pass, 44/44 tests | independent Terra rerun before the G6 verdict |
+| Browser smoke | `corepack pnpm test:e2e` | Pass, 9/9 Playwright journeys with `workers: 1` | three consecutive official Luna runs plus an independent Terra 9/9 rerun; covers complete desktop and mobile journeys, twenty prompts in one page, accessibility/comfort, WebGL recovery, and measured desktop/mobile budgets |
 | Production PWA | `corepack pnpm test:pwa` | Pass, 1/1 Chromium | production service-worker control, manifest and hashed shell assets cached, then usable input shell reloads offline |
-| Dream evals | `corepack pnpm eval` | Pass, 5/5 | six-dream G4 distinction gate, representative compiler corpus, hostile path budget, and ten-prompt mocked single/director benchmark |
-| Production build | `corepack pnpm build` | Pass | Vite 8 output: index 1.35 kB raw / 0.60 kB gzip, CSS 23.74 / 5.81 kB, JavaScript 979.63 / 271.02 kB; the raw 500 kB advisory remains nonblocking and is owned by G6 |
-| Performance | focused metrics tests + headed render inspection | Pass for G1 gate | combined per-chunk geometry, bounded one-job-per-frame scheduling, quality tiers, disposal, and runtime metric recorder |
-| Dependency/security checks | `corepack pnpm audit --prod --audit-level high`; ignored-aware pack validator; independent architecture/test/security diff review | Pass | no known production advisories; no High/Critical findings; prior cache/rate/cancellation findings remediated; validator suppresses values and excludes ignored secret files |
+| Dream evals | `corepack pnpm eval` | Pass, 4 files and 6/6 tests | six-dream distinction, representative compiler corpus, hostile aggregate, and ten-prompt mocked single/director benchmark; twenty deterministic prompts also pass in the single-page browser gate |
+| Production build | `corepack pnpm build` | Pass | Vite 8 JavaScript output 980.52 kB raw / 271.31 kB gzip; the raw 500 kB advisory remains nonblocking because documented runtime budgets pass |
+| Performance | deterministic desktop balanced and Pixel 7 reduced-profile browser metrics | Pass | desktop 119 FPS / 16.7 ms p95 / 23 draws / 11,738 triangles; reduced mobile 120 FPS / 9.1 ms p95 / 18 draws / 7,628 triangles; chunk work below 5 ms p95 and three-lifecycle heap growth approximately 6.7% |
+| Dependency/security checks | `corepack pnpm audit --prod`; pack validator; service-worker syntax; sequential repository hardening plus independent Terra gate review | Pass | zero known vulnerabilities, zero High/Critical findings, restrictive deployment-header configuration, API responses excluded from caches, and no secret-pattern hit; this was not claimed as an exhaustive multi-agent security scan |
 | Install integrity | `corepack pnpm install --frozen-lockfile` | Pass | 222 lock entries pass supply-chain policy; OpenAI SDK pinned to mature `6.46.0` |
 
 ## Recent decisions or deviations
@@ -77,16 +78,33 @@
 - Mobile touch controls feed the same engine paths as desktop movement, look, jump, and interaction; automated Chromium measures actual camera and player changes while reduced quality bounds particle work.
 - The PWA service worker is production-only, excludes API traffic, versions only DreamCraft-owned caches, discovers hashed build assets, and preserves a tested offline shell.
 - G5 was independently verified by Terra and returned PASS with no OpenAI request and no deployment.
+- G6 locks the official browser matrix to one deterministic worker; Luna
+  reproduced 9/9 three consecutive times and Terra independently reran 9/9.
+- Twenty varied API-disabled prompts reach preflighted safe fragments in one
+  page session without a reload, console error, or page error.
+- Accessibility and comfort verification covers focus containment, keyboard
+  escape/recovery, audio-cue text alternatives, reduced motion, FOV, and mouse
+  sensitivity propagation into the engine.
+- Runtime metrics now report actual loaded chunks, queues, entities, particles,
+  frame latency, draw calls, triangles, and generation/mesh latency. Desktop and
+  reduced-mobile profiles pass their budgets; three materialization lifecycles
+  remain inside the heap-growth guard.
+- Production configuration adds a restrictive CSP and transport/privacy headers;
+  the service worker continues to exclude every API response from caching.
+- Gate G6 was independently certified PASS by Terra after a sequential repository
+  hardening pass. No OpenAI request and no deployment occurred.
 
 ## Known issues
 
 | Severity | Issue | Owner | Next action |
 |---|---|---|---|
-| Low | Vite reports the 979.63 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Profile and reassess justified code splitting during G6; current gzip is 271.02 kB and G5 functionality passes |
-| Low | In-memory application rate limiting is per serverless instance | Root/release | Pair with Vercel platform/WAF rate protection before public production traffic |
-| Low | Automated mobile Chromium proves touch paths but not real-device ergonomics, GPU performance, or thermal behavior | Root/QA | Run the G6 real-device and performance pass before deployment |
+| Low | Vite reports the 980.52 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Reassess code splitting before release only if it materially improves loading; current gzip is 271.31 kB and measured runtime budgets pass |
+| Medium | In-memory application rate limiting is per serverless instance | Root/release | Configure Vercel Firewall/shared rate protection or approve a distributed limiter before public live generation |
+| Low | The API does not explicitly reject a foreign `Origin`; browser CORS behavior limits impact and the endpoint has no cookie/account authority | Root/release | Approve and add an exact same-origin check/allowlist before public live generation |
+| Low | Automated Pixel 7 Chromium proves touch paths and reduced-profile budgets but not physical-device ergonomics, GPU-driver behavior, or thermals | Root/QA | Confirm on the physical demo device during G7 release verification |
 | Low | PWA shell changes can remain stale if the service-worker cache name is not version-bumped | Root/release | Require a cache-version bump whenever cached shell behavior or assets change |
-| Low | Chunk generation/meshing is bounded to one job per frame but remains on the main thread | Root/engine | Add worker offload during the G6 performance pass if thresholds require it |
+| Low | Chunk generation/meshing remains on the main thread | Root/engine | Keep the measured sub-5 ms p95 guard; add worker offload only if future content breaks it |
+| Informational | WebGL context loss/restoration is event-tested, but actual recovery depends on the device and GPU driver | Root/QA | Verify the actionable recovery/return path on the physical demo device |
 
 ## External blockers
 
@@ -96,6 +114,9 @@
 
 ## Next worker wave
 
-- Commit and synchronize the independently certified G5 checkpoint on `main`.
-- Continue M6 reliability, failure injection, accessibility, security, performance, and real-device certification without live OpenAI calls.
-- After G6 is certified, create/link the Vercel project, configure secrets server-side, deploy and verify a preview, then request explicit production-deployment authorization.
+- Commit and synchronize the independently certified G6 checkpoint on `main`.
+- Continue M7 repository, judge, demo, rollback, and submission documentation
+  without live OpenAI calls.
+- Create/link the Vercel project only after the G6 checkpoint is clean, configure
+  generation disabled by default, deploy and verify a preview, then request
+  explicit production-deployment authorization.

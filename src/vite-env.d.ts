@@ -13,5 +13,18 @@ interface Window {
   __DREAMCRAFT_TEST__?: {
     getPlayerPosition(): Readonly<{ x: number; y: number; z: number }> | null;
     getViewRotation(): Readonly<{ yaw: number; pitch: number }> | null;
+    getComfortSettings(): Readonly<{
+      fieldOfView: number;
+      mouseSensitivity: number;
+      reducedMotion: boolean;
+    }> | null;
+    getQualityProfile(): Readonly<{
+      tier: "high" | "balanced" | "reduced";
+      maximumPixelRatio: number;
+      renderRadius: number;
+      antialias: boolean;
+    }> | null;
+    getMetrics(): import("./contracts/runtime").RuntimeMetrics | null;
+    playAudioCaption(): string;
   };
 }

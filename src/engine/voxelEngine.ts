@@ -28,6 +28,7 @@ export interface VoxelEngineOptions {
   quality?: QualityTier;
   selectedBlock?: BlockId;
   onFailure: (message: string) => void;
+  onRecovery?: () => void;
   onInteractionPrompt?: (prompt: string | null) => void;
   onEntityInteract?: (entityId: string) => void;
   onBlockEdit?: (
@@ -90,6 +91,8 @@ export interface VoxelEngine {
   setMouseSensitivity(sensitivity: number): void;
   getPlayerPosition(): Readonly<{ x: number; y: number; z: number }>;
   getViewRotation(): Readonly<{ yaw: number; pitch: number }>;
+  getComfortSettings(): Readonly<{ fieldOfView: number; mouseSensitivity: number; reducedMotion: boolean }>;
+  getQualityProfile(): Readonly<ReturnType<typeof qualityProfile>>;
   getMetrics(): RuntimeMetrics;
   applyAtmosphere(
     state: VoxelAtmosphereState,
@@ -731,6 +734,7 @@ export function createVoxelEngine(
   const handleContextRestore = (): void => {
     contextLost = false;
     resize();
+    options.onRecovery?.();
     if (desiredRunning && !document.hidden) start();
   };
 
@@ -761,14 +765,18 @@ export function createVoxelEngine(
     setMouseSensitivity,
     getPlayerPosition: () => ({ ...player.state.position }),
     getViewRotation: () => ({ yaw, pitch }),
+    getComfortSettings: () => ({ fieldOfView: camera.fov, mouseSensitivity, reducedMotion }),
+    getQualityProfile: () => ({ ...profile }),
     applyAtmosphere,
     setReducedMotion,
     applyPhysicsTransition,
     getMetrics: () => metrics.snapshot({
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
-      loadedChunks: chunkMeshes.size,
+      loadedChunks: world.getLoadedChunks().length,
       queuedChunks: streamQueue.length + meshQueue.size,
+      activeEntities: options.getInteractiveEntities?.().length ?? 0,
+      particles: particles.visible ? particleGeometry.drawRange.count : 0,
     }),
     dispose: () => {
       if (disposed) return;

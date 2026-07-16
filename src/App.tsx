@@ -261,6 +261,7 @@ export default function App(): React.JSX.Element {
             setPendingFragment(null);
             void enterDream();
           }}
+          onReturn={() => setPendingFragment(null)}
         />
       </main>
     );

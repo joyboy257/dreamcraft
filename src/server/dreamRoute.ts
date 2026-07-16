@@ -52,6 +52,12 @@ function normalizeDreamText(value: string, maximumCharacters: number): string {
     .slice(0, maximumCharacters);
 }
 
+function hasMeaningfulDreamDetail(value: string): boolean {
+  const symbols = Array.from(value.toLocaleLowerCase("en"))
+    .filter((character) => /[\p{L}\p{N}]/u.test(character));
+  return symbols.length >= 4 && new Set(symbols).size >= 3;
+}
+
 function jsonResponse(
   body: unknown,
   status: number,
@@ -223,7 +229,7 @@ export function createDreamRoute(
       parsed.data.dreamText,
       options.maximumDreamCharacters,
     );
-    if (dreamText.length < 12) {
+    if (dreamText.length < 12 || !hasMeaningfulDreamDetail(dreamText)) {
       finish("rejected", 400, "dream_too_short");
       return jsonResponse(
         { error: { code: "dream_too_short", message: "Describe at least one remembered dream detail." } },
