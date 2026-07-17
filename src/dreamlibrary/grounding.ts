@@ -19,7 +19,7 @@ export interface DreamLibraryBinding {
 function capabilityFor(text: string): string | null {
   const source = text.toLowerCase();
   const match = ([
-    ["cloud garden", "cloud-garden"], ["kitchen", "kitchen"], ["school", "school"], ["forest", "forest"], ["library", "library"], ["stage", "celebration-stage"],
+    ["cloud garden", "cloud-garden"], ["candy fragment", "candy-fragment"], ["kitchen", "kitchen"], ["school", "school"], ["forest", "forest"], ["library", "library"], ["stage", "celebration-stage"],
     ["golden house", "golden-house"], ["cup", "giant-cup"], ["sugar", "sugar-bowl"],
     ["moth", "moth"], ["dog", "dog"], ["bear", "gummy-bear"], ["shadow", "shadow"], ["guide", "procedural-guide"], ["boat", "paper-boat"],
     ["stair", "exit-stairwell"], ["door", "moon-door"], ["board", "jackpot-board"],
@@ -31,6 +31,7 @@ function capabilityFor(text: string): string | null {
 function environmentFor(text: string): string {
   const source = text.toLowerCase();
   if (source.includes("cloud garden")) return "cloud-garden";
+  if (source.includes("candy fragment")) return "candy-fragment";
   if (source.includes("kitchen")) return "kitchen";
   if (source.includes("school")) return "school";
   if (source.includes("stage") || source.includes("celebrat") || source.includes("lottery")) return "celebration";

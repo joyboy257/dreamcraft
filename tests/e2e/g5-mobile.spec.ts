@@ -81,15 +81,20 @@ test("mobile controls move, look, and interact with the real dream runtime", asy
   // element. The elementFromPoint assertion above still proves the hit layer.
   await interact.dispatchEvent("pointerdown", { pointerId: 10, pointerType: "touch" });
   await expect(page.getByRole("heading", { name: "Fragment Guide" })).toBeVisible();
-  await page.getByRole("button", { name: /follow the dream/i }).click();
+  await page.getByRole("button", { name: /tell me more/i }).click();
+  await page.getByRole("button", { name: /tell me more/i }).click();
+  await page.getByRole("button", { name: /carry this with me/i }).click();
   await expect(page.getByRole("group", { name: "Touch game controls" })).toBeVisible();
 
   const positionBefore = await page.evaluate(() => window.__DREAMCRAFT_TEST__?.getPlayerPosition());
   expect(positionBefore).toBeTruthy();
-  const forward = page.getByRole("button", { name: "Move forward" });
-  await forward.dispatchEvent("pointerdown", { pointerId: 9, pointerType: "touch" });
+  const joystick = page.getByRole("slider", { name: "Move joystick" });
+  const bounds = await joystick.boundingBox();
+  expect(bounds).toBeTruthy();
+  await joystick.dispatchEvent("pointerdown", { pointerId: 9, pointerType: "touch", clientX: bounds!.x + bounds!.width / 2, clientY: bounds!.y + bounds!.height / 2 });
+  await joystick.dispatchEvent("pointermove", { pointerId: 9, pointerType: "touch", clientX: bounds!.x + bounds!.width / 2, clientY: bounds!.y + 4 });
   await page.waitForTimeout(650);
-  await forward.dispatchEvent("pointerup", { pointerId: 9, pointerType: "touch" });
+  await joystick.dispatchEvent("pointerup", { pointerId: 9, pointerType: "touch", clientX: bounds!.x + bounds!.width / 2, clientY: bounds!.y + 4 });
   const positionAfter = await page.evaluate(() => window.__DREAMCRAFT_TEST__?.getPlayerPosition());
   expect(positionAfter).toBeTruthy();
   expect(Math.hypot(
