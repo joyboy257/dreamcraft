@@ -22,3 +22,5 @@ test-results/
 
 # Local evidence that may contain machine-specific data
 artifacts/local/
+.vercel
+.env*
