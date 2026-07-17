@@ -418,6 +418,7 @@ export function DreamExperience({
       generator: runtime.generator,
       blockColors: runtime.blockColors,
       blockMaterials: runtime.blockMaterials,
+      blockAtlasTiles: runtime.blockAtlasTiles,
       safeSpawnBlock: runtime.safeSpawnBlock,
       worldRadius: runtime.worldRadius,
       spawn: runtime.spawn,

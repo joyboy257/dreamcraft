@@ -16,7 +16,16 @@ describe("meshChunk", () => {
 
     expect(mesh.faceCount).toBe(6);
     expect(mesh.positions).toHaveLength(6 * 4 * 3);
+    expect(mesh.uvs).toHaveLength(6 * 4 * 2);
     expect(mesh.indices).toHaveLength(6 * 6);
+  });
+
+  it("maps each face into the requested nearest-filter atlas tile", () => {
+    const voxels = new Uint16Array(CHUNK_VOLUME);
+    voxels[voxelIndex(1, 1, 1)] = 2;
+    const mesh = meshChunk({ chunkX: 0, chunkZ: 0, voxels, getNeighbor: () => 0, blockAtlasTiles: { 2: [4, 1] } });
+    expect(Math.min(...mesh.uvs)).toBeGreaterThan(4 / 16);
+    expect(Math.max(...mesh.uvs)).toBeLessThan(1 - 1 / 16);
   });
 
   it("culls the shared face between adjacent solid voxels", () => {

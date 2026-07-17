@@ -53,6 +53,7 @@ export interface VoxelEngineOptions {
   particles?: VoxelParticlePlan;
   physicsProfile?: RuntimePhysicsProfile;
   blockMaterials?: Readonly<Record<number, string>>;
+  blockAtlasTiles?: Readonly<Record<number, readonly [number, number]>>;
   initialLookAt?: { x: number; y: number; z: number };
   waterVolumes?: readonly VoxelWaterVolume[];
 }
@@ -242,7 +243,11 @@ export function createVoxelEngine(
     { x: spawnX + 0.5, y: surfaceY + 1, z: spawnZ + 0.5 },
     options.playerConfig,
   );
-  const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const atlasTexture = new THREE.TextureLoader().load("/dreamlibrary/textures/dreamlibrary-atlas.png");
+  atlasTexture.colorSpace = THREE.SRGBColorSpace;
+  atlasTexture.magFilter = THREE.NearestFilter;
+  atlasTexture.minFilter = THREE.NearestFilter;
+  const material = new THREE.MeshLambertMaterial({ vertexColors: true, map: atlasTexture });
   const chunkMeshes = new Map<string, THREE.Mesh>();
   const meshQueue = new Map<string, ChunkCoordinate>();
   let streamQueue: ChunkCoordinate[] = [];
@@ -332,6 +337,7 @@ export function createVoxelEngine(
       voxels: data.voxels,
       getNeighbor: (x, y, z) => world.getBlock(x, y, z),
       ...(options.blockColors === undefined ? {} : { blockColors: options.blockColors }),
+      ...(options.blockAtlasTiles === undefined ? {} : { blockAtlasTiles: options.blockAtlasTiles }),
     });
     const key = chunkKey(chunk.x, chunk.z);
     disposeChunkMesh(key);
@@ -341,6 +347,7 @@ export function createVoxelEngine(
       geometry.setAttribute("position", new THREE.BufferAttribute(payload.positions, 3));
       geometry.setAttribute("normal", new THREE.BufferAttribute(payload.normals, 3));
       geometry.setAttribute("color", new THREE.BufferAttribute(payload.colors, 3));
+      geometry.setAttribute("uv", new THREE.BufferAttribute(payload.uvs, 2));
       geometry.setIndex(new THREE.BufferAttribute(payload.indices, 1));
       geometry.computeBoundingSphere();
       const mesh = new THREE.Mesh(geometry, material);
@@ -874,7 +881,8 @@ export function createVoxelEngine(
       selectionMaterial.dispose();
       material.dispose();
       particleGeometry.dispose();
-      particleMaterial.dispose();
+    particleMaterial.dispose();
+    atlasTexture.dispose();
       renderer.dispose();
       world.clear();
       crumbleScheduler.clear();

@@ -28,6 +28,7 @@ export interface AdaptedDreamRuntime {
   generator: ChunkGenerator;
   blockColors: Readonly<Record<number, readonly [number, number, number]>>;
   blockMaterials: Readonly<Record<number, string>>;
+  blockAtlasTiles: Readonly<Record<number, readonly [number, number]>>;
   safeSpawnBlock: BlockId;
   worldRadius: number;
   spawn: { x: number; z: number };
@@ -62,6 +63,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
   const numericIds = new Map<string, BlockId>([["air", 0]]);
   const blockColors: Record<number, readonly [number, number, number]> = {};
   const blockMaterials: Record<number, string> = {};
+  const blockAtlasTiles: Record<number, readonly [number, number]> = {};
   let nextId = 1;
   for (const block of manifest.blocks) {
     if (block.id === "air" || numericIds.has(block.id)) continue;
@@ -72,6 +74,11 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     numericIds.set(block.id, nextId);
     blockColors[nextId] = colorChannels(block.color);
     blockMaterials[nextId] = block.materialPhysicsId;
+    const materialName = `${block.id} ${block.tags.join(" ")}`.toLowerCase();
+    blockAtlasTiles[nextId] = materialName.includes("beacon") ? [3, 1]
+      : materialName.includes("surface") ? [6, 0]
+        : materialName.includes("ground") ? [1, 0]
+          : [2, 0];
     nextId += 1;
   }
   const safeSpawnBlock = manifest.generator.solidBlockIds
@@ -247,6 +254,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     generator,
     blockColors,
     blockMaterials,
+    blockAtlasTiles,
     safeSpawnBlock,
     worldRadius: manifest.generator.radius,
     spawn: { x: manifest.spawn[0], z: manifest.spawn[2] },
