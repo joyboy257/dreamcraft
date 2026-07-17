@@ -29,10 +29,15 @@ function finish(spec: DreamSpecV1): DreamSpecV1 {
   return result.spec;
 }
 
+function rebindDialogueSpeaker(spec: DreamSpecV1, entityId: string): void {
+  spec.dialogues = spec.dialogues.map((dialogue) => ({ ...dialogue, speakerEntityId: entityId }));
+}
+
 async function moonlitKitchen(): Promise<ReferenceDream> {
   const spec = await baseSpec("a moonlit kitchen with a giant cup, sugar bowl, and moth guide", "g7-1-moon-kitchen");
   const hero = spec.entities[0]!;
   hero.id = "luna-moth";
+  rebindDialogueSpeaker(spec, hero.id);
   hero.displayName = "Luna Moth";
   hero.visual.bodyPlan = "bird";
   hero.visual.features = hero.visual.features.map((feature, index) => index === 0
@@ -70,6 +75,7 @@ async function floodedSchool(): Promise<ReferenceDream> {
   const spec = await baseSpec("a flooded school with paper boats, a childhood dog, and an exit stairwell", "g7-1-flooded-school");
   const dog = spec.entities[0]!;
   dog.id = "childhood-dog";
+  rebindDialogueSpeaker(spec, dog.id);
   dog.displayName = "Childhood Dog";
   dog.visual.bodyPlan = "quadruped";
   dog.spawn = { kind: "fixed", positions: [[-6, 12, -4]] };
@@ -106,6 +112,7 @@ async function lotteryFamily(): Promise<ReferenceDream> {
   const spec = await baseSpec("a lottery family on a bright stage with a jackpot board and instruments", "g7-1-lottery-family");
   const family = spec.entities[0]!;
   family.id = "family-band";
+  rebindDialogueSpeaker(spec, family.id);
   family.displayName = "The Family Band";
   family.visual.bodyPlan = "humanoid";
   family.spawn = { kind: "fixed", positions: [[-6, 12, -4], [-3, 12, -4], [0, 12, -4]] };

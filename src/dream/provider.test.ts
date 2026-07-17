@@ -33,6 +33,13 @@ describe("MockLocalGenerationProvider", () => {
       new MockLocalGenerationProvider().generate(request, controller.signal),
     ).rejects.toMatchObject({ name: "AbortError" });
   });
+
+  it("provides a three-step local relationship arc instead of generic one-line dialogue", async () => {
+    const result = await new MockLocalGenerationProvider().generate(request, new AbortController().signal);
+    const dialogue = result.core.dialogues[0]!;
+    expect(dialogue.nodes.map(({ id }) => id)).toEqual(["opening", "middle", "ending"]);
+    expect(dialogue.nodes.map(({ text }) => text).join(" ")).toMatch(/dream guide.*remember/i);
+  });
 });
 
 describe("FallbackGenerationProvider", () => {

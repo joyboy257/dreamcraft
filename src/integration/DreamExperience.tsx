@@ -421,11 +421,14 @@ export function DreamExperience({
       safeSpawnBlock: runtime.safeSpawnBlock,
       worldRadius: runtime.worldRadius,
       spawn: runtime.spawn,
-      playerConfig: runtime.playerConfig,
+      playerConfig: runtime.waterVolumes.length
+        ? { ...runtime.playerConfig, swim: runtime.playerConfig.swim ?? { speed: 6, buoyancy: 9, drag: 1.2 } }
+        : runtime.playerConfig,
       fieldOfView: runtime.fieldOfView,
       atmosphere: runtime.atmosphere.initial,
       particles: runtime.atmosphere.particles,
       physicsProfile: runtime.physicsProfile,
+      waterVolumes: runtime.waterVolumes,
       initialLookAt: (() => {
         const focus = dreamLibraryCameraFocus(runtime.dreamLibrary.capabilityIds);
         return focus

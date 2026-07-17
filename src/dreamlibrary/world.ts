@@ -9,11 +9,24 @@ export interface DreamLibraryWorld {
   dispose(): void;
 }
 
+export interface DreamLibraryWaterVolume {
+  readonly center: readonly [number, number, number];
+  readonly size: readonly [number, number, number];
+  readonly buoyancy: number;
+  readonly drag: number;
+}
+
 export function dreamLibraryCameraFocus(capabilityIds: readonly string[]): readonly [number, number, number] | null {
   if (capabilityIds.includes("school")) return [0, 12, -9];
   if (capabilityIds.includes("kitchen")) return [5, 13, -8];
   if (capabilityIds.includes("celebration")) return [1, 13, -9];
   return null;
+}
+
+export function dreamLibraryWaterVolumes(capabilityIds: readonly string[]): readonly DreamLibraryWaterVolume[] {
+  return capabilityIds.includes("school")
+    ? [{ center: [0, 10.4, -9], size: [25, 7, 14], buoyancy: 9, drag: 1.2 }]
+    : [];
 }
 
 function material(color: number, options: Partial<THREE.MeshStandardMaterialParameters> = {}): THREE.MeshStandardMaterial {

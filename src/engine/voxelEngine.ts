@@ -54,6 +54,23 @@ export interface VoxelEngineOptions {
   physicsProfile?: RuntimePhysicsProfile;
   blockMaterials?: Readonly<Record<number, string>>;
   initialLookAt?: { x: number; y: number; z: number };
+  waterVolumes?: readonly VoxelWaterVolume[];
+}
+
+export interface VoxelWaterVolume {
+  readonly center: readonly [number, number, number];
+  readonly size: readonly [number, number, number];
+  readonly buoyancy: number;
+  readonly drag: number;
+}
+
+export function containsWaterVolume(
+  volume: VoxelWaterVolume,
+  position: Readonly<{ x: number; y: number; z: number }>,
+): boolean {
+  return Math.abs(position.x - volume.center[0]) <= volume.size[0] / 2
+    && Math.abs(position.y - volume.center[1]) <= volume.size[1] / 2
+    && Math.abs(position.z - volume.center[2]) <= volume.size[2] / 2;
 }
 
 export interface VoxelAtmosphereState {
@@ -418,6 +435,7 @@ export function createVoxelEngine(
           performance.now() - initializedAt,
         )
       : null;
+    const water = options.waterVolumes?.find((volume) => containsWaterVolume(volume, player.state.position));
     const surfaceBlock = world.getBlock(
       Math.floor(player.state.position.x),
       Math.floor(player.state.position.y - 0.04),
@@ -470,6 +488,7 @@ export function createVoxelEngine(
               movementScale: physics.movementScale,
             }
           : {}),
+        ...(water ? { swimming: true, buoyancy: water.buoyancy, drag: water.drag } : {}),
         ...(surface ? { surface } : {}),
         swimming: Boolean(physicsProfile?.player.abilities.swim),
       },
