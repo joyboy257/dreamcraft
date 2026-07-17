@@ -17,6 +17,7 @@ import {
 } from "./dream";
 import { publicEnv } from "./config/publicEnv";
 import { prepareDreamRuntime } from "./app/materialization";
+import { DreamLibraryGallery } from "./dreamlibrary";
 import {
   DreamInputForm,
   FragmentNotice,
@@ -77,6 +78,8 @@ export default function App(): React.JSX.Element {
       generationController.current?.abort();
     };
   }, []);
+
+  if (window.location.pathname === "/dreamlibrary") return <DreamLibraryGallery />;
 
   const enterDream = async (): Promise<void> => {
     generationController.current?.abort();

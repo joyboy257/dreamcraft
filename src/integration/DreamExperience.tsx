@@ -28,6 +28,7 @@ import {
   MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
+import { createDreamLibraryWorld, dreamLibraryCameraFocus } from "../dreamlibrary";
 import { createSemanticObjective, createSemanticWorldMarkers } from "./dummyWorldObjects";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 import {
@@ -188,6 +189,7 @@ export function DreamExperience({
     const updateGuide = (elapsedSeconds: number, deltaSeconds: number): void => {
       (proceduralGuide ?? legacyGuide)?.update({ elapsedSeconds, deltaSeconds });
       for (const { actor } of auxiliaryEntities) actor.update({ elapsedSeconds, deltaSeconds });
+      libraryWorld.update(elapsedSeconds);
     };
     const setGuideState = (state: DreamGuideState): void => {
       if (proceduralGuide) {
@@ -207,6 +209,11 @@ export function DreamExperience({
       runtime.staging.objectivePath,
       runtime.heroEntity?.visual.palette.accent ?? 0xf4d58d,
     );
+    const libraryWorld = createDreamLibraryWorld(manifest.spec, runtime.dreamLibrary);
+    for (const anchor of runtime.dreamLibrary.anchors) {
+      if (anchor.capabilityId === "procedural-guide") guideRoot.userData.dreamLibraryInstanceId = anchor.renderedInstanceId;
+      if (anchor.capabilityId === "objective-beacon") objectiveVisual.root.userData.dreamLibraryInstanceId = anchor.renderedInstanceId;
+    }
     const unsubscribers: Array<() => void> = [];
     busRef.current = bus;
     setSnapshot(arc.getSnapshot());
@@ -384,7 +391,7 @@ export function DreamExperience({
         if (event) recordPlayGraphEvent(event);
       },
       getInteractiveEntities,
-      sceneObjects: [guideRoot, objectiveVisual.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
+      sceneObjects: [libraryWorld.root, guideRoot, objectiveVisual.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
       onFixedUpdate: (elapsedSeconds, deltaSeconds, playerPosition) => {
         updateGuide(elapsedSeconds, deltaSeconds);
         if (arc.getSnapshot().phase !== "awaken_beacon") return;
@@ -419,11 +426,12 @@ export function DreamExperience({
       atmosphere: runtime.atmosphere.initial,
       particles: runtime.atmosphere.particles,
       physicsProfile: runtime.physicsProfile,
-      initialLookAt: {
-        x: runtime.staging.cameraTarget[0],
-        y: runtime.staging.cameraTarget[1],
-        z: runtime.staging.cameraTarget[2],
-      },
+      initialLookAt: (() => {
+        const focus = dreamLibraryCameraFocus(runtime.dreamLibrary.capabilityIds);
+        return focus
+          ? { x: focus[0], y: focus[1], z: focus[2] }
+          : { x: runtime.staging.cameraTarget[0], y: runtime.staging.cameraTarget[1], z: runtime.staging.cameraTarget[2] };
+      })(),
     });
     if (!engine) {
       arc.dispose();
@@ -432,6 +440,7 @@ export function DreamExperience({
       for (const { actor } of auxiliaryEntities) actor.dispose();
       objectiveVisual.dispose();
       markers.dispose();
+      libraryWorld.dispose();
       busRef.current = null;
       arcRef.current = null;
       return;
@@ -581,6 +590,7 @@ export function DreamExperience({
       for (const { actor } of auxiliaryEntities) actor.dispose();
       objectiveVisual.dispose();
       markers.dispose();
+      libraryWorld.dispose();
       void audio.dispose();
       engineRef.current = null;
       busRef.current = null;
@@ -733,6 +743,7 @@ export function DreamExperience({
             <>
               <MobileControls
                 onControlChange={(control, pressed) => engineRef.current?.setControl(control, pressed)}
+                onMoveVector={(x, y) => engineRef.current?.setMoveVector(x, y)}
                 onLook={(deltaX, deltaY) => engineRef.current?.lookBy(deltaX, deltaY)}
               />
               <p className="dc-mobile-landscape-hint" role="status">

@@ -16,6 +16,7 @@ import { sampleSurfaceHeight, type DreamSpecV1, type TrustedDreamManifest } from
 import { compileDreamAtmosphere, type DreamAtmospherePlan } from "./dreamAtmosphere";
 import { compileRuntimeStaging, type RuntimeStaging } from "./semanticStaging";
 import { compileEntityInstances, type RuntimeEntityInstance } from "./entityMaterializer";
+import { compileDreamLibraryBinding, type DreamLibraryBinding } from "../dreamlibrary";
 import {
   compileVoxelStructures,
   materializeVoxelStructures,
@@ -41,6 +42,7 @@ export interface AdaptedDreamRuntime {
   heroEntity: DreamSpecV1["entities"][number] | null;
   voxelStructures: readonly CompiledVoxelStructure[];
   entityInstances: readonly RuntimeEntityInstance[];
+  dreamLibrary: DreamLibraryBinding;
 }
 
 function colorChannels(color: number): readonly [number, number, number] {
@@ -86,6 +88,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     voxelStructures,
     (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
   );
+  const dreamLibrary = compileDreamLibraryBinding(manifest);
   const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
   const fallbackEnding = spec.playGraph.endings[0]!;
   const sourceDialogue = hero
@@ -273,5 +276,6 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     heroEntity: hero ? structuredClone(hero) : null,
     voxelStructures,
     entityInstances,
+    dreamLibrary,
   };
 }

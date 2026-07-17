@@ -1,0 +1,142 @@
+{
+  "version": "0.1.0",
+  "width": 512,
+  "height": 512,
+  "tile": 32,
+  "columns": 16,
+  "nearest": true,
+  "tiles": {
+    "grass": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "dirt": {
+      "x": 32,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "stone": {
+      "x": 64,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "brick": {
+      "x": 96,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "concrete": {
+      "x": 128,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "school-tile": {
+      "x": 160,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "kitchen-tile": {
+      "x": 192,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "wood": {
+      "x": 224,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "metal": {
+      "x": 256,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "glass": {
+      "x": 288,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "water": {
+      "x": 320,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "ice": {
+      "x": 352,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "sand": {
+      "x": 384,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "paper": {
+      "x": 416,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "fabric": {
+      "x": 448,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "candy": {
+      "x": 480,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    },
+    "porcelain": {
+      "x": 0,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    "cloud": {
+      "x": 32,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    "shadow": {
+      "x": 64,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    "emissive": {
+      "x": 96,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    "fire": {
+      "x": 128,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    },
+    "lava": {
+      "x": 160,
+      "y": 32,
+      "width": 32,
+      "height": 32
+    }
+  }
+}

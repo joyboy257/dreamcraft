@@ -86,6 +86,7 @@ export interface VoxelEngine {
   pause(): void;
   dispose(): void;
   setControl(control: VoxelControl, pressed: boolean): void;
+  setMoveVector(x: number, y: number): void;
   setInputEnabled(enabled: boolean): void;
   refreshInteractionTarget(): void;
   lookBy(deltaX: number, deltaY: number): void;
@@ -246,6 +247,7 @@ export function createVoxelEngine(
 
   const keys = new Set<string>();
   const externalControls = new Set<VoxelControl>();
+  let moveVector = { x: 0, y: 0 };
   let yaw = 0;
   let pitch = 0;
   let mouseSensitivity = 1;
@@ -398,9 +400,9 @@ export function createVoxelEngine(
 
   function update(): void {
     const forward = Number(keys.has("KeyW") || externalControls.has("forward"))
-      - Number(keys.has("KeyS") || externalControls.has("back"));
+      - Number(keys.has("KeyS") || externalControls.has("back")) - moveVector.y;
     const strafe = Number(keys.has("KeyD") || externalControls.has("right"))
-      - Number(keys.has("KeyA") || externalControls.has("left"));
+      - Number(keys.has("KeyA") || externalControls.has("left")) + moveVector.x;
     if (physicsTransitionId && physicsTransitionBase) {
       physicsTransitionElapsedMs += FIXED_DELTA_SECONDS * 1_000;
       physicsProfile = samplePhysicsTransition(
@@ -692,6 +694,13 @@ export function createVoxelEngine(
     else externalControls.delete(control);
   }
 
+  function setMoveVector(x: number, y: number): void {
+    if (disposed || !inputEnabled) return;
+    const magnitude = Math.hypot(x, y);
+    const scale = magnitude > 1 ? 1 / magnitude : 1;
+    moveVector = { x: Number.isFinite(x) ? x * scale : 0, y: Number.isFinite(y) ? y * scale : 0 };
+  }
+
   const resize = (): void => {
     const width = Math.max(1, canvas.clientWidth);
     const height = Math.max(1, canvas.clientHeight);
@@ -805,6 +814,7 @@ export function createVoxelEngine(
     pause,
     setInputEnabled,
     setControl,
+    setMoveVector,
     refreshInteractionTarget,
     lookBy,
     setFieldOfView,
