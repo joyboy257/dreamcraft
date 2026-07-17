@@ -7,9 +7,9 @@ import { createG71ReferenceDreams } from "../fixtures/g7-1-referenceDreams";
 describe("G7.2 DreamLibrary acceptance", () => {
   it("keeps the three reference dreams recognisable through runtime capabilities", async () => {
     const expectations = {
-      "moonlit-kitchen": ["dreamlibrary-kitchen-kit", "giant-cup", "dreamlibrary-moth"],
-      "flooded-school": ["dreamlibrary-school-kit", "dreamlibrary-water-volume", "locker-1", "paper-boat-1", "dreamlibrary-dog"],
-      "lottery-family": ["dreamlibrary-celebration-kit", "jackpot-board", "family--3"],
+      "moonlit-kitchen": ["dreamlibrary-kitchen-kit", "giant-cup", "dreamlibrary-moth", "moon-door"],
+      "flooded-school": ["dreamlibrary-school-kit", "dreamlibrary-water-volume", "locker-1", "paper-boat-1", "written-message-1", "dreamlibrary-dog"],
+      "lottery-family": ["dreamlibrary-celebration-kit", "jackpot-board", "family--4.5", "family-instrument-1", "lottery-ticket"],
     } as const;
     for (const reference of await createG71ReferenceDreams()) {
       const runtime = adaptDreamManifest(compileDreamDescriptor(reference.spec, []));

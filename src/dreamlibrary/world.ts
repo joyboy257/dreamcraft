@@ -66,6 +66,10 @@ function addSchool(root: THREE.Group, animated: THREE.Object3D[]): void {
     box(school, `desk-top-${index + 1}`, [1.7, 0.2, 1.2], [2 + (index % 2) * 3, y + 0.3, -6 + Math.floor(index / 2) * 3], 0x81563e);
     box(school, `desk-leg-${index + 1}`, [0.2, 1.1, 0.2], [2 + (index % 2) * 3, y - 0.25, -6 + Math.floor(index / 2) * 3], 0x36404c);
   }
+  for (let index = 0; index < 3; index += 1) {
+    const message = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.55), material(0xf5e9c8, { emissive: 0x4a3f2c, emissiveIntensity: 0.2 }));
+    message.name = `written-message-${index + 1}`; message.position.set(-4 + index * 3.5, y + 1.1, -8.6); message.rotation.y = Math.PI; school.add(message);
+  }
   box(school, "school-board", [5.5, 2.7, 0.12], [8, y + 2.1, -15.3], 0x173e2c);
   for (let step = 0; step < 6; step += 1) box(school, `exit-stair-${step + 1}`, [3.8, 0.45, 0.7], [10, y - 0.7 + step * 0.45, -3 - step * 0.7], 0x9da5ae);
   addWater(school, [0, y, -9], [25, 14], animated);
@@ -91,6 +95,9 @@ function addKitchen(root: THREE.Group): void {
   const handle = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.25, 10, 18, Math.PI), material(0xb8e1f5)); handle.rotation.z = -Math.PI / 2; handle.position.set(2.5, 0.4, 0); cup.add(handle);
   const bowl = new THREE.Mesh(new THREE.SphereGeometry(1.5, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), material(0xf6f1df)); bowl.name = "sugar-bowl"; bowl.position.set(1.8, y + 0.4, -7); kitchen.add(bowl);
   sphere(kitchen, "sugar", 1.08, [1.8, y + 0.55, -7], 0xfff8e6);
+  box(kitchen, "moon-door-left", [0.55, 4.6, 0.5], [12.5, y + 1.3, -13.5], 0x69489d, { emissive: 0x35254f, emissiveIntensity: 0.5 });
+  box(kitchen, "moon-door-right", [0.55, 4.6, 0.5], [16.2, y + 1.3, -13.5], 0x69489d, { emissive: 0x35254f, emissiveIntensity: 0.5 });
+  const moonDoor = new THREE.Mesh(new THREE.TorusGeometry(1.85, 0.32, 10, 18, Math.PI), material(0xc9b2ff, { emissive: 0x4d347c, emissiveIntensity: 0.7 })); moonDoor.name = "moon-door"; moonDoor.position.set(14.35, y + 3.6, -13.5); kitchen.add(moonDoor);
 }
 
 function addMoth(root: THREE.Group, position: readonly [number, number, number], animated: THREE.Object3D[]): void {
@@ -113,7 +120,12 @@ function addCelebration(root: THREE.Group, animated: THREE.Object3D[]): void {
   box(stage, "jackpot-board", [7, 3.5, 0.35], [1, y + 2.5, -12.8], 0x162a36, { emissive: 0x24667d, emissiveIntensity: 0.7 });
   box(stage, "jackpot-digits", [5.5, 1, 0.15], [1, y + 2.5, -12.55], 0xffde5c, { emissive: 0xffa800, emissiveIntensity: 1.5 });
   for (const x of [-6, 0, 6]) box(stage, `celebration-banner-${x}`, [3.4, 1.2, 0.1], [x, y + 5, -12.2], 0xf75e91);
-  for (const x of [-3, 3]) { sphere(stage, `family-${x}`, 0.52, [x, y + 1.25, -8.5], 0xf0b48a); box(stage, `family-body-${x}`, [0.8, 1.3, 0.5], [x, y + 0.45, -8.5], x < 0 ? 0x5ea6dc : 0xe279a3); }
+  for (const x of [-4.5, -1.5, 1.5, 4.5]) { sphere(stage, `family-${x}`, 0.52, [x, y + 1.25, -8.5], 0xf0b48a); box(stage, `family-body-${x}`, [0.8, 1.3, 0.5], [x, y + 0.45, -8.5], x < 0 ? 0x5ea6dc : 0xe279a3); }
+  for (const [index, x] of [-4.5, -1.5, 1.5, 4.5].entries()) {
+    const instrument = new THREE.Mesh(index % 2 === 0 ? new THREE.CylinderGeometry(0.26, 0.32, 1.1, 8) : new THREE.TorusGeometry(0.42, 0.12, 8, 12), material(0xffd85d, { metalness: 0.55, roughness: 0.25 }));
+    instrument.name = `family-instrument-${index + 1}`; instrument.position.set(x, y + 1.2, -7.8); instrument.rotation.z = index % 2 === 0 ? Math.PI / 2 : 0; stage.add(instrument);
+  }
+  box(stage, "lottery-ticket", [2.5, 1.1, 0.12], [1, y + 1, -7.5], 0xf4e5a7, { emissive: 0x59471a, emissiveIntensity: 0.35 });
   for (let index = 0; index < 32; index += 1) { const rain = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.55, 4), material(0xffd85d, { emissive: 0xffbd00, emissiveIntensity: 0.8 })); rain.name = `golden-rain-${index}`; rain.position.set(-8 + (index % 8) * 2.2, y + 4 + Math.floor(index / 8) * 0.5, -7 + (index % 3)); stage.add(rain); animated.push(rain); }
 }
 
@@ -134,8 +146,8 @@ export function createDreamLibraryWorld(spec: DreamSpecV1, binding?: DreamLibrar
     school: "dreamlibrary-school-kit", kitchen: "dreamlibrary-kitchen-kit", moth: "dreamlibrary-moth",
     dog: "dreamlibrary-dog", shadow: "dreamlibrary-shadow", "giant-cup": "giant-cup",
     "sugar-bowl": "sugar-bowl", "paper-boat": "paper-boat-1", "exit-stairwell": "exit-stair-1",
-    "moon-door": "moon-window", celebration: "dreamlibrary-celebration-kit", "celebration-stage": "dreamlibrary-celebration-kit",
-    "golden-house": "dreamlibrary-celebration-kit", "jackpot-board": "jackpot-board", family: "family--3",
+    "moon-door": "moon-door", celebration: "dreamlibrary-celebration-kit", "celebration-stage": "dreamlibrary-celebration-kit",
+    "golden-house": "dreamlibrary-celebration-kit", "jackpot-board": "jackpot-board", family: "family--4.5",
     "family-instruments": "dreamlibrary-celebration-kit", "procedural-guide": "dream-guide-staging", "objective-beacon": "dreamlibrary-world",
   };
   for (const anchor of binding?.anchors ?? []) {

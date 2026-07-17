@@ -9,6 +9,7 @@ describe("DreamLibrary world composition", () => {
     expect(world.root.getObjectByName("dreamlibrary-school-kit")).toBeTruthy();
     expect(world.root.getObjectByName("dreamlibrary-water-volume")).toBeTruthy();
     expect(world.root.getObjectByName("locker-1")).toBeTruthy();
+    expect(world.root.getObjectByName("written-message-1")).toBeTruthy();
     world.dispose();
   });
 
@@ -18,8 +19,11 @@ describe("DreamLibrary world composition", () => {
     const lottery = createDreamLibraryWorld(dreams.find(({ id }) => id === "lottery-family")!.spec);
     expect(kitchen.root.getObjectByName("giant-cup")).toBeTruthy();
     expect(kitchen.root.getObjectByName("dreamlibrary-moth")).toBeTruthy();
+    expect(kitchen.root.getObjectByName("moon-door")).toBeTruthy();
     expect(lottery.root.getObjectByName("jackpot-board")).toBeTruthy();
-    expect(lottery.root.getObjectByName("family--3")).toBeTruthy();
+    expect(lottery.root.getObjectByName("family--4.5")).toBeTruthy();
+    expect(lottery.root.getObjectByName("family-instrument-1")).toBeTruthy();
+    expect(lottery.root.getObjectByName("lottery-ticket")).toBeTruthy();
     kitchen.dispose(); lottery.dispose();
   });
 });
