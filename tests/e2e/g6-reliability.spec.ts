@@ -61,6 +61,10 @@ test("keyboard, modal focus, comfort propagation, and audio captions remain acce
   await page.keyboard.press("Shift+Tab");
   await expect(dialogue.getByRole("button").last()).toBeFocused();
   await page.keyboard.press("Digit1");
+  await expect(dialogue).toContainText(/stay with me/i);
+  await page.keyboard.press("Digit1");
+  await expect(dialogue).toContainText(/you did it/i);
+  await page.keyboard.press("Digit1");
   await expect(dialogue).toBeHidden();
 
   const caption = await page.evaluate(() => window.__DREAMCRAFT_TEST__?.playAudioCaption() ?? null);

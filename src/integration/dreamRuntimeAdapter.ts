@@ -16,6 +16,8 @@ import { sampleSurfaceHeight, type DreamSpecV1, type TrustedDreamManifest } from
 import { compileDreamAtmosphere, type DreamAtmospherePlan } from "./dreamAtmosphere";
 import { compileRuntimeStaging, type RuntimeStaging } from "./semanticStaging";
 import { compileEntityInstances, type RuntimeEntityInstance } from "./entityMaterializer";
+import { compileDreamLibraryBinding, type DreamLibraryBinding } from "../dreamlibrary";
+import { dreamLibraryWaterVolumes, type DreamLibraryWaterVolume } from "../dreamlibrary";
 import {
   compileVoxelStructures,
   materializeVoxelStructures,
@@ -26,6 +28,7 @@ export interface AdaptedDreamRuntime {
   generator: ChunkGenerator;
   blockColors: Readonly<Record<number, readonly [number, number, number]>>;
   blockMaterials: Readonly<Record<number, string>>;
+  blockAtlasTiles: Readonly<Record<number, readonly [number, number]>>;
   safeSpawnBlock: BlockId;
   worldRadius: number;
   spawn: { x: number; z: number };
@@ -41,6 +44,8 @@ export interface AdaptedDreamRuntime {
   heroEntity: DreamSpecV1["entities"][number] | null;
   voxelStructures: readonly CompiledVoxelStructure[];
   entityInstances: readonly RuntimeEntityInstance[];
+  dreamLibrary: DreamLibraryBinding;
+  waterVolumes: readonly DreamLibraryWaterVolume[];
 }
 
 function colorChannels(color: number): readonly [number, number, number] {
@@ -58,6 +63,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
   const numericIds = new Map<string, BlockId>([["air", 0]]);
   const blockColors: Record<number, readonly [number, number, number]> = {};
   const blockMaterials: Record<number, string> = {};
+  const blockAtlasTiles: Record<number, readonly [number, number]> = {};
   let nextId = 1;
   for (const block of manifest.blocks) {
     if (block.id === "air" || numericIds.has(block.id)) continue;
@@ -68,24 +74,37 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     numericIds.set(block.id, nextId);
     blockColors[nextId] = colorChannels(block.color);
     blockMaterials[nextId] = block.materialPhysicsId;
+    const materialName = `${block.id} ${block.tags.join(" ")}`.toLowerCase();
+    blockAtlasTiles[nextId] = materialName.includes("beacon") ? [3, 1]
+      : materialName.includes("surface") ? [6, 0]
+        : materialName.includes("ground") ? [1, 0]
+          : [2, 0];
     nextId += 1;
   }
   const safeSpawnBlock = manifest.generator.solidBlockIds
     .map((id) => numericIds.get(id))
     .find((id): id is number => id !== undefined) ?? 1;
   const hero = spec.entities.find(({ role }) => role === "hero") ?? spec.entities[0];
-  const voxelStructures = compileVoxelStructures(spec.structures, {
-    seed: spec.seed,
-    radius: manifest.generator.radius,
-    height: manifest.generator.height,
-    spawn: manifest.spawn,
-    surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
-  });
+  const dreamLibrary = compileDreamLibraryBinding(manifest);
+  const libraryStructureIds = new Set(
+    dreamLibrary.anchors.flatMap(({ sourceId }) => sourceId ? [sourceId] : []),
+  );
+  const voxelStructures = compileVoxelStructures(
+    spec.structures.filter(({ id }) => !libraryStructureIds.has(id)),
+    {
+      seed: spec.seed,
+      radius: manifest.generator.radius,
+      height: manifest.generator.height,
+      spawn: manifest.spawn,
+      surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
+    },
+  );
   const entityInstances = compileEntityInstances(
     manifest,
     voxelStructures,
     (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
   );
+  const waterVolumes = dreamLibraryWaterVolumes(dreamLibrary.capabilityIds);
   const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
   const fallbackEnding = spec.playGraph.endings[0]!;
   const sourceDialogue = hero
@@ -241,6 +260,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     generator,
     blockColors,
     blockMaterials,
+    blockAtlasTiles,
     safeSpawnBlock,
     worldRadius: manifest.generator.radius,
     spawn: { x: manifest.spawn[0], z: manifest.spawn[2] },
@@ -273,5 +293,7 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     heroEntity: hero ? structuredClone(hero) : null,
     voxelStructures,
     entityInstances,
+    dreamLibrary,
+    waterVolumes,
   };
 }

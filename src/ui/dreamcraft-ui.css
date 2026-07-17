@@ -664,18 +664,32 @@ kbd {
 
   .dc-mobile-controls button { user-select: none; }
 
-  .dc-move-pad {
+  .dc-analogue-joystick {
     position: absolute;
     bottom: max(var(--dc-space-5), env(safe-area-inset-bottom));
     left: max(var(--dc-space-5), env(safe-area-inset-left));
-    display: grid;
-    grid-template-columns: repeat(3, 2.75rem);
-    grid-template-rows: repeat(2, 2.75rem);
-    gap: var(--dc-space-1);
+    width: 7rem;
+    height: 7rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(230, 216, 175, 0.2), rgba(7, 7, 11, 0.58));
     pointer-events: auto;
+    touch-action: none;
   }
 
-  .dc-move-pad button,
+  .dc-analogue-stick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 50%;
+    background: rgba(240, 226, 182, 0.36);
+    transform: translate(calc(-50% + var(--dc-stick-x, 0px)), calc(-50% + var(--dc-stick-y, 0px)));
+    box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.35);
+  }
+
   .dc-action-buttons button {
     border: 1px solid rgba(255, 255, 255, 0.24);
     color: var(--dc-ink);
@@ -683,12 +697,6 @@ kbd {
     backdrop-filter: blur(0.5rem);
     touch-action: none;
   }
-
-  .dc-move-pad button { border-radius: 50%; }
-  .dc-move-pad button:nth-child(1) { grid-column: 2; }
-  .dc-move-pad button:nth-child(2) { grid-row: 2; grid-column: 1; }
-  .dc-move-pad button:nth-child(3) { grid-row: 2; grid-column: 2; }
-  .dc-move-pad button:nth-child(4) { grid-row: 2; grid-column: 3; }
 
   .dc-look-zone {
     position: absolute;

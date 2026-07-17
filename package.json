@@ -24,7 +24,8 @@
     "eval:dreams": "vitest run tests/eval",
     "smoke:deployed": "node scripts/smoke-deployed.mjs",
     "test:smoke-deployed": "node --test scripts/smoke-deployed.test.mjs",
-    "validate:g3:live": "node scripts/validate-g3-live.mjs"
+    "validate:g3:live": "node scripts/validate-g3-live.mjs",
+    "dreamlibrary:atlas": "node scripts/generate-dreamlibrary-atlas.mjs"
   },
   "dependencies": {
     "openai": "6.46.0",

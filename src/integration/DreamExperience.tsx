@@ -28,6 +28,7 @@ import {
   MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
+import { createDreamLibraryWorld, dreamLibraryCameraFocus } from "../dreamlibrary";
 import { createSemanticObjective, createSemanticWorldMarkers } from "./dummyWorldObjects";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 import {
@@ -43,6 +44,7 @@ interface DreamExperienceProps {
   preview: LocalPreview;
   manifest: TrustedDreamManifest;
   enrichmentManifest: TrustedDreamManifest | null;
+  isShowcase: boolean;
   generationLabel: string;
   onReplay: () => void;
   onRemix: () => void;
@@ -89,6 +91,7 @@ export function DreamExperience({
   preview,
   manifest,
   enrichmentManifest,
+  isShowcase,
   generationLabel,
   onReplay,
   onRemix,
@@ -188,6 +191,7 @@ export function DreamExperience({
     const updateGuide = (elapsedSeconds: number, deltaSeconds: number): void => {
       (proceduralGuide ?? legacyGuide)?.update({ elapsedSeconds, deltaSeconds });
       for (const { actor } of auxiliaryEntities) actor.update({ elapsedSeconds, deltaSeconds });
+      libraryWorld.update(elapsedSeconds);
     };
     const setGuideState = (state: DreamGuideState): void => {
       if (proceduralGuide) {
@@ -207,6 +211,11 @@ export function DreamExperience({
       runtime.staging.objectivePath,
       runtime.heroEntity?.visual.palette.accent ?? 0xf4d58d,
     );
+    const libraryWorld = createDreamLibraryWorld(manifest.spec, runtime.dreamLibrary);
+    for (const anchor of runtime.dreamLibrary.anchors) {
+      if (anchor.capabilityId === "procedural-guide") guideRoot.userData.dreamLibraryInstanceId = anchor.renderedInstanceId;
+      if (anchor.capabilityId === "objective-beacon") objectiveVisual.root.userData.dreamLibraryInstanceId = anchor.renderedInstanceId;
+    }
     const unsubscribers: Array<() => void> = [];
     busRef.current = bus;
     setSnapshot(arc.getSnapshot());
@@ -384,7 +393,7 @@ export function DreamExperience({
         if (event) recordPlayGraphEvent(event);
       },
       getInteractiveEntities,
-      sceneObjects: [guideRoot, objectiveVisual.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
+      sceneObjects: [libraryWorld.root, guideRoot, objectiveVisual.root, markers.root, ...auxiliaryEntities.map(({ stagingRoot }) => stagingRoot)],
       onFixedUpdate: (elapsedSeconds, deltaSeconds, playerPosition) => {
         updateGuide(elapsedSeconds, deltaSeconds);
         if (arc.getSnapshot().phase !== "awaken_beacon") return;
@@ -411,19 +420,25 @@ export function DreamExperience({
       generator: runtime.generator,
       blockColors: runtime.blockColors,
       blockMaterials: runtime.blockMaterials,
+      blockAtlasTiles: runtime.blockAtlasTiles,
       safeSpawnBlock: runtime.safeSpawnBlock,
       worldRadius: runtime.worldRadius,
       spawn: runtime.spawn,
-      playerConfig: runtime.playerConfig,
+      playerConfig: runtime.waterVolumes.length
+        ? { ...runtime.playerConfig, swim: runtime.playerConfig.swim ?? { speed: 6, buoyancy: 9, drag: 1.2 } }
+        : runtime.playerConfig,
       fieldOfView: runtime.fieldOfView,
       atmosphere: runtime.atmosphere.initial,
       particles: runtime.atmosphere.particles,
       physicsProfile: runtime.physicsProfile,
-      initialLookAt: {
-        x: runtime.staging.cameraTarget[0],
-        y: runtime.staging.cameraTarget[1],
-        z: runtime.staging.cameraTarget[2],
-      },
+      waterVolumes: runtime.waterVolumes,
+      initialLookAt: (() => {
+        const showcaseFocus = isShowcase
+          ? dreamLibraryCameraFocus(runtime.dreamLibrary.capabilityIds)
+          : null;
+        const target = showcaseFocus ?? runtime.staging.cameraTarget;
+        return { x: target[0], y: target[1], z: target[2] };
+      })(),
     });
     if (!engine) {
       arc.dispose();
@@ -432,6 +447,7 @@ export function DreamExperience({
       for (const { actor } of auxiliaryEntities) actor.dispose();
       objectiveVisual.dispose();
       markers.dispose();
+      libraryWorld.dispose();
       busRef.current = null;
       arcRef.current = null;
       return;
@@ -581,6 +597,7 @@ export function DreamExperience({
       for (const { actor } of auxiliaryEntities) actor.dispose();
       objectiveVisual.dispose();
       markers.dispose();
+      libraryWorld.dispose();
       void audio.dispose();
       engineRef.current = null;
       busRef.current = null;
@@ -590,7 +607,7 @@ export function DreamExperience({
         delete window.__DREAMCRAFT_TEST__;
       }
     };
-  }, [manifest, preview.seed]);
+  }, [isShowcase, manifest, preview.seed]);
 
   useEffect(() => {
     audioRef.current?.setMuted(comfort.muted);
@@ -733,6 +750,7 @@ export function DreamExperience({
             <>
               <MobileControls
                 onControlChange={(control, pressed) => engineRef.current?.setControl(control, pressed)}
+                onMoveVector={(x, y) => engineRef.current?.setMoveVector(x, y)}
                 onLook={(deltaX, deltaY) => engineRef.current?.lookBy(deltaX, deltaY)}
               />
               <p className="dc-mobile-landscape-hint" role="status">

@@ -12,6 +12,7 @@ export interface ChunkMeshRequest {
   voxels: Uint16Array;
   getNeighbor: (worldX: number, y: number, worldZ: number) => BlockId;
   blockColors?: Readonly<Record<number, readonly [number, number, number]>>;
+  blockAtlasTiles?: Readonly<Record<number, readonly [number, number]>>;
 }
 
 export interface ChunkMeshData {
@@ -21,6 +22,7 @@ export interface ChunkMeshData {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  uvs: Float32Array;
   indices: Uint32Array;
   faceCount: number;
 }
@@ -55,10 +57,15 @@ function colorFor(
   return custom?.[block] ?? BLOCK_COLORS[block] ?? [0.8, 0.8, 0.84];
 }
 
+function tileFor(block: BlockId, tiles: ChunkMeshRequest["blockAtlasTiles"]): readonly [number, number] {
+  return tiles?.[block] ?? [2, 0];
+}
+
 export function meshChunk(request: ChunkMeshRequest): ChunkMeshData {
   const positions: number[] = [];
   const normals: number[] = [];
   const colors: number[] = [];
+  const uvs: number[] = [];
   const indices: number[] = [];
   const originX = chunkOrigin(request.chunkX);
   const originZ = chunkOrigin(request.chunkZ);
@@ -86,10 +93,18 @@ export function meshChunk(request: ChunkMeshRequest): ChunkMeshData {
 
           const vertexStart = positions.length / 3;
           const [red, green, blue] = colorFor(block, request.blockColors);
-          for (const [cornerX, cornerY, cornerZ] of face.corners) {
+          const [tileX, tileY] = tileFor(block, request.blockAtlasTiles);
+          const inset = 0.001;
+          const minU = tileX / 16 + inset;
+          const maxU = (tileX + 1) / 16 - inset;
+          const minV = 1 - (tileY + 1) / 16 + inset;
+          const maxV = 1 - tileY / 16 - inset;
+          const faceUvs: readonly (readonly [number, number])[] = [[minU, minV], [minU, maxV], [maxU, maxV], [maxU, minV]];
+          for (const [[cornerX, cornerY, cornerZ], [u, v]] of face.corners.map((corner, index) => [corner, faceUvs[index]!] as const)) {
             positions.push(localX + cornerX, y + cornerY, localZ + cornerZ);
             normals.push(normalX, normalY, normalZ);
             colors.push(red, green, blue);
+            uvs.push(u, v);
           }
           indices.push(
             vertexStart,
@@ -112,6 +127,7 @@ export function meshChunk(request: ChunkMeshRequest): ChunkMeshData {
     positions: new Float32Array(positions),
     normals: new Float32Array(normals),
     colors: new Float32Array(colors),
+    uvs: new Float32Array(uvs),
     indices: new Uint32Array(indices),
     faceCount,
   };

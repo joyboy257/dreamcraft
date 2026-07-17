@@ -17,6 +17,7 @@ interface DreamInputFormProps {
   isBusy?: boolean;
   issue?: string | null;
   samples?: readonly DreamSample[];
+  onSampleSelect?: (sample: DreamSample) => void;
   onValueChange: (value: string) => void;
   onIntensityChange: (intensity: DreamIntensity) => void;
   onSubmit: () => void;
@@ -34,6 +35,7 @@ export function DreamInputForm({
   isBusy = false,
   issue = null,
   samples = DEFAULT_SAMPLES,
+  onSampleSelect,
   onValueChange,
   onIntensityChange,
   onSubmit,
@@ -115,17 +117,20 @@ export function DreamInputForm({
       </p>
 
       <div className="dc-samples" aria-labelledby="dream-samples-title">
-        <p id="dream-samples-title">Or begin with a sample</p>
+        <p id="dream-samples-title">Play a DreamLibrary showcase</p>
         <div>
           {samples.map((sample) => (
             <button
               key={sample.id}
               type="button"
               disabled={isBusy}
-              onClick={() => onValueChange(sample.text)}
+              onClick={() => {
+                onValueChange(sample.text);
+                onSampleSelect?.(sample);
+              }}
             >
               <strong>{sample.label}</strong>
-              <span>{sample.text}</span>
+              <span>{sample.description ?? sample.text}</span>
             </button>
           ))}
         </div>

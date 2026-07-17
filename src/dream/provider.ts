@@ -1,5 +1,6 @@
 import { sanitizeDreamSpec } from "./sanitizer.js";
 import type { DreamCondition, DreamIssue, DreamSpecV1 } from "./schema.js";
+import { composeLocalDialogue } from "../dreamlibrary/dialogueComposer";
 
 export type GenerationStrategy = "mock-local" | "single-sol" | "director-parallel";
 export type DreamIntensity = "calm" | "vivid" | "fever";
@@ -470,7 +471,7 @@ function createLocalCandidate(request: DreamGenerationRequest): DreamSpecV1 {
       entityInstances: 1,
       meshPartsPerHero: 12,
       physicsFields: 0,
-      dialogueNodes: 0,
+      dialogueNodes: 3,
       storyBeats: 1,
       particles: 180,
     },
@@ -758,7 +759,32 @@ function createLocalCandidate(request: DreamGenerationRequest): DreamSpecV1 {
       cues: [],
     },
   };
-  return applyLocalScenario(candidate, normalized.toLowerCase());
+  const scenario = applyLocalScenario(candidate, normalized.toLowerCase());
+  const dialogue = composeLocalDialogue({
+    identity: scenario.entities[0]!.displayName,
+    relationship: scenario.entities[0]!.role === "companion" ? "your returning companion" : "your dream guide",
+    event: scenario.blueprint.summary,
+    emotion: scenario.atmosphere.particleKind.includes("bubbles") ? "protective" : "hopeful",
+    objective: scenario.playGraph.beats[0]!.objectiveText.toLowerCase(),
+    ending: scenario.playGraph.endings[0]!.narration,
+  });
+  scenario.dialogues = [{
+    id: "local-relationship-arc",
+    speakerEntityId: scenario.entities[0]!.id,
+    trigger: "interact",
+    startNodeId: "opening",
+    nodes: dialogue.map((line, index) => ({
+      id: line.id,
+      text: line.text,
+      responses: [{
+        id: `${line.id}-continue`,
+        text: index === dialogue.length - 1 ? "I will carry this with me." : "Tell me more.",
+        ...(index < dialogue.length - 1 ? { nextNodeId: dialogue[index + 1]!.id } : {}),
+        effects: [],
+      }],
+    })),
+  }];
+  return scenario;
 }
 
 function abortError(): DOMException {

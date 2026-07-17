@@ -53,7 +53,25 @@ export interface VoxelEngineOptions {
   particles?: VoxelParticlePlan;
   physicsProfile?: RuntimePhysicsProfile;
   blockMaterials?: Readonly<Record<number, string>>;
+  blockAtlasTiles?: Readonly<Record<number, readonly [number, number]>>;
   initialLookAt?: { x: number; y: number; z: number };
+  waterVolumes?: readonly VoxelWaterVolume[];
+}
+
+export interface VoxelWaterVolume {
+  readonly center: readonly [number, number, number];
+  readonly size: readonly [number, number, number];
+  readonly buoyancy: number;
+  readonly drag: number;
+}
+
+export function containsWaterVolume(
+  volume: VoxelWaterVolume,
+  position: Readonly<{ x: number; y: number; z: number }>,
+): boolean {
+  return Math.abs(position.x - volume.center[0]) <= volume.size[0] / 2
+    && Math.abs(position.y - volume.center[1]) <= volume.size[1] / 2
+    && Math.abs(position.z - volume.center[2]) <= volume.size[2] / 2;
 }
 
 export interface VoxelAtmosphereState {
@@ -86,6 +104,7 @@ export interface VoxelEngine {
   pause(): void;
   dispose(): void;
   setControl(control: VoxelControl, pressed: boolean): void;
+  setMoveVector(x: number, y: number): void;
   setInputEnabled(enabled: boolean): void;
   refreshInteractionTarget(): void;
   lookBy(deltaX: number, deltaY: number): void;
@@ -224,7 +243,11 @@ export function createVoxelEngine(
     { x: spawnX + 0.5, y: surfaceY + 1, z: spawnZ + 0.5 },
     options.playerConfig,
   );
-  const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const atlasTexture = new THREE.TextureLoader().load("/dreamlibrary/textures/dreamlibrary-atlas.png");
+  atlasTexture.colorSpace = THREE.SRGBColorSpace;
+  atlasTexture.magFilter = THREE.NearestFilter;
+  atlasTexture.minFilter = THREE.NearestFilter;
+  const material = new THREE.MeshLambertMaterial({ vertexColors: true, map: atlasTexture });
   const chunkMeshes = new Map<string, THREE.Mesh>();
   const meshQueue = new Map<string, ChunkCoordinate>();
   let streamQueue: ChunkCoordinate[] = [];
@@ -246,6 +269,7 @@ export function createVoxelEngine(
 
   const keys = new Set<string>();
   const externalControls = new Set<VoxelControl>();
+  let moveVector = { x: 0, y: 0 };
   let yaw = 0;
   let pitch = 0;
   let mouseSensitivity = 1;
@@ -313,6 +337,7 @@ export function createVoxelEngine(
       voxels: data.voxels,
       getNeighbor: (x, y, z) => world.getBlock(x, y, z),
       ...(options.blockColors === undefined ? {} : { blockColors: options.blockColors }),
+      ...(options.blockAtlasTiles === undefined ? {} : { blockAtlasTiles: options.blockAtlasTiles }),
     });
     const key = chunkKey(chunk.x, chunk.z);
     disposeChunkMesh(key);
@@ -322,6 +347,7 @@ export function createVoxelEngine(
       geometry.setAttribute("position", new THREE.BufferAttribute(payload.positions, 3));
       geometry.setAttribute("normal", new THREE.BufferAttribute(payload.normals, 3));
       geometry.setAttribute("color", new THREE.BufferAttribute(payload.colors, 3));
+      geometry.setAttribute("uv", new THREE.BufferAttribute(payload.uvs, 2));
       geometry.setIndex(new THREE.BufferAttribute(payload.indices, 1));
       geometry.computeBoundingSphere();
       const mesh = new THREE.Mesh(geometry, material);
@@ -398,9 +424,9 @@ export function createVoxelEngine(
 
   function update(): void {
     const forward = Number(keys.has("KeyW") || externalControls.has("forward"))
-      - Number(keys.has("KeyS") || externalControls.has("back"));
+      - Number(keys.has("KeyS") || externalControls.has("back")) - moveVector.y;
     const strafe = Number(keys.has("KeyD") || externalControls.has("right"))
-      - Number(keys.has("KeyA") || externalControls.has("left"));
+      - Number(keys.has("KeyA") || externalControls.has("left")) + moveVector.x;
     if (physicsTransitionId && physicsTransitionBase) {
       physicsTransitionElapsedMs += FIXED_DELTA_SECONDS * 1_000;
       physicsProfile = samplePhysicsTransition(
@@ -416,6 +442,7 @@ export function createVoxelEngine(
           performance.now() - initializedAt,
         )
       : null;
+    const water = options.waterVolumes?.find((volume) => containsWaterVolume(volume, player.state.position));
     const surfaceBlock = world.getBlock(
       Math.floor(player.state.position.x),
       Math.floor(player.state.position.y - 0.04),
@@ -468,6 +495,7 @@ export function createVoxelEngine(
               movementScale: physics.movementScale,
             }
           : {}),
+        ...(water ? { swimming: true, buoyancy: water.buoyancy, drag: water.drag } : {}),
         ...(surface ? { surface } : {}),
         swimming: Boolean(physicsProfile?.player.abilities.swim),
       },
@@ -692,6 +720,13 @@ export function createVoxelEngine(
     else externalControls.delete(control);
   }
 
+  function setMoveVector(x: number, y: number): void {
+    if (disposed || !inputEnabled) return;
+    const magnitude = Math.hypot(x, y);
+    const scale = magnitude > 1 ? 1 / magnitude : 1;
+    moveVector = { x: Number.isFinite(x) ? x * scale : 0, y: Number.isFinite(y) ? y * scale : 0 };
+  }
+
   const resize = (): void => {
     const width = Math.max(1, canvas.clientWidth);
     const height = Math.max(1, canvas.clientHeight);
@@ -805,6 +840,7 @@ export function createVoxelEngine(
     pause,
     setInputEnabled,
     setControl,
+    setMoveVector,
     refreshInteractionTarget,
     lookBy,
     setFieldOfView,
@@ -845,7 +881,8 @@ export function createVoxelEngine(
       selectionMaterial.dispose();
       material.dispose();
       particleGeometry.dispose();
-      particleMaterial.dispose();
+    particleMaterial.dispose();
+    atlasTexture.dispose();
       renderer.dispose();
       world.clear();
       crumbleScheduler.clear();
