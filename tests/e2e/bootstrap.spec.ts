@@ -9,7 +9,9 @@ async function completeCurrentDream(page: Page): Promise<void> {
 
   await page.keyboard.press("KeyE");
   await expect(page.getByRole("heading", { name: "Fragment Guide" })).toBeVisible();
-  await page.getByRole("button", { name: /follow the dream/i }).click();
+  await page.getByRole("button", { name: /tell me more/i }).click();
+  await page.getByRole("button", { name: /tell me more/i }).click();
+  await page.getByRole("button", { name: /carry this with me/i }).click();
   await expect(
     page.getByLabel("Current objective").getByText("Awaken the Fragment", { exact: true }),
   ).toBeVisible();

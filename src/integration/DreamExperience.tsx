@@ -28,7 +28,7 @@ import {
   MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
-import { createDreamLibraryWorld, dreamLibraryCameraFocus } from "../dreamlibrary";
+import { createDreamLibraryWorld } from "../dreamlibrary";
 import { createSemanticObjective, createSemanticWorldMarkers } from "./dummyWorldObjects";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 import {
@@ -430,12 +430,11 @@ export function DreamExperience({
       particles: runtime.atmosphere.particles,
       physicsProfile: runtime.physicsProfile,
       waterVolumes: runtime.waterVolumes,
-      initialLookAt: (() => {
-        const focus = dreamLibraryCameraFocus(runtime.dreamLibrary.capabilityIds);
-        return focus
-          ? { x: focus[0], y: focus[1], z: focus[2] }
-          : { x: runtime.staging.cameraTarget[0], y: runtime.staging.cameraTarget[1], z: runtime.staging.cameraTarget[2] };
-      })(),
+      initialLookAt: {
+        x: runtime.staging.cameraTarget[0],
+        y: runtime.staging.cameraTarget[1],
+        z: runtime.staging.cameraTarget[2],
+      },
     });
     if (!engine) {
       arc.dispose();
