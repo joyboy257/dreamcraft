@@ -22,7 +22,7 @@ export function DialogueOverlay({
     return () => {
       if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
     };
-  }, [dialogue.id, dialogue.text]);
+  }, [dialogue.text]);
 
   const choose = (index: number): void => {
     const choice = dialogue.choices[index];
