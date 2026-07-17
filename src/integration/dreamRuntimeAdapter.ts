@@ -85,19 +85,25 @@ export function adaptDreamManifest(manifest: TrustedDreamManifest): AdaptedDream
     .map((id) => numericIds.get(id))
     .find((id): id is number => id !== undefined) ?? 1;
   const hero = spec.entities.find(({ role }) => role === "hero") ?? spec.entities[0];
-  const voxelStructures = compileVoxelStructures(spec.structures, {
-    seed: spec.seed,
-    radius: manifest.generator.radius,
-    height: manifest.generator.height,
-    spawn: manifest.spawn,
-    surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
-  });
+  const dreamLibrary = compileDreamLibraryBinding(manifest);
+  const libraryStructureIds = new Set(
+    dreamLibrary.anchors.flatMap(({ sourceId }) => sourceId ? [sourceId] : []),
+  );
+  const voxelStructures = compileVoxelStructures(
+    spec.structures.filter(({ id }) => !libraryStructureIds.has(id)),
+    {
+      seed: spec.seed,
+      radius: manifest.generator.radius,
+      height: manifest.generator.height,
+      spawn: manifest.spawn,
+      surfaceAt: (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
+    },
+  );
   const entityInstances = compileEntityInstances(
     manifest,
     voxelStructures,
     (x, z) => sampleSurfaceHeight(manifest.generator, x, z),
   );
-  const dreamLibrary = compileDreamLibraryBinding(manifest);
   const waterVolumes = dreamLibraryWaterVolumes(dreamLibrary.capabilityIds);
   const beat = spec.playGraph.beats.find(({ optional }) => !optional) ?? spec.playGraph.beats[0]!;
   const fallbackEnding = spec.playGraph.endings[0]!;

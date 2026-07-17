@@ -29,6 +29,15 @@ function visibleRepresentation(
   runtime: AdaptedDreamRuntime,
   anchor: TrustedDreamManifest["anchorStaging"][number],
 ): { visible: boolean; reason: string } {
+  const libraryBinding = runtime.dreamLibrary.anchors.find(
+    ({ anchorId }) => anchorId === anchor.anchorId,
+  );
+  if (libraryBinding) {
+    return {
+      visible: true,
+      reason: `DreamLibrary capability: ${libraryBinding.capabilityId}`,
+    };
+  }
   if (anchor.source === "structure") {
     const visible = runtime.voxelStructures.some(({ id }) => id === anchor.sourceId);
     return { visible, reason: visible ? "bounded voxel archetype" : "structure missing from voxel plan" };

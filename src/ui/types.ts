@@ -14,6 +14,7 @@ export interface DreamSample {
   id: string;
   label: string;
   text: string;
+  description?: string;
 }
 
 export interface ObjectiveView {

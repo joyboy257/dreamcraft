@@ -28,7 +28,7 @@ import {
   MobileControls,
 } from "../ui";
 import type { ComfortSettings } from "../ui";
-import { createDreamLibraryWorld } from "../dreamlibrary";
+import { createDreamLibraryWorld, dreamLibraryCameraFocus } from "../dreamlibrary";
 import { createSemanticObjective, createSemanticWorldMarkers } from "./dummyWorldObjects";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
 import {
@@ -44,6 +44,7 @@ interface DreamExperienceProps {
   preview: LocalPreview;
   manifest: TrustedDreamManifest;
   enrichmentManifest: TrustedDreamManifest | null;
+  isShowcase: boolean;
   generationLabel: string;
   onReplay: () => void;
   onRemix: () => void;
@@ -90,6 +91,7 @@ export function DreamExperience({
   preview,
   manifest,
   enrichmentManifest,
+  isShowcase,
   generationLabel,
   onReplay,
   onRemix,
@@ -430,11 +432,13 @@ export function DreamExperience({
       particles: runtime.atmosphere.particles,
       physicsProfile: runtime.physicsProfile,
       waterVolumes: runtime.waterVolumes,
-      initialLookAt: {
-        x: runtime.staging.cameraTarget[0],
-        y: runtime.staging.cameraTarget[1],
-        z: runtime.staging.cameraTarget[2],
-      },
+      initialLookAt: (() => {
+        const showcaseFocus = isShowcase
+          ? dreamLibraryCameraFocus(runtime.dreamLibrary.capabilityIds)
+          : null;
+        const target = showcaseFocus ?? runtime.staging.cameraTarget;
+        return { x: target[0], y: target[1], z: target[2] };
+      })(),
     });
     if (!engine) {
       arc.dispose();
@@ -603,7 +607,7 @@ export function DreamExperience({
         delete window.__DREAMCRAFT_TEST__;
       }
     };
-  }, [manifest, preview.seed]);
+  }, [isShowcase, manifest, preview.seed]);
 
   useEffect(() => {
     audioRef.current?.setMuted(comfort.muted);

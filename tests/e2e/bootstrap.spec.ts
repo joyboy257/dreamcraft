@@ -87,3 +87,21 @@ test("boots the deterministic local shell without an API key", async ({ page }) 
   await expect(page.getByTestId("dream-canvas")).toHaveCount(0);
   expect(browserFailures).toEqual([]);
 });
+
+test("launches every featured template through the DreamLibrary showcase runtime", async ({ page }) => {
+  test.setTimeout(45_000);
+
+  for (const showcase of [
+    { label: "Tiny wonder", title: "The Moonlit Kitchen", objective: "Meet Luna Moth" },
+    { label: "Lost messages", title: "Flooded School Escape", objective: "Meet Childhood Dog" },
+    { label: "Golden celebration", title: "The Lottery Family Finale", objective: "Meet The Family Band" },
+  ]) {
+    await page.goto("/");
+    await page.getByRole("button", { name: new RegExp(showcase.label, "i") }).click();
+    await expect(page.getByTestId("dream-canvas")).toBeVisible();
+    await expect(page.getByText("DreamLibrary showcase", { exact: true })).toBeVisible();
+    await expect(page.getByText(showcase.title, { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Current objective")).toContainText(showcase.objective);
+    await expect(page.getByTestId("entry-scrim")).toBeVisible();
+  }
+});

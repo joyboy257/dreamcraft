@@ -19,6 +19,10 @@ import { publicEnv } from "./config/publicEnv";
 import { prepareDreamRuntime } from "./app/materialization";
 import { DreamLibraryGallery } from "./dreamlibrary";
 import {
+  createDreamLibraryShowcases,
+  DREAM_LIBRARY_SHOWCASE_CARDS,
+} from "./dreamlibrary";
+import {
   DreamInputForm,
   FragmentNotice,
   MaterializationOverlay,
@@ -45,6 +49,7 @@ const generationProvider = new FallbackGenerationProvider(
     safeCache,
   ),
 );
+const dreamLibraryShowcases = createDreamLibraryShowcases();
 
 function yieldToBrowser(): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
@@ -61,6 +66,7 @@ export default function App(): React.JSX.Element {
   const [issue, setIssue] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<GenerationMetadata | null>(null);
   const [pendingFragment, setPendingFragment] = useState<MaterializedDream | null>(null);
+  const [showcaseId, setShowcaseId] = useState<string | null>(null);
   const [session, setSession] = useState(0);
   const generationController = useRef<AbortController | null>(null);
 
@@ -86,6 +92,7 @@ export default function App(): React.JSX.Element {
     const controller = new AbortController();
     generationController.current = controller;
     try {
+      setShowcaseId(null);
       const localPreview = createLocalPreview(dreamText);
       let enteredProgressiveCore = false;
       let progressiveCompileDurationMs: number | undefined;
@@ -203,6 +210,49 @@ export default function App(): React.JSX.Element {
     }
   };
 
+  const enterShowcase = async (id: string): Promise<void> => {
+    generationController.current?.abort();
+    generationController.current = null;
+    setIssue(null);
+    setPendingFragment(null);
+    setEnrichmentManifest(null);
+    setMaterialization("validating");
+
+    try {
+      const showcase = (await dreamLibraryShowcases).find((candidate) => candidate.id === id);
+      if (!showcase) throw new Error("That DreamLibrary showcase is unavailable.");
+
+      const compileStartedAt = performance.now();
+      const trustedManifest = compileDreamDescriptor(showcase.spec, []);
+      prepareDreamRuntime(trustedManifest);
+      setDreamText(showcase.prompt);
+      setManifest(trustedManifest);
+      setPreview({
+        ...createLocalPreview(showcase.prompt),
+        title: trustedManifest.title,
+        seed: trustedManifest.seed,
+      });
+      setMetadata({
+        strategy: "mock-local",
+        requestedStrategy: "mock-local",
+        actualStrategy: "mock-local",
+        modelAliases: [],
+        requestDurationMs: 0,
+        validationDurationMs: 0,
+        compileDurationMs: Math.max(0, Math.round(performance.now() - compileStartedAt)),
+        fallbackUsed: false,
+        repairCount: 0,
+        requestId: `dreamlibrary-showcase-${showcase.id}`,
+      });
+      setShowcaseId(showcase.id);
+      setSession((current) => current + 1);
+    } catch (error) {
+      setIssue(error instanceof Error ? error.message : "The showcase could not be prepared.");
+    } finally {
+      setMaterialization(null);
+    }
+  };
+
   if (preview && manifest) {
     return (
       <DreamExperience
@@ -210,7 +260,10 @@ export default function App(): React.JSX.Element {
         preview={preview}
         manifest={manifest}
         enrichmentManifest={enrichmentManifest}
-        generationLabel={metadata?.fallbackUsed ? "Stable local fragment" : "GPT-5.6 generated dream"}
+        isShowcase={showcaseId !== null}
+        generationLabel={showcaseId
+          ? "DreamLibrary showcase"
+          : metadata?.fallbackUsed ? "Stable local fragment" : "GPT-5.6 generated dream"}
         onReplay={() => setSession((current) => current + 1)}
         onRemix={() => {
           generationController.current?.abort();
@@ -219,6 +272,7 @@ export default function App(): React.JSX.Element {
           setPreview(null);
           setMetadata(null);
           setEnrichmentManifest(null);
+          setShowcaseId(null);
         }}
         onNewDream={() => {
           generationController.current?.abort();
@@ -228,6 +282,7 @@ export default function App(): React.JSX.Element {
           setPreview(null);
           setMetadata(null);
           setEnrichmentManifest(null);
+          setShowcaseId(null);
         }}
       />
     );
@@ -257,6 +312,7 @@ export default function App(): React.JSX.Element {
             setManifest(pendingFragment.manifest);
             setPreview(pendingFragment.preview);
             setMetadata(pendingFragment.metadata);
+            setShowcaseId(null);
             setPendingFragment(null);
             setSession((current) => current + 1);
           }}
@@ -297,6 +353,15 @@ export default function App(): React.JSX.Element {
             value={dreamText}
             intensity={intensity}
             issue={issue}
+            samples={DREAM_LIBRARY_SHOWCASE_CARDS.map(({ id, label, prompt, summary }) => ({
+              id,
+              label,
+              text: prompt,
+              description: summary,
+            }))}
+            onSampleSelect={(sample) => {
+              void enterShowcase(sample.id);
+            }}
             onValueChange={setDreamText}
             onIntensityChange={setIntensity}
             onSubmit={() => {

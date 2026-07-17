@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MockLocalGenerationProvider, compileDreamDescriptor, type DreamSpecV1 } from "../dream";
 import { voxelIndex, worldToChunk } from "../engine/chunkMath";
 import { adaptDreamManifest } from "./dreamRuntimeAdapter";
+import { createDreamLibraryShowcases } from "../dreamlibrary";
 
 describe("adaptDreamManifest", () => {
   it("turns a trusted descriptor into deterministic numeric voxel chunks", async () => {
@@ -55,5 +56,16 @@ describe("adaptDreamManifest", () => {
     const chunk = runtime.generator.generate({ chunkX: chunkX.chunk, chunkZ: chunkZ.chunk });
 
     expect(chunk.voxels[voxelIndex(chunkX.local, kitchen!.position[1], chunkZ.local)]).not.toBe(0);
+  });
+
+  it("lets DreamLibrary render a showcase's signature structures instead of covering them with generic voxels", async () => {
+    const kitchen = (await createDreamLibraryShowcases()).find(({ id }) => id === "moonlit-kitchen")!;
+    const runtime = adaptDreamManifest(compileDreamDescriptor(kitchen.spec, []));
+    const renderedByLibrary = new Set(
+      runtime.dreamLibrary.anchors.flatMap(({ sourceId }) => sourceId ? [sourceId] : []),
+    );
+
+    expect(runtime.voxelStructures.some(({ id }) => renderedByLibrary.has(id))).toBe(false);
+    expect([...renderedByLibrary]).toEqual(expect.arrayContaining(["moonlit-kitchen", "giant-cup"]));
   });
 });
