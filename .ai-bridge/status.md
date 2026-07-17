@@ -4,10 +4,10 @@
 
 ## Baseline
 
-- Date/time: 2026-07-16 (Asia/Singapore)
-- Branch / base commit: `main`; deployment-build repair starts from synchronized G7 checkpoint `7a8dacc`; final repair SHA is recorded at handoff
+- Date/time: 2026-07-17 (Asia/Singapore)
+- Branch / base commit: `main` synchronized with `origin/main` at `3264b22` (G7.1 semantic-grounding merge)
 - Remote: `git@github.com:joyboy257/dreamcraft.git`; authenticated owner permission confirmed with `gh`
-- Release-candidate state: G7 engineering is certified; generation-disabled production edge is verified at `https://dreamcraft-psi.vercel.app`; physical-device proof remains pending
+- Release-candidate state: G7.1 is merged and Ready at `https://dreamcraft-psi.vercel.app`; production retains the API-disabled policy, while physical-device and live-proof gates remain pending
 - Node / package manager: Node `24.18.0`; project-pinned pnpm `11.13.0` via Corepack
 - Existing implementation summary: remote contained one product `README.md` and no runnable code; README preserved byte-for-byte during pack installation
 - Detected tooling: npm `11.16.0`, Chromium CLI, Google Chrome, Safari, GitHub CLI
@@ -18,9 +18,9 @@
 
 - Milestone: M7 — Deployment and hackathon submission
 - Work items: DC-WI-070 through DC-WI-073; Gate G7
-- Goal: retain the verified generation-disabled production release and complete physical/device release proof without enabling OpenAI
-- Gate state: **engineering-complete / public fallback release verified / physical-proof-pending; Gate G7 not complete**
-- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; production `dpl_GtwUnH595kvDhxmfiDchukMuojXp` is Ready, Git integration remains disconnected, and live requests remain unauthorized
+- Goal: retain the verified API-disabled production release and complete the remaining physical/device, legal, and separately-authorized live-proof gates
+- Gate state: **G7.1 engineering-complete / protected-main merged / production Ready / human-proof-pending; Gate G7 not complete**
+- Owners/agents: Sol integration/release authority, sequential Luna implementation/documentation, and Terra security/gate verification; production `dpl_7z7JgqQfRcbeae2DHPJAXFfPqyrr` is Ready, Git integration remains disconnected, and live requests remain unauthorized
 
 ## Working user-visible behavior
 
@@ -41,18 +41,20 @@
 | Fresh clone | local `git clone --no-local`, then frozen install and full G0 suite | Pass | isolated clone of `8f0e888`; install/typecheck/lint/test/eval/build/e2e/pack validation all passed |
 | Typecheck | `corepack pnpm typecheck` | Pass | strict TypeScript across client, server, API handler, and tests, 2026-07-16 |
 | Lint | `corepack pnpm lint` | Pass, zero warnings | ESLint 10 + typed rules |
-| Unit/integration tests | `corepack pnpm test` | Current G7 candidate passes, 49 files and 202/202 tests | adds safe health/config states, exact same-origin generation requests, bounded Vercel function configuration, direct build-path regression coverage, and prior G0–G6 coverage |
+| Unit/integration tests | `corepack pnpm test` | Pass, 54 files and 216/216 tests | includes G7.1 semantic anchors, bounded voxel structures, entity instances, semantic objectives, and all prior G0–G7 coverage |
 | Deployed-smoke validator | `corepack pnpm test:smoke-deployed` | Pass, 4/4 Node tests | validates safe URL handling, generation-disabled fail-closed behavior, deterministic fallback checks, CORS/header checks, and error redaction without contacting a deployment |
 | Focused independent verification | changed-path unit, integration, security, and hostile suites | Pass, 44/44 tests | independent Terra rerun before the G6 verdict |
-| Browser smoke | `corepack pnpm test:e2e` | Pass, 9/9 Playwright journeys with `workers: 1` | G6 reproducibility plus Sol's final G7-candidate rerun; covers complete desktop and mobile journeys, twenty prompts in one page, accessibility/comfort, WebGL recovery, and measured desktop/mobile budgets |
+| Browser smoke | `corepack pnpm test:e2e` plus explicit mobile rerun | Pass, 9/9 Playwright journeys | desktop and mobile journeys, semantic-objective discoverability, twenty prompts in one page, accessibility/comfort, WebGL recovery, and measured desktop/mobile budgets |
 | Production PWA | `corepack pnpm test:pwa` | Pass, 1/1 Chromium | Sol reran production service-worker control, manifest and hashed shell caching, then the usable input shell offline reload on the final G7 candidate |
-| Dream evals | `corepack pnpm eval` | Pass, 4 files and 6/6 tests | six-dream distinction, representative compiler corpus, hostile aggregate, and ten-prompt mocked single/director benchmark; twenty deterministic prompts also pass in the single-page browser gate |
+| Dream evals | `corepack pnpm eval` | Pass, 5 files and 8/8 tests | adds moonlit-kitchen, flooded-school, and lottery-family G7.1 fidelity evaluation with 100% high-priority anchor coverage and a generic-beacon regression guard |
 | Production build | `corepack pnpm build` | Pass | Vite 8 JavaScript output 980.52 kB raw / 271.31 kB gzip; the raw 500 kB advisory remains nonblocking because documented runtime budgets pass |
 | Performance | deterministic desktop balanced and Pixel 7 reduced-profile browser metrics | Pass | desktop 119 FPS / 16.7 ms p95 / 23 draws / 11,738 triangles; reduced mobile 120 FPS / 9.1 ms p95 / 18 draws / 7,628 triangles; chunk work below 5 ms p95 and three-lifecycle heap growth approximately 6.7% |
 | Dependency/security checks | `corepack pnpm audit --prod`; pack validator; service-worker syntax; sequential repository hardening plus independent Terra gate review | Pass | zero known vulnerabilities, zero High/Critical findings, restrictive deployment-header configuration, API responses excluded from caches, and no secret-pattern hit; this was not claimed as an exhaustive multi-agent security scan |
 | G7 release-security review | exact-origin, health/smoke, CI action pins, Vercel bounds/headers, live-script safety | Terra PASS | no Critical/High finding; Checkout and Setup Node use immutable SHAs, credentials are not persisted, and CI contains no deploy/upload step |
 | G7 complete local matrix | full serialized release commands on the final candidate | Terra post-fix PASS | typecheck/lint, 202/202 unit/integration, 4/4 smoke validator, 6/6 eval, direct build, 9/9 E2E, 1/1 PWA, pack/script/SW syntax, zero-vulnerability audit, and diff check all passed |
 | Install integrity | `corepack pnpm install --frozen-lockfile` | Pass | 222 lock entries pass supply-chain policy; OpenAI SDK pinned to mature `6.46.0` |
+| G7.1 protected release | PR #2 / `release-checks` | Pass | `3264b22` merged after hosted typecheck, lint, tests, evals, Chromium, PWA, pack, service-worker, and audit checks |
+| G7.1 production deployment | Vercel `dpl_7z7JgqQfRcbeae2DHPJAXFfPqyrr` | Ready | aliases include `https://dreamcraft-psi.vercel.app`; deployment used existing encrypted API-disabled environment policy and added no key |
 
 ## Recent decisions or deviations
 
@@ -122,10 +124,14 @@
 - Terra returned PASS for G7 release security, including exact same-origin
   enforcement and immutable GitHub Action pins. Sol then reran the complete
   serialized release matrix and certified the local candidate.
-- The accurate G7 state is engineering-complete / Vercel-proof-pending. The
-  project is linked, but no deployment, alias, Ready preview, authorized
-  production release, public URL, or live OpenAI proof exists. Evidence:
-  `docs/20_G7_LOCAL_RELEASE_EVIDENCE.md`.
+- G7.1 preserves source phrases, representation kind, gameplay role, importance,
+  and visible-presence requirements through the compiler; it voxel-materializes
+  bounded DreamSpec structures, materializes entity instances, and binds
+  objectives to semantic targets. Evidence:
+  `docs/21_G7_1_SEMANTIC_GROUNDING_EVIDENCE.md`.
+- PR #2 passed hosted `release-checks` and merged through protected `main` at
+  `3264b22`. Vercel deployment `dpl_7z7JgqQfRcbeae2DHPJAXFfPqyrr` is Ready at
+  `https://dreamcraft-psi.vercel.app`; no live OpenAI call was made.
 
 ## Known issues
 
@@ -134,7 +140,7 @@
 | Low | Vite reports the 980.52 kB raw client entry chunk above its 500 kB advisory threshold | Root/engine | Reassess code splitting before release only if it materially improves loading; current gzip is 271.31 kB and measured runtime budgets pass |
 | Medium | In-memory application rate limiting is per serverless instance | Root/release | Configure Vercel Firewall/shared rate protection or approve a distributed limiter before public live generation |
 | Low | Exact same-origin enforcement is locally certified but not yet verified at the Vercel edge | Release | Probe missing, foreign, and exact origins against the generation-disabled preview |
-| Medium | Vercel promotes a new project's first successful deployment to production even when the command names `--target=preview` | Release | Obtain explicit owner authorization for the first successful production-target deployment; then create/verify a generation-disabled preview |
+| Resolved | First successful Vercel deployment required production promotion | Release | Explicit authorization was supplied; production `dpl_7z7JgqQfRcbeae2DHPJAXFfPqyrr` is Ready and retains the API-disabled policy |
 | Low | Automated Pixel 7 Chromium proves touch paths and reduced-profile budgets but not physical-device ergonomics, GPU-driver behavior, or thermals | Root/QA | Confirm on the physical demo device during G7 release verification |
 | Low | PWA shell changes can remain stale if the service-worker cache name is not version-bumped | Root/release | Require a cache-version bump whenever cached shell behavior or assets change |
 | Low | Chunk generation/meshing remains on the main thread | Root/engine | Keep the measured sub-5 ms p95 guard; add worker offload only if future content breaks it |
@@ -143,20 +149,14 @@
 ## External blockers
 
 - The existing development key must be rotated because its value appeared in local validator output. Do not add credit to that key.
-- The replacement OpenAI project needs up to `$10` credit and explicit authorization before the locked ten-prompt proof. Projected maximum spend is `$9.35`; see `docs/13_G3_LIVE_VALIDATION_RUNBOOK.md`.
-- Production deployment requires explicit owner authorization after a preview passes.
+- The replacement OpenAI project needs up to `$10` credit and explicit authorization before the locked ten-prompt proof. Projected maximum spend is `$9.45`; see `docs/13_G3_LIVE_VALIDATION_RUNBOOK.md`.
 - MIT adoption requires owner legal approval; `LICENSE-MIT-DRAFT.md` is intentionally not an adopted `LICENSE` file.
 - Public deployment/video URLs, team display names, and the primary Sol `/feedback` session ID remain human submission placeholders.
 - Live-key blockers affect only the live G3 proof; deterministic fallback and G0–G6 engineering remain complete locally.
 
 ## Next worker wave
 
-- Keep the existing disconnected-Git project link and matching safe Preview/
-  Production environments. On explicit owner authorization only, create the
-  first successful production-target deployment; then create and verify the
-  generation-disabled preview.
-- Configure required checks/branch protection after the CI workflow is present
-  on the remote.
-- Populate preview evidence and request explicit production authorization only
-  after incognito, second-device, slow-network, fallback, health, header, and
-  complete-flow checks pass.
+- Keep production API-disabled until the replacement funded key and separate
+  live-proof authorization are supplied.
+- Capture physical handset/second-device/incognito evidence and make the MIT
+  legal adoption decision before claiming Gate G7 complete.
