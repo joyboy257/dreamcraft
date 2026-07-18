@@ -17,9 +17,9 @@ export interface DreamLibraryWaterVolume {
 }
 
 export function dreamLibraryCameraFocus(capabilityIds: readonly string[]): readonly [number, number, number] | null {
-  if (capabilityIds.includes("school")) return [0, 12, -9];
-  if (capabilityIds.includes("kitchen")) return [5, 13, -8];
-  if (capabilityIds.includes("celebration")) return [1, 13, -9];
+  if (capabilityIds.includes("school")) return [0, 10, -2];
+  if (capabilityIds.includes("kitchen")) return [0, 10, -2];
+  if (capabilityIds.includes("celebration")) return [-1, 10, -2];
   return null;
 }
 

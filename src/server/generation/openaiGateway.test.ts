@@ -229,7 +229,7 @@ describe("OpenAIResponsesGateway", () => {
     const maximumOutputCost =
       (4_000 * tenPromptMaximumAttempts * 30) / 1_000_000;
 
-    expect(bytes).toBe(70_489);
-    expect(conservativeInputCost + maximumOutputCost).toBeLessThanOrEqual(9.45);
+    expect(bytes).toBe(70_553);
+    expect(conservativeInputCost + maximumOutputCost).toBeLessThanOrEqual(9.46);
   });
 });

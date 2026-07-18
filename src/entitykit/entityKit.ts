@@ -60,9 +60,14 @@ export interface BodyPlanDefinition {
 export const MVP_BODY_PLANS = [
   "humanoid",
   "small_humanoid",
+  "humanoid_adult",
+  "humanoid_child",
+  "humanoid_elder",
   "quadruped",
+  "dog",
   "bear",
   "bird",
+  "moth",
   "fish",
   "serpent",
   "blob",
@@ -116,12 +121,44 @@ const BODY_PLAN_DEFINITIONS: Record<EntityBodyPlan, BodyPlanDefinition> = {
     supportedLocomotion: ["walk", "waddle", "hop"],
     supportedEmotion: STANDARD_EMOTIONS,
   },
+  humanoid_adult: {
+    joints: ["body", "head", "arm-left", "arm-right", "leg-left", "leg-right"],
+    contactPoints: ["leg-left", "leg-right"],
+    attachmentSlots: ["head", "body", "arm-left", "arm-right"],
+    collider: { kind: "capsule", size: [0.78, 2.05, 0.72] },
+    supportedLocomotion: ["walk", "hop"],
+    supportedEmotion: STANDARD_EMOTIONS,
+  },
+  humanoid_child: {
+    joints: ["body", "head", "arm-left", "arm-right", "leg-left", "leg-right"],
+    contactPoints: ["leg-left", "leg-right"],
+    attachmentSlots: ["head", "body", "arm-left", "arm-right"],
+    collider: { kind: "capsule", size: [0.62, 1.45, 0.62] },
+    supportedLocomotion: ["walk", "waddle", "hop"],
+    supportedEmotion: STANDARD_EMOTIONS,
+  },
+  humanoid_elder: {
+    joints: ["body", "head", "arm-left", "arm-right", "leg-left", "leg-right"],
+    contactPoints: ["leg-left", "leg-right"],
+    attachmentSlots: ["head", "body", "arm-left", "arm-right"],
+    collider: { kind: "capsule", size: [0.82, 1.85, 0.78] },
+    supportedLocomotion: ["walk", "hop"],
+    supportedEmotion: STANDARD_EMOTIONS,
+  },
   quadruped: {
     joints: ["body", "head", "leg-front-left", "leg-front-right", "leg-rear-left", "leg-rear-right", "tail"],
     contactPoints: ["leg-front-left", "leg-front-right", "leg-rear-left", "leg-rear-right"],
     attachmentSlots: ["head", "body", "tail"],
     collider: { kind: "box", size: [1.2, 0.9, 1.8] },
     supportedLocomotion: ["walk", "hop"],
+    supportedEmotion: STANDARD_EMOTIONS,
+  },
+  dog: {
+    joints: ["body", "head", "muzzle", "leg-front-left", "leg-front-right", "leg-rear-left", "leg-rear-right", "tail"],
+    contactPoints: ["leg-front-left", "leg-front-right", "leg-rear-left", "leg-rear-right"],
+    attachmentSlots: ["head", "muzzle", "body", "tail"],
+    collider: { kind: "box", size: [1.6, 1.25, 2.5] },
+    supportedLocomotion: ["walk", "waddle"],
     supportedEmotion: STANDARD_EMOTIONS,
   },
   bear: {
@@ -138,6 +175,14 @@ const BODY_PLAN_DEFINITIONS: Record<EntityBodyPlan, BodyPlanDefinition> = {
     attachmentSlots: ["head", "body", "wing-left", "wing-right", "tail"],
     collider: { kind: "sphere", size: [0.8, 0.9, 0.8] },
     supportedLocomotion: ["fly", "hop", "waddle"],
+    supportedEmotion: STANDARD_EMOTIONS,
+  },
+  moth: {
+    joints: ["body", "head", "thorax", "abdomen", "wing-upper-left", "wing-upper-right", "wing-lower-left", "wing-lower-right", "antenna-left", "antenna-right"],
+    contactPoints: ["body"],
+    attachmentSlots: ["head", "thorax", "abdomen", "wing-upper-left", "wing-upper-right", "wing-lower-left", "wing-lower-right"],
+    collider: { kind: "sphere", size: [2.3, 1.4, 0.8] },
+    supportedLocomotion: ["fly"],
     supportedEmotion: STANDARD_EMOTIONS,
   },
   fish: {
@@ -407,6 +452,7 @@ function addMesh(
   context.geometries.add(geometry);
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name;
+  if (name.startsWith("moth-wing")) material.side = THREE.DoubleSide;
   mesh.scale.set(...scale);
   mesh.position.set(...position);
   mesh.rotation.set(...rotation);
@@ -435,6 +481,109 @@ function cylinder(): THREE.CylinderGeometry {
 
 function torus(): THREE.TorusGeometry {
   return new THREE.TorusGeometry(0.5, 0.12, 6, 12);
+}
+
+function wingGeometry(lower: boolean): THREE.BoxGeometry {
+  return new THREE.BoxGeometry(lower ? 1.5 : 2.15, lower ? 0.72 : 1.2, 0.08);
+}
+
+function buildFamilyHumanoid(context: BuildContext, _visual: EntityVisualSpec, variant: "adult" | "child" | "elder"): void {
+  const child = variant === "child";
+  const elder = variant === "elder";
+  const height = child ? 0.72 : elder ? 0.92 : 1.08;
+  const shoulder = child ? 0.48 : elder ? 0.64 : 0.62;
+  const limb = child ? 0.58 : elder ? 0.72 : 0.82;
+  const legY = child ? -0.62 : -0.78;
+  const clothingMaterial = elder ? context.accentMaterial : context.primaryMaterial;
+  addMesh(context, context.body, `humanoid-${variant}-torso`, box(), clothingMaterial,
+    [shoulder, height, child ? 0.34 : 0.4], [0, 0, 0]);
+  const head = makeJoint(context, "head", context.body, [0, height + 0.5, 0]);
+  addMesh(context, head, `humanoid-${variant}-head`, sphere(), context.primaryMaterial,
+    [child ? 0.34 : 0.4, child ? 0.38 : 0.44, child ? 0.34 : 0.4]);
+  const hair = makeJoint(context, "hair", head, [0, 0.24, -0.02]);
+  addMesh(context, hair, `humanoid-${variant}-hair`, sphere(), context.accentMaterial,
+    [child ? 0.37 : 0.43, 0.18, child ? 0.35 : 0.4], [0, 0.08, -0.18]);
+  for (const side of [-1, 1] as const) {
+    const label = side < 0 ? "left" : "right";
+    const arm = makeJoint(context, `arm-${label}`, context.body, [side * (shoulder + 0.16), 0.28, 0]);
+    addMesh(context, arm, `humanoid-${variant}-arm-${label}`, cylinder(), context.primaryMaterial,
+      [0.12, limb * 0.7, 0.12], [0, -limb * 0.3, 0], [0, 0, side * -0.08]);
+    addMesh(context, arm, `humanoid-${variant}-hand-${label}`, sphere(), context.accentMaterial,
+      [0.15, 0.13, 0.15], [0, -limb * 0.67, 0]);
+    const leg = makeJoint(context, `leg-${label}`, context.body, [side * (child ? 0.22 : 0.28), legY, 0]);
+    addMesh(context, leg, `humanoid-${variant}-leg-${label}`, cylinder(), context.primaryMaterial,
+      [0.14, limb * 0.72, 0.14], [0, -limb * 0.35, 0]);
+    addMesh(context, leg, `humanoid-${variant}-shoe-${label}`, box(), context.accentMaterial,
+      [0.2, 0.12, 0.3], [0, -limb * 0.78, 0.1]);
+  }
+  if (elder) {
+    const cane = makeJoint(context, "cane", context.body, [0.62, -0.06, 0.12]);
+    addMesh(context, cane, "humanoid-elder-cane", cylinder(), context.accentMaterial,
+      [0.06, 0.85, 0.06], [0, -0.45, 0]);
+  } else if (child) {
+    const hat = makeJoint(context, "hat", head, [0, 0.44, 0]);
+    addMesh(context, hat, "humanoid-child-cap", cone(), context.accentMaterial,
+      [0.38, 0.2, 0.38], [0, 0.1, 0]);
+  }
+}
+
+function buildDog(context: BuildContext, visual: EntityVisualSpec): void {
+  addMesh(context, context.body, "dog-torso", sphere(), context.primaryMaterial,
+    [visual.proportions.torsoScale[0] * 1.2, visual.proportions.torsoScale[1] * 0.58, visual.proportions.torsoScale[2] * 0.95]);
+  const head = makeJoint(context, "head", context.body, [0, 0.56, 0.88]);
+  addMesh(context, head, "dog-head", sphere(), context.primaryMaterial,
+    [visual.proportions.headScale[0] * 0.62, visual.proportions.headScale[1] * 0.58, visual.proportions.headScale[2] * 0.62]);
+  const muzzle = makeJoint(context, "muzzle", head, [0, -0.08, 0.48]);
+  addMesh(context, muzzle, "dog-muzzle", sphere(), context.accentMaterial, [0.38, 0.25, 0.3]);
+  addMesh(context, muzzle, "dog-nose", sphere(), context.accentMaterial, [0.14, 0.12, 0.1], [0, 0, 0.28]);
+  for (const side of [-1, 1] as const) {
+    const label = side < 0 ? "left" : "right";
+    const ear = makeJoint(context, `ear-${label}`, head, [side * 0.34, 0.42, 0.03]);
+    addMesh(context, ear, `dog-ear-${label}`, cone(), context.accentMaterial,
+      [0.22, 0.5, 0.18], [0, -0.16, 0], [0, 0, side * -0.2]);
+    const eye = makeJoint(context, `eye-${label}`, head, [side * 0.2, 0.12, 0.5]);
+    addMesh(context, eye, `dog-eye-${label}`, sphere(), context.accentMaterial, [0.09, 0.09, 0.06]);
+  }
+  for (const front of [-1, 1] as const) {
+    for (const side of [-1, 1] as const) {
+      const label = `${front > 0 ? "front" : "rear"}-${side < 0 ? "left" : "right"}`;
+      const leg = makeJoint(context, `leg-${label}`, context.body, [side * 0.58, -0.42, front * 0.55]);
+      addMesh(context, leg, `dog-leg-${label}`, cylinder(), context.primaryMaterial,
+        [0.16, 0.72, 0.16], [0, -0.34, 0]);
+      addMesh(context, leg, `dog-paw-${label}`, sphere(), context.accentMaterial,
+        [0.22, 0.14, 0.28], [0, -0.76, 0.12]);
+    }
+  }
+  const tail = makeJoint(context, "tail", context.body, [0, 0.22, -0.98]);
+  addMesh(context, tail, "dog-tail", cylinder(), context.primaryMaterial,
+    [0.12, 0.8, 0.12], [0, 0.32, -0.32], [Math.PI * 0.7, 0, 0]);
+  addMesh(context, tail, "dog-tail-tip", sphere(), context.accentMaterial, [0.18, 0.18, 0.18], [0, 0.66, -0.58]);
+}
+
+function buildMoth(context: BuildContext): void {
+  const thorax = makeJoint(context, "thorax", context.body, [0, 0, 0]);
+  addMesh(context, thorax, "moth-thorax", sphere(), context.primaryMaterial, [0.32, 0.4, 0.42]);
+  const abdomen = makeJoint(context, "abdomen", context.body, [0, -0.05, -0.56]);
+  addMesh(context, abdomen, "moth-abdomen", sphere(), context.primaryMaterial, [0.24, 0.28, 0.58]);
+  const head = makeJoint(context, "head", context.body, [0, 0.04, 0.48]);
+  addMesh(context, head, "moth-head", sphere(), context.accentMaterial, [0.3, 0.28, 0.3]);
+  for (const side of [-1, 1] as const) {
+    const label = side < 0 ? "left" : "right";
+    const upper = makeJoint(context, `wing-upper-${label}`, thorax, [side * 0.16, 0.08, 0]);
+    addMesh(context, upper, `moth-wing-upper-${label}`, wingGeometry(false), context.primaryMaterial,
+      [side, 1, 1], [side * 0.78, 0.18, 0], [0, side * 0.08, side * 0.12]);
+    const lower = makeJoint(context, `wing-lower-${label}`, thorax, [side * 0.16, -0.06, -0.05]);
+    addMesh(context, lower, `moth-wing-lower-${label}`, wingGeometry(true), context.accentMaterial,
+      [side * 0.92, 0.88, 1], [side * 0.58, -0.12, 0], [0, side * 0.08, side * 0.14]);
+    const antenna = makeJoint(context, `antenna-${label}`, head, [side * 0.15, 0.22, 0.1]);
+    addMesh(context, antenna, `moth-antenna-${label}`, cylinder(), context.accentMaterial,
+      [0.035, 0.5, 0.035], [0, 0.22, 0], [0, side * 0.25, side * 0.32]);
+    for (let leg = 0; leg < 3; leg += 1) {
+      const legJoint = makeJoint(context, `moth-leg-${label}-${leg}`, thorax, [side * (0.16 + leg * 0.04), -0.2, 0.18 - leg * 0.28]);
+      addMesh(context, legJoint, `moth-leg-${label}-${leg}`, cylinder(), context.accentMaterial,
+        [0.035, 0.28, 0.035], [0, -0.14, 0], [0, side * 0.28, side * 0.22]);
+    }
+  }
 }
 
 function buildBiped(context: BuildContext, visual: EntityVisualSpec, small: boolean): void {
@@ -500,14 +649,29 @@ function buildSimplePlan(context: BuildContext, visual: EntityVisualSpec): void 
     case "small_humanoid":
       buildBiped(context, visual, true);
       break;
+    case "humanoid_adult":
+      buildFamilyHumanoid(context, visual, "adult");
+      break;
+    case "humanoid_child":
+      buildFamilyHumanoid(context, visual, "child");
+      break;
+    case "humanoid_elder":
+      buildFamilyHumanoid(context, visual, "elder");
+      break;
     case "quadruped":
       buildQuadruped(context, visual, false);
+      break;
+    case "dog":
+      buildDog(context, visual);
       break;
     case "bear":
       buildQuadruped(context, visual, true);
       break;
     case "bird":
       buildBirdOrFish(context, visual, false);
+      break;
+    case "moth":
+      buildMoth(context);
       break;
     case "fish":
       buildBirdOrFish(context, visual, true);
@@ -747,14 +911,18 @@ export function createProceduralEntity(options: ProceduralEntityOptions): Proced
   const eyeCount = addFace(context, visual);
   const phase = phaseFromSeed(options.seed);
   const intendedDistance = clamp(options.intendedDistance ?? 10, 0, 100);
+  const dedicatedFeatureFamilies = visual.bodyPlan === "moth" ? 4
+    : visual.bodyPlan === "dog" ? 4
+      : visual.bodyPlan === "humanoid_adult" || visual.bodyPlan === "humanoid_child" || visual.bodyPlan === "humanoid_elder" ? 4
+        : 0;
   const iconicFeatureCount = Math.min(
-    representedFeatureFamilies,
+    Math.max(representedFeatureFamilies, dedicatedFeatureFamilies),
     visual.recognitionFeatures.length,
   );
   const focalContrast = visual.face !== undefined &&
     (Math.abs(luminance(visual.palette.eye) - luminance(visual.palette.primary)) >= 0.22 ||
       visual.face.eyeStyle === "glowing" || visual.face.eyeStyle === "screen");
-  const distinctSilhouette = representedFeatureFamilies >= 2 ||
+  const distinctSilhouette = representedFeatureFamilies >= 2 || dedicatedFeatureFamilies >= 3 ||
     visual.bodyPlan === "serpent" || visual.bodyPlan === "plant_creature";
   const visibleAtDistance = intendedDistance <= Math.max(8, entityScale * 12);
   const bodyPlanDefinition = getBodyPlanDefinition(visual.bodyPlan);
@@ -814,6 +982,18 @@ export function createProceduralEntity(options: ProceduralEntityOptions): Proced
         for (const [name, joint] of context.joints) {
           if (name.includes("wing-") || name.includes("fin-")) joint.rotation.z = Math.sin(time * 5) * 0.65 * activeAmount;
         }
+      }
+      if (visual.bodyPlan === "moth") {
+        for (const [name, joint] of context.joints) {
+          if (name.startsWith("wing-")) joint.rotation.z += Math.sin(time * 5 + (name.includes("left") ? 0 : Math.PI)) * 0.22 * activeAmount;
+        }
+        body.rotation.y = Math.sin(time * 1.4) * 0.08 * activeAmount;
+      }
+      if (visual.bodyPlan === "dog") {
+        const tail = context.joints.get("tail");
+        const dogHead = context.joints.get("head");
+        if (tail) tail.rotation.y = Math.sin(time * 4.5) * 0.5 * activeAmount;
+        if (dogHead) dogHead.rotation.y = Math.sin(time * 1.2) * 0.08 * activeAmount;
       }
       if (locomotion === "slither") body.rotation.y = Math.sin(time * 2.4) * 0.16 * activeAmount;
       if (locomotion === "roll") body.rotation.z = time;

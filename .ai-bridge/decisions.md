@@ -107,3 +107,11 @@ These decisions are locked unless the root Sol thread records a replacement with
 **Supersedes:** The parallel-worker portion of D-005 and earlier worker-wave guidance. Directory ownership and root shared-contract authority remain unchanged.
 
 **Context policy:** Keep unused MCP/connectors idle and load only the repository context needed for the active gate.
+
+## D-020 — Dedicated showcase entity archetypes
+
+**Decision:** G7.3 adds dedicated trusted procedural builders for `moth`, `dog`, `humanoid_adult`, `humanoid_child`, and `humanoid_elder`. DreamSpecs select these body plans directly and DreamLibrary registers the same archetype IDs.
+
+**Why:** The previous generic body-plan + feature composition produced primitive arrangements that failed normal-distance recognisability for the three submission showcases. Dedicated bounded silhouettes preserve the declarative runtime path without introducing external assets or a universal creature generator.
+
+**Correction boundary:** Only the showcase camera framing, solid palette treatment, and authored spawn positions were corrected after rendered inspection. Further visual expansion is frozen for submission.

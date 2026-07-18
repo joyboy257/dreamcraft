@@ -453,7 +453,7 @@ export function DreamExperience({
       return;
     }
     engineRef.current = engine;
-    if (import.meta.env.DEV && navigator.webdriver) {
+    if (import.meta.env.DEV) {
       window.__DREAMCRAFT_TEST__ = {
         getPlayerPosition: () => engine?.getPlayerPosition() ?? null,
         getViewRotation: () => engine?.getViewRotation() ?? null,
@@ -461,6 +461,10 @@ export function DreamExperience({
         getQualityProfile: () => engine?.getQualityProfile() ?? null,
         getMetrics: () => engine?.getMetrics() ?? null,
         getRendererDiagnostics: () => engine?.getRendererDiagnostics() ?? null,
+        getEntityDiagnostics: () => [
+          ...(proceduralGuide ? [{ id: proceduralGuide.id, partCount: proceduralGuide.partCount, meshNames: proceduralGuide.root.children.flatMap((child) => { const names: string[] = []; child.traverse((object) => { if (object instanceof THREE.Mesh) names.push(object.name); }); return names; }), position: guideRoot.position, bounds: (() => { const box = new THREE.Box3().setFromObject(proceduralGuide.root); const size = new THREE.Vector3(); box.getSize(size); return size; })() }] : []),
+          ...auxiliaryEntities.map(({ actor, stagingRoot }) => { const names: string[] = []; actor.root.traverse((object) => { if (object instanceof THREE.Mesh) names.push(object.name); }); const box = new THREE.Box3().setFromObject(actor.root); const size = new THREE.Vector3(); box.getSize(size); return { id: actor.id, partCount: actor.partCount, meshNames: names, position: stagingRoot.position, bounds: size }; }),
+        ],
         focusActiveInteraction: () => {
           const target = getInteractiveEntities()[0];
           if (!engine || !target) return false;
@@ -603,7 +607,7 @@ export function DreamExperience({
       busRef.current = null;
       arcRef.current = null;
       audioRef.current = null;
-      if (import.meta.env.DEV && navigator.webdriver) {
+      if (import.meta.env.DEV) {
         delete window.__DREAMCRAFT_TEST__;
       }
     };

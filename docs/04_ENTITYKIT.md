@@ -267,6 +267,16 @@ interface EntityReadabilityReport {
 - Behavior: talk, follow, gather, cheer/dance
 - Important: do not claim photorealistic identity or recreate a real person from text alone
 
+### G7.3 showcase archetypes
+
+The three reference dreams use dedicated body plans through the normal materialisation path:
+
+- `moth`: segmented head/thorax/abdomen, four bilateral wings, antennae, eyes, legs, and flutter animation.
+- `dog`: horizontal torso, head/muzzle, ears, four leg-and-paw rigs, connected tail, eyes/nose contrast, and walk/wag animation.
+- `humanoid_adult`, `humanoid_child`, `humanoid_elder`: upright clothing silhouettes with hands, shoes, hair/accessory differences, and shared wave/cheer/dance support.
+
+No external assets are bundled for these archetypes; all geometry and materials are generated deterministically by EntityKit.
+
 ## Budgets
 
 Suggested initial limits:
