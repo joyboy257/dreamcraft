@@ -1,6 +1,6 @@
 import { sanitizeDreamSpec } from "./sanitizer.js";
 import type { DreamCondition, DreamIssue, DreamSpecV1 } from "./schema.js";
-import { composeLocalDialogue } from "../dreamlibrary/dialogueComposer";
+import { composeLocalDialogue } from "../dreamlibrary/dialogueComposer.js";
 
 export type GenerationStrategy = "mock-local" | "single-sol" | "director-parallel";
 export type DreamIntensity = "calm" | "vivid" | "fever";
