@@ -4,7 +4,7 @@ import { DREAM_LIBRARY, getDreamLibraryCapability, selectDreamLibraryCapabilitie
 describe("DreamLibrary registry", () => {
   it("ships all material and reference-dream capabilities as renderable contracts", () => {
     expect(DREAM_LIBRARY.filter(({ category }) => category === "material")).toHaveLength(22);
-    for (const id of ["school", "kitchen", "celebration", "water", "moth", "dog", "family", "giant-cup", "paper-boat", "lottery-ticket"]) {
+    for (const id of ["school", "kitchen", "celebration", "water", "moth", "dog", "humanoid_adult", "humanoid_child", "humanoid_elder", "family", "giant-cup", "paper-boat", "lottery-ticket"]) {
       expect(getDreamLibraryCapability(id)?.rendered).toBe(true);
     }
   });

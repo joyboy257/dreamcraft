@@ -26,6 +26,7 @@ interface Window {
     }> | null;
     getMetrics(): import("./contracts/runtime").RuntimeMetrics | null;
     getRendererDiagnostics(): import("./engine/voxelEngine").RendererDiagnostics | null;
+    getEntityDiagnostics(): readonly { id: string; meshNames: readonly string[]; partCount: number; position: Readonly<{ x: number; y: number; z: number }>; bounds: Readonly<{ x: number; y: number; z: number }> }[];
     focusActiveInteraction(): boolean;
     playAudioCaption(): string;
   };

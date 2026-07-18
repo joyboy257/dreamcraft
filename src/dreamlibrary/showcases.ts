@@ -59,6 +59,31 @@ function finish(spec: DreamSpecV1): DreamSpecV1 {
   return result.spec;
 }
 
+function showcaseMaterials(
+  visual: DreamSpecV1["entities"][number]["visual"],
+  primary: number,
+  accent: number,
+  eye: number,
+): void {
+  visual.palette = { ...visual.palette, primary, secondary: accent, accent, eye };
+  const first = visual.materials[0];
+  const solid = (material: DreamSpecV1["entities"][number]["visual"]["materials"][number], color: number, id = material.id) => ({
+    ...material,
+    id,
+    preset: "matte" as const,
+    color,
+    roughness: 0.55,
+    metalness: 0,
+    opacity: 1,
+    emissive: 0,
+  });
+  visual.materials = visual.materials.length >= 2
+    ? visual.materials.map((material, index) => solid(material, index === 0 ? primary : index === 1 ? accent : material.color))
+    : first === undefined
+      ? [{ id: "showcase-primary", preset: "toon", color: primary, roughness: 0.5, metalness: 0, opacity: 1, emissive: 0 }, { id: "showcase-accent", preset: "toon", color: accent, roughness: 0.5, metalness: 0, opacity: 1, emissive: 0 }]
+      : [solid(first, primary), solid(first, accent, "showcase-accent")];
+}
+
 function rebindDialogueSpeaker(spec: DreamSpecV1, entityId: string): void {
   spec.dialogues = spec.dialogues.map((dialogue) => ({ ...dialogue, speakerEntityId: entityId }));
 }
@@ -71,11 +96,19 @@ async function moonlitKitchen(): Promise<DreamLibraryShowcase> {
   hero.id = "luna-moth";
   rebindDialogueSpeaker(spec, hero.id);
   hero.displayName = "Luna Moth";
-  hero.visual.bodyPlan = "bird";
-  hero.visual.features = hero.visual.features.map((feature, index) => index === 0
-    ? { ...feature, kind: "antenna", style: "moon-feelers" }
-    : feature);
-  hero.spawn = { kind: "fixed", positions: [[-5, 12, -4]] };
+  hero.visual.bodyPlan = "moth";
+  hero.visual.scale = 1.85;
+  showcaseMaterials(hero.visual, 0x352050, 0xf0a4c8, 0x16131d);
+  hero.visual.face = { eyeStyle: "glowing", eyeScale: 1.2, eyeSpacing: 0.6, mouthStyle: "none", defaultExpression: "curious" };
+  hero.visual.animationStyle = { idle: "float", locomotion: "fly", emotion: "wave", speedMultiplier: 1.15, exaggeration: 1.25 };
+  const mothMaterial = hero.visual.materials[0]?.id ?? "body";
+  hero.visual.features = [
+    { kind: "antenna", style: "moon-feelers", size: 1, materialSlot: mothMaterial },
+    { kind: "wing", style: "patterned", size: 1, materialSlot: mothMaterial },
+    { kind: "tail", style: "abdomen", size: 0.8, materialSlot: mothMaterial },
+  ];
+  hero.visual.recognitionFeatures = ["four broad wings", "feathered antennae", "segmented abdomen", "bright eyes"];
+  hero.spawn = { kind: "fixed", positions: [[0, 8, -2]] };
   hero.tags = ["moth-guide", "guide", "hero"];
   spec.budgets.structures = 5;
   spec.budgets.entityDefinitions = 1;
@@ -112,8 +145,19 @@ async function floodedSchool(): Promise<DreamLibraryShowcase> {
   dog.id = "childhood-dog";
   rebindDialogueSpeaker(spec, dog.id);
   dog.displayName = "Childhood Dog";
-  dog.visual.bodyPlan = "quadruped";
-  dog.spawn = { kind: "fixed", positions: [[-6, 12, -4]] };
+  dog.visual.bodyPlan = "dog";
+  dog.visual.scale = 1.55;
+  showcaseMaterials(dog.visual, 0x8b4a2d, 0xf1d19b, 0x151017);
+  dog.visual.animationStyle = { idle: "breathe", locomotion: "walk", emotion: "cheer", speedMultiplier: 1.1, exaggeration: 1.15 };
+  const dogMaterial = dog.visual.materials[0]?.id ?? "body";
+  dog.visual.features = [
+    { kind: "ear", style: "floppy", size: 1, materialSlot: dogMaterial },
+    { kind: "snout", style: "muzzle", size: 1, materialSlot: dogMaterial },
+    { kind: "paw", style: "four-paws", size: 1, materialSlot: dogMaterial },
+    { kind: "tail", style: "wagging", size: 1, materialSlot: dogMaterial },
+  ];
+  dog.visual.recognitionFeatures = ["muzzle", "upright ears", "four paws", "connected tail"];
+  dog.spawn = { kind: "fixed", positions: [[0, 8, -2]] };
   dog.tags = ["childhood-dog", "guide", "hero"];
   const shadow: DreamSpecV1["entities"][number] = {
     ...structuredClone(dog), id: "hallway-shadow", displayName: "Hallway Shadow", role: "threat", visual: { ...structuredClone(dog.visual), bodyPlan: "blob", palette: { ...dog.visual.palette, primary: 0x161a2b } }, spawn: { kind: "fixed", positions: [[9, 12, -10]] }, behavior: { kind: "guard", targetId: "exit-stairwell", warningRadius: 5, chaseRadius: 9, speed: 4 }, tags: ["hallway-shadow", "threat"],
@@ -149,14 +193,43 @@ async function lotteryFamily(): Promise<DreamLibraryShowcase> {
   const { prompt } = card;
   const spec = await baseSpec(prompt, "dreamlibrary-lottery-family");
   const family = spec.entities[0]!;
-  family.id = "family-band";
+  family.id = "family-adult";
   rebindDialogueSpeaker(spec, family.id);
-  family.displayName = "The Family Band";
-  family.visual.bodyPlan = "humanoid";
-  family.spawn = { kind: "fixed", positions: [[-6, 12, -4], [-3, 12, -4], [0, 12, -4]] };
-  family.tags = ["family-band", "guide", "hero"];
+  family.displayName = "Family Adult";
+  family.visual.bodyPlan = "humanoid_adult";
+  family.visual.scale = 1.3;
+  showcaseMaterials(family.visual, 0x2e6f95, 0xf2c14e, 0x1d1720);
+  family.visual.features = [{ kind: "hair", style: "wave", size: 1, materialSlot: family.visual.materials[0]?.id ?? "body" }, { kind: "necklace", style: "keepsake", size: 0.8, materialSlot: family.visual.materials[0]?.id ?? "body" }];
+  family.visual.recognitionFeatures = ["upright torso", "hair", "hands", "shoes"];
+  family.spawn = { kind: "fixed", positions: [[-4, 8, -2]] };
+  family.tags = ["family-band", "family-adult", "guide", "hero"];
+  const familyChild = structuredClone(family);
+  familyChild.id = "family-child";
+  familyChild.displayName = "Family Child";
+  familyChild.role = "companion";
+  familyChild.visual.bodyPlan = "humanoid_child";
+  familyChild.visual.scale = 1.05;
+  showcaseMaterials(familyChild.visual, 0xc84b66, 0x79c267, 0x1d1720);
+  familyChild.visual.animationStyle = { ...family.visual.animationStyle, locomotion: "waddle", emotion: "dance" };
+  familyChild.visual.features = [{ kind: "hat", style: "cap", size: 0.8, materialSlot: familyChild.visual.materials[0]?.id ?? "body" }, { kind: "hair", style: "short", size: 0.8, materialSlot: familyChild.visual.materials[0]?.id ?? "body" }];
+  familyChild.visual.recognitionFeatures = ["shorter height", "cap", "hands", "shoes"];
+  familyChild.spawn = { kind: "fixed", positions: [[-1, 8, -2]] };
+  familyChild.tags = ["family-band", "family-child", "companion"];
+  const familyElder = structuredClone(family);
+  familyElder.id = "family-elder";
+  familyElder.displayName = "Family Elder";
+  familyElder.role = "companion";
+  familyElder.visual.bodyPlan = "humanoid_elder";
+  familyElder.visual.scale = 1.22;
+  showcaseMaterials(familyElder.visual, 0x6d597a, 0xe9c46a, 0x1d1720);
+  familyElder.visual.animationStyle = { ...family.visual.animationStyle, locomotion: "walk", emotion: "cheer" };
+  familyElder.visual.features = [{ kind: "hair", style: "silver", size: 1.1, materialSlot: familyElder.visual.materials[0]?.id ?? "body" }, { kind: "backpack", style: "satchel", size: 0.8, materialSlot: familyElder.visual.materials[0]?.id ?? "body" }];
+  familyElder.visual.recognitionFeatures = ["tall posture", "silver hair", "walking cane", "shoes"];
+  familyElder.spawn = { kind: "fixed", positions: [[2, 8, -2]] };
+  familyElder.tags = ["family-band", "family-elder", "companion"];
+  spec.entities = [family, familyChild, familyElder];
   spec.budgets.structures = 6;
-  spec.budgets.entityDefinitions = 1;
+  spec.budgets.entityDefinitions = 3;
   spec.budgets.entityInstances = 4;
   spec.blueprint.semanticAnchors = [
     { id: "jackpot-board", concept: "jackpot board", sourcePhrase: "lottery jackpot board", role: "object", representation: "prop", gameplayRole: "landmark", importance: 5, nearSpawn: true, mustAppear: true },

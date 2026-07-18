@@ -94,7 +94,7 @@ test("launches every featured template through the DreamLibrary showcase runtime
   for (const showcase of [
     { label: "Tiny wonder", title: "The Moonlit Kitchen", objective: "Meet Luna Moth" },
     { label: "Lost messages", title: "Flooded School Escape", objective: "Meet Childhood Dog" },
-    { label: "Golden celebration", title: "The Lottery Family Finale", objective: "Meet The Family Band" },
+    { label: "Golden celebration", title: "The Lottery Family Finale", objective: "Meet Family Adult" },
   ]) {
     await page.goto("/");
     await page.getByRole("button", { name: new RegExp(showcase.label, "i") }).click();

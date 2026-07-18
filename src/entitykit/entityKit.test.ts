@@ -123,7 +123,7 @@ describe("createProceduralEntity", () => {
   });
 
   it("defines and compiles every MVP body plan with bounded rig semantics", () => {
-    expect(MVP_BODY_PLANS).toHaveLength(10);
+    expect(MVP_BODY_PLANS).toHaveLength(15);
 
     for (const bodyPlan of MVP_BODY_PLANS) {
       const definition = getBodyPlanDefinition(bodyPlan);
@@ -149,6 +149,89 @@ describe("createProceduralEntity", () => {
       expect(entity.partCount).toBeLessThanOrEqual(12);
       entity.dispose();
     }
+  });
+
+  it("builds a moth silhouette with four wings, antennae, abdomen, and fluttering joints", () => {
+    const moth = createProceduralEntity({
+      id: "luna-moth",
+      role: "hero",
+      seed: 7,
+      intendedDistance: 10,
+      visual: {
+        ...gummyGuardian,
+        bodyPlan: "moth",
+        scale: 1.85,
+        features: [
+          { kind: "antenna", size: 1, materialSlot: "jelly_body" },
+          { kind: "wing", size: 1, materialSlot: "jelly_body" },
+          { kind: "tail", size: 1, materialSlot: "jelly_body" },
+        ],
+        recognitionFeatures: ["wings", "antennae", "abdomen"],
+        animationStyle: { idle: "float", locomotion: "fly", emotion: "wave", speedMultiplier: 1, exaggeration: 1 },
+      },
+    });
+    expect(moth.root.getObjectByName("moth-thorax")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-abdomen")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-wing-upper-left")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-wing-upper-right")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-wing-lower-left")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-wing-lower-right")).toBeDefined();
+    expect(moth.root.getObjectByName("moth-antenna-left")).toBeDefined();
+    const wing = moth.root.getObjectByName("joint-wing-upper-left");
+    const before = wing?.rotation.z;
+    moth.setAnimationState("locomotion");
+    moth.update({ elapsedSeconds: 0.4, deltaSeconds: 1 / 60 });
+    expect(wing?.rotation.z).not.toBe(before);
+    expect(moth.getReadabilityReport().passed).toBe(true);
+    moth.dispose();
+  });
+
+  it("builds a dog silhouette with muzzle, ears, four paws, and a wagging tail", () => {
+    const dog = createProceduralEntity({
+      id: "childhood-dog",
+      role: "hero",
+      seed: 11,
+      intendedDistance: 12,
+      visual: {
+        ...gummyGuardian,
+        bodyPlan: "dog",
+        scale: 1.55,
+        features: [
+          { kind: "ear", size: 1, materialSlot: "jelly_body" },
+          { kind: "snout", size: 1, materialSlot: "jelly_body" },
+          { kind: "paw", size: 1, materialSlot: "jelly_body" },
+          { kind: "tail", size: 1, materialSlot: "jelly_body" },
+        ],
+        recognitionFeatures: ["muzzle", "ears", "paws", "tail"],
+        animationStyle: { idle: "breathe", locomotion: "walk", emotion: "cheer", speedMultiplier: 1, exaggeration: 1 },
+      },
+    });
+    for (const name of ["dog-torso", "dog-head", "dog-muzzle", "dog-ear-left", "dog-ear-right", "dog-paw-front-left", "dog-paw-front-right", "dog-paw-rear-left", "dog-paw-rear-right", "dog-tail"]) {
+      expect(dog.root.getObjectByName(name)).toBeDefined();
+    }
+    const tail = dog.root.getObjectByName("joint-tail");
+    const before = tail?.rotation.y;
+    dog.setAnimationState("emotion");
+    dog.update({ elapsedSeconds: 0.4, deltaSeconds: 1 / 60 });
+    expect(tail?.rotation.y).not.toBe(before);
+    expect(dog.getReadabilityReport().passed).toBe(true);
+    dog.dispose();
+  });
+
+  it("builds visually distinct family humanoid variants", () => {
+    const entities = (['humanoid_adult', 'humanoid_child', 'humanoid_elder'] as const).map((bodyPlan) => createProceduralEntity({
+      id: bodyPlan,
+      role: "companion",
+      visual: { ...gummyGuardian, bodyPlan, features: [{ kind: "hair", size: 1, materialSlot: "jelly_body" }], recognitionFeatures: ["head", "torso", "clothing"], animationStyle: { idle: "breathe", locomotion: "walk", emotion: "dance", speedMultiplier: 1, exaggeration: 1 } },
+    }));
+    expect(entities.every((entity) => entity.root.getObjectByName("joint-head") && entity.root.getObjectByName("joint-arm-left") && entity.root.getObjectByName("joint-leg-left"))).toBe(true);
+    const meshes = entities.map((entity) => {
+      const box = new THREE.Box3().setFromObject(entity.root);
+      return box.max.y - box.min.y;
+    });
+    expect(new Set(meshes.map((height) => Math.round(height * 100))).size).toBe(3);
+    expect(entities.every((entity) => entity.getReadabilityReport().passed)).toBe(true);
+    for (const entity of entities) entity.dispose();
   });
 
   it("articulates a distinctive flying teapot through semantic feature joints", () => {

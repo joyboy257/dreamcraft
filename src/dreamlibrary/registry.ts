@@ -19,7 +19,7 @@ export const DREAM_LIBRARY: readonly DreamLibraryCapability[] = [
   ...["school", "kitchen", "celebration", "forest", "bedroom", "underwater", "sky", "nightmare", "library", "cloud-garden", "candy-fragment"].map((id) => define("environment", id, id, [id])),
   ...["corridor", "classroom", "lockers", "stairs", "exit-stairwell", "kitchen-counter", "moon-window", "moon-door", "stage", "celebration-stage", "golden-house", "jackpot-board"].map((id) => define("structure", id, id.replaceAll("-", " "), [id])),
   ...["giant-cup", "sugar-bowl", "paper-boat", "written-message", "desk", "school-board", "banner", "instrument", "family-instruments", "lottery-ticket", "golden-rain", "objective-beacon", "treasure-chest"].map((id) => define("prop", id, id.replaceAll("-", " "), [id])),
-  ...["moth", "dog", "family", "shadow", "paper-boat-character", "procedural-guide", "gummy-bear"].map((id) => define("entity", id, id.replaceAll("-", " "), [id])),
+  ...["moth", "dog", "humanoid_adult", "humanoid_child", "humanoid_elder", "family", "shadow", "paper-boat-character", "procedural-guide", "gummy-bear"].map((id) => define("entity", id, id.replaceAll("_", " ").replaceAll("-", " "), [id])),
   ...["scale-traversal", "swimming-route", "message-arc", "ticket-verification", "performance"].map((id) => define("gameplay", id, id.replaceAll("-", " "), [id])),
   define("dialogue", "relationship-arc", "relationship arc", ["opening", "middle", "ending"]),
   define("atmosphere", "underwater-fog", "underwater fog", ["water", "fog"]),
