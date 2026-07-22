@@ -1,54 +1,102 @@
-# DreamCraft
+<p align="center">
+  <img src="docs/assets/readme/dreamcraft-hero.svg" alt="DreamCraft — describe a dream and step into a playable world" width="100%" />
+</p>
 
-> Describe a dream. Step into a playable world.
+<p align="center">
+  <a href="#run-it-locally"><strong>Run locally</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#how-a-dream-becomes-a-world"><strong>Architecture</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#engineering-evidence"><strong>Engineering evidence</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="docs/11_DEMO_AND_SUBMISSION.md"><strong>Judge path</strong></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="docs/00_PRODUCT_NORTH_STAR.md"><strong>Product vision</strong></a>
+</p>
 
-DreamCraft turns a plain-English dream into a short first-person voxel game:
-terrain, a procedural character, strange physics, dialogue, an objective, and a
-real ending. It is a browser-first OpenAI Build Week 2026 project for the
-**Apps for Your Life** track.
+<p align="center">
+  <img src="https://img.shields.io/badge/OpenAI-Build%20Week%202026-100d20?logo=openai&logoColor=d8c7ff" alt="OpenAI Build Week 2026" />
+  <img src="https://img.shields.io/badge/runtime-Three.js%20voxel%20engine-100d20" alt="Three.js voxel engine" />
+  <img src="https://img.shields.io/badge/world%20format-DreamSpec%20v1-100d20" alt="DreamSpec v1" />
+  <img src="https://img.shields.io/badge/tests-192%2F192-214c44" alt="192 tests passing" />
+  <img src="https://img.shields.io/badge/browser%20matrix-9%2F9-214c44" alt="9 browser journeys passing" />
+</p>
 
-| Judge link | Status |
-| --- | --- |
-| Live demo | **PENDING — no Vercel deployment or alias exists; first successful deployment needs explicit production authorization** |
-| Demo video | **PENDING — public under-three-minute video not recorded/uploaded** |
-| Repository | [github.com/joyboy257/dreamcraft](https://github.com/joyboy257/dreamcraft) |
+<p align="center">
+  <strong>DreamCraft turns a plain-English dream into a short first-person voxel game.</strong><br />
+  Terrain, procedural characters, strange physics, dialogue, objectives, and a real ending—compiled safely into a browser-playable world.
+</p>
 
-G0–G6 are locally certified. G7 release preparation is in progress. The GPT-5.6
-runtime is engineering-complete but its locked ten-prompt live proof is still
-pending a rotated key, funding, and explicit authorization. The deterministic
-local generator is the mandatory fallback and requires no account or API key.
+> [!IMPORTANT]
+> The deterministic local experience is fully playable and requires no account or API key. Public Vercel deployment and the locked live GPT-5.6 ten-prompt proof remain intentionally pending explicit owner authorization, a rotated key, and funding. Mocked provider failures are covered and always fall back to the local generator.
 
-## What judges can do
+## See the worlds
 
-1. Choose a sample dream or describe a place, strange rule, and character.
-2. Select Calm, Vivid, or Fever intensity and choose **Enter Dream**.
-3. If **Stable fragment** appears, choose **Enter the fragment**; this is the
-   intentional API-disabled/failure fallback, not a dead end.
-4. Choose **Step into the dream**, press `E` to meet the guide, select
-   **Follow the dream**, then press `E` again to awaken the fragment.
-5. Reach the ending and use Replay, Remix this dream, or Remember another.
+<table>
+  <tr>
+    <td width="33%" align="center"><strong>Golden celebration</strong></td>
+    <td width="33%" align="center"><strong>Moonlit kitchen</strong></td>
+    <td width="33%" align="center"><strong>Messages from a dog</strong></td>
+  </tr>
+  <tr>
+    <td><img src="output/playwright/g7-3-family-final.png" alt="DreamCraft golden family celebration world" /></td>
+    <td><img src="output/playwright/g7-3-moonlit-close-final.png" alt="DreamCraft moonlit kitchen world" /></td>
+    <td><img src="output/playwright/g7-3-dog-close-final.png" alt="DreamCraft childhood dog dream world" /></td>
+  </tr>
+</table>
 
-Expected time: about 60–90 seconds. Desktop controls are `WASD` to move, mouse
-to look, `Space` to jump/rise, `Shift` to sprint, `E` or click to interact, and
-`Esc` to pause. Touch movement, look, jump, and interaction controls appear on
-mobile.
+Each world starts from a short description and intensity choice. DreamCraft materializes a coherent fragment with recognizable entities, atmosphere, movement rules, interaction, dialogue, an objective, and an ending instead of generating a decorative scene with nothing to do.
 
-The full judge path is in
-[`docs/11_DEMO_AND_SUBMISSION.md`](docs/11_DEMO_AND_SUBMISSION.md).
+## What makes DreamCraft different
 
-## Sample prompts
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>✦ Meaning becomes mechanics</h3>
+      Dream details influence terrain, entities, materials, lighting, sound, physics, dialogue, objectives, and story beats—not only visual style.
+    </td>
+    <td width="50%" valign="top">
+      <h3>⌁ Every world is playable</h3>
+      The generated fragment includes safe spawning, navigation, interaction, a guide, a goal, progression, and a deterministic ending.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>◇ Model output stays declarative</h3>
+      GPT-5.6 produces bounded DreamSpec data. Trusted TypeScript compilers decide behavior; DreamCraft never executes model-generated JavaScript, shaders, callbacks, imports, or URLs.
+    </td>
+    <td width="50%" valign="top">
+      <h3>↻ Failure still produces a world</h3>
+      API-disabled, timeout, refusal, rate-limit, authentication, quota, and malformed-output paths all converge on the deterministic local generator.
+    </td>
+  </tr>
+</table>
 
-- **Tiny wonder:** “I was tiny in a moonlit kitchen where teacups floated and a
-  patient moth guarded the sugar bowl.”
-- **Lost messages:** “A flooded school repeated forever while paper boats
-  carried messages from my childhood dog.”
-- **Golden celebration:** “My family celebrated beneath a golden rainstorm as
-  the city buildings slowly turned into instruments.”
+## The 60-second experience
 
-The same normalized description and intensity always produce the same local
-fragment. This makes the fallback reproducible for judging and testing.
+1. Describe a place, a strange rule, and a character—or choose a sample dream.
+2. Select **Calm**, **Vivid**, or **Fever** intensity.
+3. Enter the generated fragment.
+4. Explore with first-person movement and meet the dream guide.
+5. Follow the objective, awaken the fragment, and reach the ending.
+6. Replay, remix the dream, or remember another.
 
-## Architecture
+Desktop controls: `WASD` to move, mouse to look, `Space` to jump or rise, `Shift` to sprint, `E` or click to interact, and `Esc` to pause. Mobile receives dedicated movement, look, jump, and interaction controls.
+
+## Sample dreams
+
+> **Tiny wonder**<br />
+> “I was tiny in a moonlit kitchen where teacups floated and a patient moth guarded the sugar bowl.”
+
+> **Lost messages**<br />
+> “A flooded school repeated forever while paper boats carried messages from my childhood dog.”
+
+> **Golden celebration**<br />
+> “My family celebrated beneath a golden rainstorm as the city buildings slowly turned into instruments.”
+
+The same normalized prompt and intensity always produce the same deterministic fallback fragment, making the safe path reproducible for testing and judging.
+
+## How a dream becomes a world
 
 ```mermaid
 flowchart LR
@@ -59,56 +107,96 @@ flowchart LR
     D -- "Yes" --> F["GPT-5.6 structured output"]
     E --> G["DreamSpec v1"]
     F --> G
-    G --> H["Schema, references, budgets, and spawn validation"]
+    G --> H["Schema + references + budgets + spawn validation"]
     H --> I["Trusted TypeScript compilers"]
     I --> J["Terrain + EntityKit + Physics + DreamPlayGraph"]
     J --> K["Three.js voxel runtime"]
 ```
 
-DreamSpec is bounded declarative data. GPT-5.6 describes the world using
-allowlisted structures, entities, physics, dialogue, effects, and story beats;
-trusted TypeScript code decides how those values behave. DreamCraft never runs
-model-generated JavaScript, imports, shaders, callbacks, or URLs. This boundary
-makes worlds reproducible, validates resource budgets before rendering, and
-keeps gameplay independent of the model after generation.
+### DreamSpec v1
 
-The client renders combined exposed-face chunk geometry rather than one mesh per
-block. The central chunk is prepared first, outer chunk work is bounded, and
-desktop/mobile quality profiles cap draw work and particles.
+DreamSpec is bounded declarative data describing:
 
-More detail: [`docs/01_SYSTEM_ARCHITECTURE.md`](docs/01_SYSTEM_ARCHITECTURE.md),
-[`docs/02_DREAMSPEC_DSL.md`](docs/02_DREAMSPEC_DSL.md), and
-[`docs/10_SECURITY_AND_RELIABILITY.md`](docs/10_SECURITY_AND_RELIABILITY.md).
+- terrain, structures, materials, atmosphere, and effects;
+- recognizable procedural entities and their roles;
+- movement, gravity, buoyancy, friction, jump, and world physics;
+- dialogue, interactions, objectives, progression, and endings;
+- hard budgets for world size, entities, particles, references, and spawn safety.
 
-## How Codex and GPT-5.6 are used
+Every specification passes schema, cross-reference, resource-budget, semantic, and spawn validation before trusted compilers materialize it.
 
-Codex built the repository through evidence-backed gates:
+### Runtime compilation
 
-- **Sol** owns architecture, scope, integration, Git checkpoints, and final
-  release review.
-- **Luna** handles bounded implementation, tests, documentation, and routine
-  fixes.
-- **Terra** handles difficult systems/debugging, security review, and independent
-  gate verification.
+The runtime converts validated DreamSpec into:
 
-Work is sequential through G7, and a gate is not complete until its commands and
-evidence are reproduced. At runtime, `single-sol` is the default GPT-5.6 path.
-The feature-flagged Sol → Terra/Luna director pipeline remains experimental
-because mocked evaluation did not prove enough quality gain to justify extra
-calls. Model output is complete before play begins.
+- exposed-face chunk geometry instead of one mesh per block;
+- bounded terrain streaming and prioritized central chunks;
+- procedural entity geometry through EntityKit;
+- physics profiles and DreamPlayGraph mechanics;
+- adaptive desktop and mobile quality profiles;
+- procedural atmosphere and audio;
+- deterministic interaction and story-state transitions.
 
-The live runtime proof has **not** been run. Mocked success, timeout,
-cancellation, refusal, malformed output, rate-limit, authentication, quota, and
-API-disabled paths are covered, and each failure reaches the local generator.
-See [`docs/14_G3_ENGINEERING_EVIDENCE.md`](docs/14_G3_ENGINEERING_EVIDENCE.md)
-and [`docs/13_G3_LIVE_VALIDATION_RUNBOOK.md`](docs/13_G3_LIVE_VALIDATION_RUNBOOK.md).
+Read the deeper design in:
 
-## Local setup
+- [`docs/01_SYSTEM_ARCHITECTURE.md`](docs/01_SYSTEM_ARCHITECTURE.md)
+- [`docs/02_DREAMSPEC_DSL.md`](docs/02_DREAMSPEC_DSL.md)
+- [`docs/03_PHYSICS_DSL.md`](docs/03_PHYSICS_DSL.md)
+- [`docs/04_ENTITYKIT.md`](docs/04_ENTITYKIT.md)
+- [`docs/05_DREAMPLAYGRAPH.md`](docs/05_DREAMPLAYGRAPH.md)
+
+## Recruiter quick scan
+
+| | |
+| --- | --- |
+| **Product** | Natural-language-to-playable-world browser game built for OpenAI Build Week 2026. |
+| **My role** | Product design, system architecture, engine design, AI pipeline, orchestration, testing, security, performance, and release engineering. |
+| **Core technical problem** | Convert open-ended dream language into bounded, semantically faithful, safe, performant gameplay—not arbitrary generated code. |
+| **Stack** | React 19, TypeScript 6, Three.js, Vite, Zod, OpenAI structured output, Vitest, Playwright, PWA service worker, Vercel serverless routes. |
+| **Reliability model** | Deterministic fallback, strict schemas, resource budgets, same-origin server API, no raw text in metrics, no API responses in offline cache. |
+| **Agentic build model** | Sol architecture/integration, Luna bounded implementation, Terra systems/debugging and independent gate review. |
+
+## Engineering evidence
+
+DreamCraft was built through evidence-backed gates rather than a single demo sprint.
+
+| Certified local gate evidence | Result |
+| --- | ---: |
+| Unit and integration tests | **192 / 192** |
+| DreamSpec and generation evals | **6 / 6** |
+| Serialized desktop/mobile browser matrix | **9 / 9** |
+| Production PWA/offline test | **1 / 1** |
+| Independent systems review | **Passed** |
+| Desktop balanced synthetic profile | **≈119 FPS** |
+| Pixel 7 reduced synthetic profile | **≈120 FPS** |
+| Draw-call release guard | **<25** |
+| Visible-triangle release guard | **<12,000** |
+| Chunk-work p95 release guard | **<5 ms** |
+
+The performance figures are synthetic Chromium release guards, not real-user monitoring. Physical-device GPU, thermal, and ergonomic checks remain release work. The raw client bundle also remains above Vite's 500 kB advisory at 980.52 kB, or 271.31 kB gzip.
+
+Evidence lives in [`docs/14_G3_ENGINEERING_EVIDENCE.md`](docs/14_G3_ENGINEERING_EVIDENCE.md) through [`docs/21_G7_1_SEMANTIC_GROUNDING_EVIDENCE.md`](docs/21_G7_1_SEMANTIC_GROUNDING_EVIDENCE.md).
+
+## Security and privacy boundary
+
+- No account, database, analytics tracker, file upload, or PII persistence is required.
+- Dream descriptions are bounded and normalized.
+- Server metrics omit raw dream text, credentials, authorization headers, and stack traces.
+- `/api/dream` accepts same-origin JSON POST requests only and returns `no-store` responses.
+- A server-side key cannot activate generation by itself; `DREAMCRAFT_OPENAI_ENABLED=true` is also required.
+- Model output passes strict schema, reference, budget, semantic, and spawn validation.
+- The service worker caches the application shell but excludes every `/api/` response.
+- CSP, HSTS, framing, MIME, referrer, permissions, opener/resource, and cache headers are configured for Vercel.
+
+Read [`docs/10_SECURITY_AND_RELIABILITY.md`](docs/10_SECURITY_AND_RELIABILITY.md) and [`docs/18_G6_ENGINEERING_EVIDENCE.md`](docs/18_G6_ENGINEERING_EVIDENCE.md).
+
+## Run it locally
 
 Requirements:
 
-- Node.js `24.18.0` (`>=24 <25`)
-- Corepack and project-pinned pnpm `11.13.0`
+- Node.js `24.18.0` or another version in `>=24 <25`
+- Corepack
+- project-pinned pnpm `11.13.0`
 
 ```bash
 git clone https://github.com/joyboy257/dreamcraft.git
@@ -118,13 +206,26 @@ corepack pnpm install --frozen-lockfile
 corepack pnpm dev
 ```
 
-Open `http://localhost:5173`. No `.env.local` file is required for the safe
-local path.
+Open `http://localhost:5173`. The safe local path requires no `.env.local`, account, or API key.
 
-### Environment
+## Useful commands
 
-`.env.example` is authoritative. If local configuration is needed, copy it to
-the ignored `.env.local`; never commit that file.
+| Command | Purpose |
+| --- | --- |
+| `corepack pnpm dev` | Start Vite and the local `/api/dream` route |
+| `corepack pnpm typecheck` | Strict TypeScript verification |
+| `corepack pnpm lint` | ESLint with zero warnings |
+| `corepack pnpm test` | Unit and integration suite |
+| `corepack pnpm eval` | DreamSpec and generation evaluations |
+| `corepack pnpm test:e2e` | Serialized desktop/mobile browser journeys |
+| `corepack pnpm test:pwa` | Production build and offline PWA journey |
+| `corepack pnpm build` | Typecheck and produce the Vite bundle |
+| `bash scripts/validate-pack.sh` | Validate the repository and scan nonignored files |
+| `corepack pnpm audit --prod --audit-level high` | Audit production dependencies |
+
+## Runtime configuration
+
+`.env.example` is authoritative. Secrets never use a `VITE_*` name because Vite variables are shipped to the browser.
 
 | Variable | Purpose | Safe default |
 | --- | --- | --- |
@@ -137,85 +238,45 @@ the ignored `.env.local`; never commit that file.
 | `DREAMCRAFT_MAX_BODY_BYTES` | Request-body limit | `8192` |
 | `DREAMCRAFT_ENABLE_DEBUG_METRICS` | Safe structured server metrics | `false` |
 
-Never use a `VITE_*` name for a secret; Vite variables are shipped to the
-browser. A key alone cannot enable calls: the server requires both a key and the
-literal `DREAMCRAFT_OPENAI_ENABLED=true` gate.
+## Current release status
 
-## Commands and evidence
+<details>
+<summary><strong>Open release gates and judge status</strong></summary>
 
-| Command | Purpose |
+<br />
+
+| Surface | Current status |
 | --- | --- |
-| `corepack pnpm dev` | Start Vite and the local `/api/dream` development route |
-| `corepack pnpm typecheck` | Strict TypeScript check |
-| `corepack pnpm lint` | ESLint with zero warnings |
-| `corepack pnpm test` | Unit and integration tests |
-| `corepack pnpm eval` | DreamSpec and generation evals |
-| `corepack pnpm test:e2e` | Serialized desktop/mobile Chromium journeys |
-| `corepack pnpm test:pwa` | Production build plus offline PWA test |
-| `corepack pnpm build` | Typecheck and create Vite output in `dist/` |
-| `corepack pnpm test:smoke-deployed` | Test the deployed-smoke validator itself |
-| `corepack pnpm smoke:deployed -- https://preview.example` | Verify a generation-disabled deployment |
-| `bash scripts/validate-pack.sh` | Validate required files and scan nonignored files safely |
-| `node --check public/sw.js` | Validate service-worker syntax |
-| `corepack pnpm audit --prod --audit-level high` | Audit production dependencies |
+| Local deterministic experience | **Certified and playable** |
+| GPT-5.6 runtime implementation | **Engineering-complete** |
+| Locked ten-prompt live provider proof | **Pending rotated key, funding, and authorization** |
+| Vercel deployment and alias | **Pending explicit production authorization** |
+| Public under-three-minute demo video | **Pending** |
+| Physical-device GPU and thermal checks | **Pending G7 release work** |
+| Repository license | **Pending owner legal approval** |
 
-Gate evidence lives in `docs/12_*` through `docs/18_*`. G6 passed 192/192
-unit/integration tests, 6/6 eval tests, the serialized 9/9 browser matrix, 1/1
-production PWA test, and an independent Terra review. Current G7 changes remain
-unreleased until their own review and release checks finish.
+G0–G6 are locally certified. G7 release preparation is in progress. Exact preview, smoke, production, and rollback steps are in [`docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md`](docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md).
 
-## Fallback, security, and privacy
+The feature-flagged Sol → Terra/Luna director runtime remains experimental because mocked evaluation did not prove sufficient quality improvement to justify additional model calls. `single-sol` remains the default live strategy.
 
-- No account, database, analytics tracker, file upload, or PII persistence is
-  required.
-- Dream descriptions are bounded and normalized. Server metrics omit raw dream
-  text, credentials, authorization headers, and stack traces.
-- `/api/dream` accepts same-origin JSON POSTs only, uses bounded body/input/model
-  budgets, and returns `no-store` responses.
-- Model data crosses strict schema, cross-reference, budget, spawn-safety, and
-  client validation before trusted compilers consume it.
-- The service worker caches the application shell but excludes every `/api/`
-  response.
-- CSP, HSTS, framing, MIME, referrer, permissions, opener/resource, and API
-  cache headers are configured for Vercel.
-- Live public generation additionally requires Vercel Firewall/shared rate
-  protection because the application limiter is process-local on serverless
-  instances.
+</details>
 
-Security details and residual risks are recorded in
-[`docs/18_G6_ENGINEERING_EVIDENCE.md`](docs/18_G6_ENGINEERING_EVIDENCE.md).
+## Documentation map
 
-## Performance and accessibility
+| Topic | Document |
+| --- | --- |
+| Product north star | [`docs/00_PRODUCT_NORTH_STAR.md`](docs/00_PRODUCT_NORTH_STAR.md) |
+| System architecture | [`docs/01_SYSTEM_ARCHITECTURE.md`](docs/01_SYSTEM_ARCHITECTURE.md) |
+| DreamSpec DSL | [`docs/02_DREAMSPEC_DSL.md`](docs/02_DREAMSPEC_DSL.md) |
+| Physics DSL | [`docs/03_PHYSICS_DSL.md`](docs/03_PHYSICS_DSL.md) |
+| Procedural entities | [`docs/04_ENTITYKIT.md`](docs/04_ENTITYKIT.md) |
+| Gameplay graph | [`docs/05_DREAMPLAYGRAPH.md`](docs/05_DREAMPLAYGRAPH.md) |
+| UI and game feel | [`docs/07_PRODUCT_UI_AND_GAME_FEEL.md`](docs/07_PRODUCT_UI_AND_GAME_FEEL.md) |
+| Performance budgets | [`docs/08_PERFORMANCE_BUDGETS.md`](docs/08_PERFORMANCE_BUDGETS.md) |
+| Test and evaluation plan | [`docs/09_TEST_AND_EVAL_PLAN.md`](docs/09_TEST_AND_EVAL_PLAN.md) |
+| Security and reliability | [`docs/10_SECURITY_AND_RELIABILITY.md`](docs/10_SECURITY_AND_RELIABILITY.md) |
+| Demo and submission path | [`docs/11_DEMO_AND_SUBMISSION.md`](docs/11_DEMO_AND_SUBMISSION.md) |
 
-The certified deterministic Chromium profile measured approximately 119 FPS on
-desktop balanced and 120 FPS under Pixel 7 reduced emulation, with frame p95
-below 17 ms and 10 ms respectively, fewer than 25 draw calls, fewer than 12,000
-visible triangles, and chunk work below 5 ms p95. These are synthetic release
-guards, not real-user monitoring. The raw client bundle remains above Vite’s
-500 kB advisory at 980.52 kB (271.31 kB gzip).
+## License
 
-Keyboard focus containment, reduced motion, high-contrast HUD, audio text
-alternatives, FOV/sensitivity controls, pause/escape recovery, and mobile touch
-paths are automated. Physical-device GPU, thermal, and ergonomic checks remain
-G7 release work.
-
-## Deployment
-
-Vercel is the selected Vite/serverless host: Node 24, frozen pnpm install,
-`corepack pnpm build`, and `dist/`. Preview and Production each have the same
-seven safe, non-secret, generation-disabled settings and **no OpenAI key**.
-Vercel automatically promotes a new project's first successful deployment to
-production, so the first deployment now requires explicit owner authorization;
-no deployment or alias remains. Funding/rotating a key and running the live
-ten-prompt proof are separate later actions.
-
-Exact preview, smoke, production, and rollback steps are in
-[`docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md`](docs/19_RELEASE_AND_ROLLBACK_RUNBOOK.md).
-
-## License and notices
-
-The DreamCraft repository license is **pending owner legal approval**. An
-approval-ready MIT draft with the neutral holder “DreamCraft contributors” is
-available at [`LICENSE-MIT-DRAFT.md`](LICENSE-MIT-DRAFT.md); it is not yet an
-adopted `LICENSE` file. Direct dependency notices are in
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+The repository license remains pending owner legal approval. [`LICENSE-MIT-DRAFT.md`](LICENSE-MIT-DRAFT.md) is an approval-ready draft and is not yet an adopted license. Direct dependency notices are recorded in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
